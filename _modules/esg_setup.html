@@ -166,184 +166,94 @@
            <div itemprop="articleBody">
             
   <h1>Source code for esg_setup</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">re</span>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">platform</span>
-<span class="kn">import</span> <span class="nn">netifaces</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
 <span class="kn">import</span> <span class="nn">yaml</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">UnprivilegedUserError</span><span class="p">,</span> <span class="n">WrongOSError</span><span class="p">,</span> <span class="n">UnverifiedScriptError</span>
-<span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="k">import</span> <span class="n">find_executable</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_version_manager</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">pybash</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
 
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 
-<span class="n">force_install</span> <span class="o">=</span> <span class="kc">False</span>
+<div class="viewcode-block" id="exit_on_false"><a class="viewcode-back" href="../api.html#esg_setup.exit_on_false">[docs]</a><span class="k">def</span> <span class="nf">exit_on_false</span><span class="p">(</span><span class="n">assertion</span><span class="p">,</span> <span class="n">err_msg</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Exit if the assertion fails &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">assertion</span><span class="p">,</span> <span class="n">err_msg</span>
+    <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
+        <span class="k">raise</span></div>
 
 <div class="viewcode-block" id="check_if_root"><a class="viewcode-back" href="../api.html#esg_setup.check_if_root">[docs]</a><span class="k">def</span> <span class="nf">check_if_root</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Check to see if the user is root&#39;&#39;&#39;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Checking that you have root privileges on </span><span class="si">%s</span><span class="s2">... &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">())</span>
-    <span class="n">root_check</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">geteuid</span><span class="p">()</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">root_check</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UnprivilegedUserError</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Root user found.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">except</span> <span class="n">UnprivilegedUserError</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Must run this program with root&#39;s effective UID</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+    <span class="sd">&#39;&#39;&#39;Check to see if the user has root privileges&#39;&#39;&#39;</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Checking for root privileges...&quot;</span>
+
+    <span class="n">err_msg</span> <span class="o">=</span> <span class="s2">&quot;This program must be run with root privileges&quot;</span>
+    <span class="n">exit_on_false</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">geteuid</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">err_msg</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Root privileges found&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="check_os"><a class="viewcode-back" href="../api.html#esg_setup.check_os">[docs]</a><span class="k">def</span> <span class="nf">check_os</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Check if the operating system on server is Redhat or CentOS;</span>
-<span class="sd">    returns False Otherwise&#39;&#39;&#39;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Checking operating system.....&quot;</span>
-    <span class="n">release_version</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
-        <span class="s2">&quot;(centos|redhat)-(\S*)-&quot;</span><span class="p">,</span> <span class="n">platform</span><span class="o">.</span><span class="n">platform</span><span class="p">())</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Release Version: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">release_version</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s2">&quot;6&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">release_version</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="n">WrongOSError</span>
-    <span class="k">except</span> <span class="n">WrongOSError</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems&quot;</span><span class="p">)</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;Operating System = </span><span class="si">{OS}</span><span class="s2"> </span><span class="si">{version}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">OS</span><span class="o">=</span><span class="n">release_version</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">version</span><span class="o">=</span><span class="n">release_version</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="k">return</span> <span class="kc">True</span></div>
+    <span class="sd">&#39;&#39;&#39; Check if the operating system on server is Redhat or CentOS &#39;&#39;&#39;</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Checking operating system...&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;  </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">platform</span><span class="o">.</span><span class="n">platform</span><span class="p">())</span>
+    <span class="n">machine</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span>
+    <span class="n">req_machines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;x86_64&#39;</span><span class="p">]</span>
+    <span class="n">err_msg</span> <span class="o">=</span> <span class="s2">&quot;Accepted machine types: </span><span class="si">{}</span><span class="s2">, Found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">req_machines</span><span class="p">,</span> <span class="n">machine</span><span class="p">)</span>
+    <span class="n">exit_on_false</span><span class="p">(</span><span class="n">machine</span> <span class="ow">in</span> <span class="n">req_machines</span><span class="p">,</span> <span class="n">err_msg</span><span class="p">)</span>
+
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">linux_distribution</span><span class="p">(</span><span class="n">full_distribution_name</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">dist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">req_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rhel&#39;</span><span class="p">,</span> <span class="s1">&#39;redhat&#39;</span><span class="p">,</span> <span class="s1">&#39;centos&#39;</span><span class="p">,</span> <span class="s1">&#39;scientific&#39;</span><span class="p">]</span>
+    <span class="n">err_msg</span> <span class="o">=</span> <span class="s2">&quot;Accepted distributions: </span><span class="si">{}</span><span class="s2">, Found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">req_names</span><span class="p">,</span> <span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;None&quot;</span><span class="p">)</span>
+    <span class="n">exit_on_false</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">req_names</span><span class="p">,</span> <span class="n">err_msg</span><span class="p">)</span>
+
+    <span class="n">major</span> <span class="o">=</span> <span class="n">dist</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">req_major</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;6&#39;</span><span class="p">]</span>
+    <span class="n">err_msg</span> <span class="o">=</span> <span class="s2">&quot;Accepted versions: </span><span class="si">{}</span><span class="s2">, Found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">req_major</span><span class="p">,</span> <span class="n">major</span> <span class="ow">or</span> <span class="s2">&quot;None&quot;</span><span class="p">)</span>
+    <span class="n">exit_on_false</span><span class="p">(</span><span class="n">major</span> <span class="ow">in</span> <span class="n">req_major</span><span class="p">,</span> <span class="n">err_msg</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;dist: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="check_prerequisites"><a class="viewcode-back" href="../api.html#esg_setup.check_prerequisites">[docs]</a><span class="k">def</span> <span class="nf">check_prerequisites</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for</span>
+<span class="sd">        A check for what is expected to be on the system a-priori that we are</span>
+<span class="sd">        not going to install or be responsible for.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">check_if_root</span><span class="p">():</span>
-        <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="c1">#----------------------------------------</span>
-    <span class="nb">print</span> <span class="s2">&quot;Checking requisites... &quot;</span>
-
     <span class="c1"># checking for OS, architecture, distribution and version</span>
-    <span class="k">return</span> <span class="n">check_os</span><span class="p">()</span></div>
+    <span class="nb">print</span> <span class="s2">&quot;Checking prerequisites...&quot;</span>
+    <span class="n">check_os</span><span class="p">()</span>
+    <span class="n">check_if_root</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="create_esg_directories"><a class="viewcode-back" href="../api.html#esg_setup.create_esg_directories">[docs]</a><span class="k">def</span> <span class="nf">create_esg_directories</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Create directories to hold ESGF scripts, config files, and logs&#39;&#39;&#39;</span>
-    <span class="n">directories_to_check</span> <span class="o">=</span> <span class="p">[</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_backup_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_tools_dir&quot;</span><span class="p">],</span>
-                            <span class="n">config</span><span class="p">[</span>
-                                <span class="s2">&quot;esg_log_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_etc_dir&quot;</span><span class="p">],</span>
-                            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">]]</span>
+    <span class="n">directories_to_check</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_backup_dir&quot;</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_tools_dir&quot;</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_log_dir&quot;</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_etc_dir&quot;</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">]</span>
+    <span class="p">]</span>
     <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">directories_to_check</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
-            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_etc_dir&quot;</span><span class="p">],</span> <span class="mi">0777</span><span class="p">)</span></div>
+            <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">init_structure</span><span class="p">():</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_etc_dir&quot;</span><span class="p">],</span> <span class="mi">0777</span><span class="p">)</span>
 
-    <span class="n">create_esg_directories</span><span class="p">()</span>
-
-    <span class="c1">#Create esgf.properties file</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">]):</span>
-        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">touch</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">])</span>
-
-    <span class="c1">#--------------</span>
-    <span class="c1"># Setup variables....</span>
-    <span class="c1">#--------------</span>
-
-    <span class="n">check_for_my_ip</span><span class="p">()</span>
-
-<span class="k">def</span> <span class="nf">_select_ip_address</span><span class="p">():</span>
-    <span class="n">choice</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">choice</span>
-
-
-<span class="k">def</span> <span class="nf">_render_ip_address_menu</span><span class="p">(</span><span class="n">ip_addresses</span><span class="p">):</span>
-    <span class="nb">print</span> <span class="s2">&quot;Detected multiple IP addresses bound to this host...</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Please select the IP address to use for this installation</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">-------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">ip</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ip_addresses</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2"> </span><span class="si">%i</span><span class="s2">) </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">ip</span><span class="p">)</span>
-    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">-------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span>
-
-
-<span class="k">def</span> <span class="nf">check_for_my_ip</span><span class="p">(</span><span class="n">force_install</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Checking for IP address(es)...&quot;</span><span class="p">)</span>
-    <span class="n">matched</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">my_ip_address</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">eth0</span> <span class="o">=</span> <span class="n">netifaces</span><span class="o">.</span><span class="n">ifaddresses</span><span class="p">(</span><span class="n">netifaces</span><span class="o">.</span><span class="n">interfaces</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">ip_addresses</span> <span class="o">=</span> <span class="p">[</span><span class="n">ip</span><span class="p">[</span><span class="s2">&quot;addr&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">eth0</span><span class="p">[</span><span class="n">netifaces</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">]]</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">esgf_host_ip</span>
-    <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
-        <span class="n">esgf_host_ip</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.host.ip&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">esgf_host_ip</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_install</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using IP: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">esgf_host_ip</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">0</span>
-
-    <span class="c1"># We want to make sure that the IP address we have in our config</span>
-    <span class="c1"># matches one of the IPs that are associated with this host</span>
-    <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">ip_addresses</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">ip</span> <span class="o">==</span> <span class="n">esgf_host_ip</span><span class="p">:</span>
-            <span class="n">matched</span> <span class="o">+=</span> <span class="mi">1</span>
-
-    <span class="k">if</span> <span class="n">matched</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Configured host IP address does not match available IPs...&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">esgf_host_ip</span> <span class="ow">or</span> <span class="n">force_install</span> <span class="ow">or</span> <span class="n">matched</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ip_addresses</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="c1"># ask the user to choose...</span>
-            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="n">_render_ip_address_menu</span><span class="p">(</span><span class="n">ip_addresses</span><span class="p">)</span>
-                <span class="n">default</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="n">choice</span> <span class="o">=</span> <span class="n">_select_ip_address</span><span class="p">()</span> <span class="ow">or</span> <span class="n">default</span>
-                <span class="n">my_ip_address</span> <span class="o">=</span> <span class="n">ip_addresses</span><span class="p">[</span><span class="n">choice</span><span class="p">]</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;selected address -&gt; </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">my_ip_address</span><span class="p">)</span>
-                <span class="k">break</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">my_ip_address</span> <span class="o">=</span> <span class="n">ip_addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_host_ip&quot;</span><span class="p">,</span> <span class="n">my_ip_address</span><span class="p">)</span>
-    <span class="n">esgf_host_ip</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.host.ip&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">esgf_host_ip</span>
-
-
-<span class="k">def</span> <span class="nf">setup_cdat</span><span class="p">():</span>
-    <span class="nb">print</span> <span class="s2">&quot;Checking for *UV* CDAT (Python+CDMS) </span><span class="si">{cdat_version}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cdat_version</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;cdat_version&quot;</span><span class="p">])</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;cdat_home&quot;</span><span class="p">],</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;python&quot;</span><span class="p">))</span>
-        <span class="kn">import</span> <span class="nn">cdat_info</span>
-        <span class="kn">import</span> <span class="nn">cdms2</span>
-        <span class="c1">#if semver.match(cdat_info.Version, &quot;&gt;=&quot;+config[&quot;cdat_version&quot;])</span>
-        <span class="k">if</span> <span class="n">esg_version_manager</span><span class="o">.</span><span class="n">check_version_atleast</span><span class="p">(</span><span class="n">cdat_info</span><span class="o">.</span><span class="n">Version</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;cdat_version&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_install</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s2">&quot;CDAT already installed [OK]&quot;</span>
-            <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unable to import cdms2&quot;</span><span class="p">)</span>
-
-    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Setting up CDAT - (Python + CDMS)... </span><span class="si">{cdat_version}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cdat_version</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;cdat_version&quot;</span><span class="p">])</span>
-    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
-
-
-    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;cdat_home&quot;</span><span class="p">],</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;uvcdat&quot;</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
-        <span class="nb">print</span> <span class="s2">&quot;Detected an existing CDAT installation...&quot;</span>
-        <span class="n">cdat_setup_choice</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
-            <span class="s2">&quot;Do you want to continue with CDAT installation and setup? [y/N] &quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">cdat_setup_choice</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
-            <span class="nb">print</span> <span class="s2">&quot;Skipping CDAT installation and setup - will assume CDAT is setup properly&quot;</span>
-            <span class="k">return</span> <span class="kc">True</span>
-
-    <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
 </pre></div>
 
            </div>

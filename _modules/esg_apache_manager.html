@@ -170,12 +170,14 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">ConfigParser</span>
 <span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="k">import</span> <span class="n">find_executable</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
-<span class="kn">import</span> <span class="nn">pip</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">pybash</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
+<span class="kn">from</span> <span class="nn">plumbum.commands</span> <span class="k">import</span> <span class="n">ProcessExecutionError</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
 
@@ -183,38 +185,51 @@
     <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">check_for_apache_installation</span><span class="p">():</span>
-    <span class="k">if</span> <span class="n">find_executable</span><span class="p">(</span><span class="s2">&quot;httpd&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
+<div class="viewcode-block" id="check_for_apache_installation"><a class="viewcode-back" href="../api.html#esg_apache_manager.check_for_apache_installation">[docs]</a><span class="k">def</span> <span class="nf">check_for_apache_installation</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Check for existing httpd installation&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">find_executable</span><span class="p">(</span><span class="s2">&quot;httpd&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="start_apache"><a class="viewcode-back" href="../api.html#esg_apache_manager.start_apache">[docs]</a><span class="k">def</span> <span class="nf">start_apache</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Start httpd server&#39;&#39;&#39;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">])</span></div>
 
 
-<span class="k">def</span> <span class="nf">start_apache</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;service esgf-httpd start&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="stop_apache"><a class="viewcode-back" href="../api.html#esg_apache_manager.stop_apache">[docs]</a><span class="k">def</span> <span class="nf">stop_apache</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Stop httpd server&#39;&#39;&#39;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">])</span></div>
 
 
-<span class="k">def</span> <span class="nf">stop_apache</span><span class="p">():</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service esgf-httpd stop&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="restart_apache"><a class="viewcode-back" href="../api.html#esg_apache_manager.restart_apache">[docs]</a><span class="k">def</span> <span class="nf">restart_apache</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Restart httpd server&#39;&#39;&#39;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;restart&quot;</span><span class="p">])</span></div>
 
 
-<span class="k">def</span> <span class="nf">restart_apache</span><span class="p">():</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service esgf-httpd restart&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="check_apache_status"><a class="viewcode-back" href="../api.html#esg_apache_manager.check_apache_status">[docs]</a><span class="k">def</span> <span class="nf">check_apache_status</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Check httpd status&#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="c1"># Return code of 3 indicates process is not running</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">retcode</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">raise</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
 
 
-<span class="k">def</span> <span class="nf">check_apache_status</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;service esgf-httpd status&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="run_apache_config_test"><a class="viewcode-back" href="../api.html#esg_apache_manager.run_apache_config_test">[docs]</a><span class="k">def</span> <span class="nf">run_apache_config_test</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Run httpd config test&#39;&#39;&#39;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;configtest&quot;</span><span class="p">])</span></div>
 
 
-<span class="k">def</span> <span class="nf">run_apache_config_test</span><span class="p">():</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service esgf-httpd configtest&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">check_apache_version</span><span class="p">():</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-version&quot;</span><span class="p">])</span>
 
 
-<span class="k">def</span> <span class="nf">install_apache_httpd</span><span class="p">():</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y update&quot;</span><span class="p">)</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span>
-        <span class="s2">&quot;yum install -y httpd httpd-devel mod_ssl&quot;</span><span class="p">)</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum clean all&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="install_apache_httpd"><a class="viewcode-back" href="../api.html#esg_apache_manager.install_apache_httpd">[docs]</a><span class="k">def</span> <span class="nf">install_apache_httpd</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Install apache from yum&#39;&#39;&#39;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">])</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;httpd-devel&quot;</span><span class="p">,</span> <span class="s2">&quot;mod_ssl&quot;</span><span class="p">])</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;clean&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">])</span>
 
     <span class="c1"># Custom ESGF Apache files that setup proxying</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;apache_conf/esgf-httpd&quot;</span><span class="p">),</span> <span class="s2">&quot;/etc/init.d/esgf-httpd&quot;</span><span class="p">)</span>
@@ -224,7 +239,7 @@
     <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;apache_conf/esgf-httpd-local.conf&quot;</span><span class="p">),</span>
                     <span class="s2">&quot;/etc/httpd/conf/esgf-httpd-local.conf&quot;</span><span class="p">)</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;apache_conf/esgf-httpd-locals.conf&quot;</span><span class="p">),</span>
-                    <span class="s2">&quot;/etc/httpd/conf/esgf-httpd-locals.conf&quot;</span><span class="p">)</span>
+                    <span class="s2">&quot;/etc/httpd/conf/esgf-httpd-locals.conf&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="install_mod_wsgi"><a class="viewcode-back" href="../api.html#esg_apache_manager.install_mod_wsgi">[docs]</a><span class="k">def</span> <span class="nf">install_mod_wsgi</span><span class="p">():</span>
@@ -233,31 +248,45 @@
     <span class="nb">print</span> <span class="s2">&quot;Setting mod_wsgi&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
-    <span class="n">pip</span><span class="o">.</span><span class="n">main</span><span class="p">([</span><span class="s1">&#39;install&#39;</span><span class="p">,</span> <span class="s2">&quot;mod_wsgi==4.5.3&quot;</span><span class="p">])</span>
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/etc/httpd/modules&quot;</span><span class="p">):</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">pip_install</span><span class="p">(</span><span class="s2">&quot;mod_wsgi==4.5.3&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/etc/httpd/modules&quot;</span><span class="p">):</span>
         <span class="c1"># If installer running in a conda env</span>
+        <span class="c1"># TODO Make this more resilient to potential changes</span>
         <span class="k">if</span> <span class="s2">&quot;conda&quot;</span> <span class="ow">in</span> <span class="n">find_executable</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">):</span>
-            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">symlink_force</span><span class="p">(</span>
+            <span class="n">pybash</span><span class="o">.</span><span class="n">symlink_force</span><span class="p">(</span>
                 <span class="s2">&quot;/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/httpd/modules/mod_wsgi-py27.so&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">symlink_force</span><span class="p">(</span>
+            <span class="n">pybash</span><span class="o">.</span><span class="n">symlink_force</span><span class="p">(</span>
                 <span class="s2">&quot;/usr/local/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/httpd/modules/mod_wsgi-py27.so&quot;</span><span class="p">)</span></div>
 
-<span class="k">def</span> <span class="nf">make_python_eggs_dir</span><span class="p">():</span>
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/var/www/.python-eggs&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="make_python_eggs_dir"><a class="viewcode-back" href="../api.html#esg_apache_manager.make_python_eggs_dir">[docs]</a><span class="k">def</span> <span class="nf">make_python_eggs_dir</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Create Python egg directories&#39;&#39;&#39;</span>
+    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/var/www/.python-eggs&quot;</span><span class="p">)</span>
     <span class="n">apache_user_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;apache&quot;</span><span class="p">)</span>
     <span class="n">apache_group_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;apache&quot;</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="s2">&quot;/var/www/.python-eggs&quot;</span><span class="p">,</span> <span class="n">apache_user_id</span><span class="p">,</span> <span class="n">apache_group_id</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="s2">&quot;/var/www/.python-eggs&quot;</span><span class="p">,</span> <span class="n">apache_user_id</span><span class="p">,</span> <span class="n">apache_group_id</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="copy_apache_conf_files"><a class="viewcode-back" href="../api.html#esg_apache_manager.copy_apache_conf_files">[docs]</a><span class="k">def</span> <span class="nf">copy_apache_conf_files</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39; Copy custom apache conf files &#39;&#39;&#39;</span>
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/etc/certs&quot;</span><span class="p">)</span>
+    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/etc/certs&quot;</span><span class="p">)</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;apache_certs/esgf-ca-bundle.crt&quot;</span><span class="p">),</span>
                     <span class="s2">&quot;/etc/certs/esgf-ca-bundle.crt&quot;</span><span class="p">)</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;apache_html/index.html&quot;</span><span class="p">),</span> <span class="s2">&quot;/var/www/html/index.html&quot;</span><span class="p">)</span>
-    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;apache_conf/ssl.conf&quot;</span><span class="p">),</span> <span class="s2">&quot;/etc/httpd/conf.d/ssl.conf&quot;</span><span class="p">)</span></div>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;apache_conf/ssl.conf&quot;</span><span class="p">),</span> <span class="s2">&quot;/etc/httpd/conf.d/ssl.conf&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/sysconfig/httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/sysconfig/httpd-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()))</span>
 
+    <span class="c1">#add LD_LIBRARY_PATH to /etc/sysconfig/httpd</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/sysconfig/httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">httpd_file</span><span class="p">:</span>
+        <span class="n">httpd_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;OPTIONS=&#39;-f /etc/httpd/conf/esgf-httpd.conf&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">httpd_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;export LD_LIBRARY_PATH=/usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1">#append tempcert to cert_bundle</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/certs/esgf-ca-bundle.crt&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cert_bundle_file</span><span class="p">:</span>
+            <span class="n">cert_bundle_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/tempcerts/cacert.pem&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span></div>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
@@ -266,20 +295,23 @@
 
     <span class="k">if</span> <span class="n">check_for_apache_installation</span><span class="p">():</span>
         <span class="nb">print</span> <span class="s2">&quot;Found existing Apache installation.&quot;</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;httpd -version&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.apache&quot;</span><span class="p">):</span>
+        <span class="n">check_apache_version</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
             <span class="n">setup_apache_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span>
                 <span class="s2">&quot;update.apache&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
             <span class="n">setup_apache_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
                 <span class="s2">&quot;Would you like to continue the Apache installation anyway? [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;N&quot;</span>
+
         <span class="k">if</span> <span class="n">setup_apache_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">]:</span>
             <span class="k">return</span>
     <span class="n">install_apache_httpd</span><span class="p">()</span>
+    <span class="n">stop_apache</span><span class="p">()</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;chkconfig&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;--levels&quot;</span><span class="p">,</span> <span class="s2">&quot;2345&quot;</span><span class="p">,</span> <span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">])</span>
     <span class="n">install_mod_wsgi</span><span class="p">()</span>
     <span class="n">make_python_eggs_dir</span><span class="p">()</span>
     <span class="n">copy_apache_conf_files</span><span class="p">()</span>
-    <span class="n">start_apache</span><span class="p">()</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>

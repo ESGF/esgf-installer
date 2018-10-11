@@ -167,15 +167,13 @@
             
   <h1>Source code for esg_postgres</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">grp</span>
 <span class="kn">import</span> <span class="nn">pwd</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">datetime</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">getpass</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">sleep</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">ConfigParser</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="k">import</span> <span class="n">find_executable</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">semver</span>
@@ -183,24 +181,18 @@
 <span class="kn">from</span> <span class="nn">psycopg2.extensions</span> <span class="k">import</span> <span class="n">ISOLATION_LEVEL_AUTOCOMMIT</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">pybash</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities.esg_env_manager</span> <span class="k">import</span> <span class="n">EnvWriter</span>
+<span class="kn">from</span> <span class="nn">plumbum.commands</span> <span class="k">import</span> <span class="n">ProcessExecutionError</span>
+<span class="kn">from</span> <span class="nn">plumbum</span> <span class="k">import</span> <span class="n">local</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
 
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 
-
-<span class="k">def</span> <span class="nf">download_postgres</span><span class="p">():</span>
-    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Downloading Postgres&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
-
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span>
-        <span class="s2">&quot;yum -y install postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64&quot;</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">initialize_postgres</span><span class="p">():</span>
+<div class="viewcode-block" id="initialize_postgres"><a class="viewcode-back" href="../api.html#esg_postgres.initialize_postgres">[docs]</a><span class="k">def</span> <span class="nf">initialize_postgres</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Sets up postgres data directory&#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s2">&quot;/var/lib/pgsql/data&quot;</span><span class="p">):</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Data directory already exists. Skipping initialize_postgres().&quot;</span><span class="p">)</span>
@@ -208,11 +200,13 @@
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
 
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service postgresql initdb&quot;</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_install_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;data&quot;</span><span class="p">),</span> <span class="mi">0700</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span> <span class="s2">&quot;initdb&quot;</span><span class="p">])</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;chkconfig&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span> <span class="s2">&quot;on&quot;</span><span class="p">])</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_install_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;data&quot;</span><span class="p">),</span> <span class="mi">0700</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="check_existing_pg_version"><a class="viewcode-back" href="../api.html#esg_postgres.check_existing_pg_version">[docs]</a><span class="k">def</span> <span class="nf">check_existing_pg_version</span><span class="p">(</span><span class="n">psql_path</span><span class="p">,</span> <span class="n">force_install</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="check_existing_pg_version"><a class="viewcode-back" href="../api.html#esg_postgres.check_existing_pg_version">[docs]</a><span class="k">def</span> <span class="nf">check_existing_pg_version</span><span class="p">(</span><span class="n">psql_path</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Gets the version number if a previous Postgres installation is detected&#39;&#39;&#39;</span>
     <span class="nb">print</span> <span class="s2">&quot;Checking for postgresql &gt;= </span><span class="si">{postgress_min_version}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">postgress_min_version</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_min_version&quot;</span><span class="p">])</span>
 
@@ -220,9 +214,9 @@
         <span class="nb">print</span> <span class="s2">&quot;Postgres not found on system&quot;</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">postgres_version_found</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;psql --version&quot;</span><span class="p">)[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span>
-            <span class="n">postgres_version_number</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;\d.*&quot;</span><span class="p">,</span> <span class="n">postgres_version_found</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">semver</span><span class="o">.</span><span class="n">compare</span><span class="p">(</span><span class="n">postgres_version_number</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_min_version&quot;</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_install</span><span class="p">:</span>
+            <span class="n">postgres_version_found</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;psql&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;--version&quot;</span><span class="p">])</span>
+            <span class="n">postgres_version_number</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\d.*&quot;</span><span class="p">,</span> <span class="n">postgres_version_found</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">semver</span><span class="o">.</span><span class="n">compare</span><span class="p">(</span><span class="n">postgres_version_number</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_min_version&quot;</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Found acceptible Postgres version&quot;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="kc">True</span>
             <span class="k">else</span><span class="p">:</span>
@@ -232,7 +226,8 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unable to check existing Postgres version </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">setup_postgres</span><span class="p">(</span><span class="n">force_install</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_continue_install</span><span class="o">=</span><span class="s2">&quot;N&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="setup_postgres"><a class="viewcode-back" href="../api.html#esg_postgres.setup_postgres">[docs]</a><span class="k">def</span> <span class="nf">setup_postgres</span><span class="p">(</span><span class="n">default_continue_install</span><span class="o">=</span><span class="s2">&quot;N&quot;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Installs postgres&#39;&#39;&#39;</span>
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;Setting up Postgres&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
@@ -240,9 +235,9 @@
     <span class="n">psql_path</span> <span class="o">=</span> <span class="n">find_executable</span><span class="p">(</span><span class="s2">&quot;psql&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">check_existing_pg_version</span><span class="p">(</span><span class="n">psql_path</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.postgres&quot;</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
             <span class="n">setup_postgres_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.postgres&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
             <span class="n">setup_postgres_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
                 <span class="s2">&quot;Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">default_continue_install</span>
 
@@ -250,48 +245,38 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Skipping Postgres installation. Using existing Postgres version&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">force_install</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">backup_db</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">,</span> <span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
+            <span class="c1"># TODO At this point we know there is a valid postgres installation</span>
+            <span class="c1"># There are no purges, uninstalls, or deletes happening so a db backup is unneeded</span>
+            <span class="c1">#   as nothing will happen. If we want to purge the old install that will require</span>
+            <span class="c1">#   a bit more functionality to be added here.</span>
+            <span class="n">backup_db</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
 
-    <span class="n">download_postgres</span><span class="p">()</span>
-
-    <span class="sd">&#39;&#39;&#39;Create system account (postgres) if it doesn&#39;t exist &#39;&#39;&#39;</span>
-    <span class="c1">########</span>
-    <span class="c1"># Create the system account for postgress to run as.</span>
-    <span class="c1">########</span>
-    <span class="n">pg_sys_acct_homedir</span> <span class="o">=</span> <span class="n">psql_path</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">check_for_postgres_sys_acct</span><span class="p">():</span>
-        <span class="c1"># NOTE: &quot;useradd/groupadd&quot; are a RedHat/CentOS thing... to make this cross distro compatible clean this up.</span>
-        <span class="n">create_postgres_group</span><span class="p">()</span>
-        <span class="n">set_pg_sys_account_password</span><span class="p">()</span>
-        <span class="n">create_postgres_system_user</span><span class="p">(</span><span class="n">pg_sys_acct_homedir</span><span class="p">)</span>
-
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">postgress_user_shell</span> <span class="o">=</span> <span class="n">get_postgres_user_shell</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">postgress_user_shell</span> <span class="o">!=</span> <span class="s2">&quot;/bin/bash&quot;</span><span class="p">:</span>
-            <span class="n">set_postgres_user_shell</span><span class="p">()</span>
-    <span class="n">change_pg_install_dir_ownership</span><span class="p">()</span>
+    <span class="n">pg_name</span> <span class="o">=</span> <span class="s2">&quot;postgresql-server-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_version&quot;</span><span class="p">])</span>
+    <span class="n">pg_devel</span> <span class="o">=</span> <span class="s2">&quot;postgresql-devel-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_version&quot;</span><span class="p">])</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="n">pg_name</span><span class="p">,</span> <span class="n">pg_devel</span><span class="p">])</span>
 
     <span class="n">initialize_postgres</span><span class="p">()</span>
 
     <span class="c1"># start the postgres server</span>
-    <span class="n">start_postgres</span><span class="p">()</span>
     <span class="n">setup_postgres_conf_file</span><span class="p">()</span>
     <span class="n">setup_hba_conf_file</span><span class="p">()</span>
-
     <span class="n">restart_postgres</span><span class="p">()</span>
 
-    <span class="n">setup_db_schemas</span><span class="p">(</span><span class="n">force_install</span><span class="p">)</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">set_isolation_level</span><span class="p">(</span><span class="n">ISOLATION_LEVEL_AUTOCOMMIT</span><span class="p">)</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">db_user_password</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_publisher_password</span><span class="p">()</span>
+    <span class="n">create_pg_super_user</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">db_user_password</span><span class="p">)</span>
+    <span class="n">create_pg_publisher_user</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">db_user_password</span><span class="p">)</span>
     <span class="n">create_pg_pass_file</span><span class="p">()</span>
 
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">check_shmmax</span><span class="p">()</span>
     <span class="n">write_postgress_env</span><span class="p">()</span>
-    <span class="n">write_postgress_install_log</span><span class="p">(</span><span class="n">psql_path</span><span class="p">)</span>
-    <span class="n">log_postgres_properties</span><span class="p">()</span>
+    <span class="n">write_postgress_install_log</span><span class="p">()</span>
+    <span class="n">log_postgres_properties</span><span class="p">()</span></div>
 
-
-<span class="k">def</span> <span class="nf">create_pg_super_user</span><span class="p">(</span><span class="n">psycopg2_cursor</span><span class="p">,</span> <span class="n">db_user_password</span><span class="p">):</span>
-    <span class="c1"># create super user</span>
+<div class="viewcode-block" id="create_pg_super_user"><a class="viewcode-back" href="../api.html#esg_postgres.create_pg_super_user">[docs]</a><span class="k">def</span> <span class="nf">create_pg_super_user</span><span class="p">(</span><span class="n">psycopg2_cursor</span><span class="p">,</span> <span class="n">db_user_password</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create postgres super user&#39;&#39;&#39;</span>
     <span class="nb">print</span> <span class="s2">&quot;Create </span><span class="si">{db_user}</span><span class="s2"> user: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">db_user</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">]),</span> <span class="n">psycopg2_cursor</span><span class="o">.</span><span class="n">mogrify</span><span class="p">(</span><span class="s2">&quot;CREATE USER </span><span class="si">{db_user}</span><span class="s2"> with CREATEROLE superuser PASSWORD </span><span class="se">\&#39;</span><span class="si">{db_user_password}</span><span class="se">\&#39;</span><span class="s2">;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">db_user</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">],</span> <span class="n">db_user_password</span><span class="o">=</span><span class="n">db_user_password</span><span class="p">))</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">psycopg2_cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;CREATE USER </span><span class="si">{db_user}</span><span class="s2"> with CREATEROLE superuser PASSWORD </span><span class="se">\&#39;</span><span class="si">{db_user_password}</span><span class="se">\&#39;</span><span class="s2">;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -299,10 +284,11 @@
     <span class="k">except</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">ProgrammingError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
         <span class="c1"># Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE</span>
         <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">pgcode</span> <span class="o">==</span> <span class="s2">&quot;42710&quot;</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{db_user}</span><span class="s2"> role already exists. Skipping creation&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">db_user</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">])</span>
+            <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{db_user}</span><span class="s2"> role already exists. Skipping creation&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">db_user</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">])</span></div>
 
 
-<span class="k">def</span> <span class="nf">create_pg_publisher_user</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">db_user_password</span><span class="p">):</span>
+<div class="viewcode-block" id="create_pg_publisher_user"><a class="viewcode-back" href="../api.html#esg_postgres.create_pg_publisher_user">[docs]</a><span class="k">def</span> <span class="nf">create_pg_publisher_user</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">db_user_password</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Creates postgres user for the ESGF Publisher (esgcet by default)&#39;&#39;&#39;</span>
     <span class="n">publisher_db_user</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;publisher.db.user&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">publisher_db_user</span><span class="p">:</span>
         <span class="n">publisher_db_user</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
@@ -314,93 +300,28 @@
     <span class="k">except</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">ProgrammingError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
         <span class="c1"># Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE</span>
         <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">pgcode</span> <span class="o">==</span> <span class="s2">&quot;42710&quot;</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{publisher_db_user}</span><span class="s2"> role already exists. Skipping creation&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">publisher_db_user</span><span class="o">=</span><span class="n">publisher_db_user</span><span class="p">)</span>
+            <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{publisher_db_user}</span><span class="s2"> role already exists. Skipping creation&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">publisher_db_user</span><span class="o">=</span><span class="n">publisher_db_user</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="setup_db_schemas"><a class="viewcode-back" href="../api.html#esg_postgres.setup_db_schemas">[docs]</a><span class="k">def</span> <span class="nf">setup_db_schemas</span><span class="p">(</span><span class="n">force_install</span><span class="p">,</span> <span class="n">publisher_password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Load ESGF schemas&#39;&#39;&#39;</span>
-    <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
-    <span class="n">conn</span><span class="o">.</span><span class="n">set_isolation_level</span><span class="p">(</span><span class="n">ISOLATION_LEVEL_AUTOCOMMIT</span><span class="p">)</span>
-    <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-
+<div class="viewcode-block" id="backup_db"><a class="viewcode-back" href="../api.html#esg_postgres.backup_db">[docs]</a><span class="k">def</span> <span class="nf">backup_db</span><span class="p">(</span><span class="n">db_name</span><span class="p">,</span> <span class="n">backup_dir</span><span class="o">=</span><span class="s2">&quot;/etc/esgf_db_backup&quot;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Backup database to directory specified by backup_dir&#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">db_user_password</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_publisher_password</span><span class="p">()</span>
-    <span class="k">except</span> <span class="ne">IOError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">set_publisher_password</span><span class="p">(</span><span class="n">publisher_password</span><span class="p">)</span>
-        <span class="n">db_user_password</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_publisher_password</span><span class="p">()</span>
+        <span class="n">backup_db_input</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;backup.database&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
+        <span class="n">backup_db_input</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to backup the current database? [Y/n]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;y&quot;</span>
 
-    <span class="n">create_pg_super_user</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">db_user_password</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">backup_db_input</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Skipping backup database.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
 
-    <span class="c1"># create &#39;esgcet&#39; user</span>
-    <span class="n">create_pg_publisher_user</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">db_user_password</span><span class="p">)</span>
+    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">backup_dir</span><span class="p">)</span>
+    <span class="n">backup_file</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2">.sql&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">db_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()))</span>
+    <span class="n">backup_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">backup_dir</span><span class="p">,</span> <span class="n">backup_file</span><span class="p">)</span>
 
-    <span class="c1"># create CoG and publisher databases</span>
-    <span class="c1"># create_database(&quot;cogdb&quot;, cur)</span>
-    <span class="n">create_database</span><span class="p">(</span><span class="s2">&quot;esgcet&quot;</span><span class="p">,</span> <span class="n">cur</span><span class="p">)</span>
-    <span class="n">cur</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-
-    <span class="c1"># TODO: move download_config_files() here</span>
-
-    <span class="n">load_esgf_schemas</span><span class="p">(</span><span class="n">db_user_password</span><span class="p">)</span>
-
-    <span class="c1"># IMPORTANT: change connections to require encrypted password</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">replace_string_in_file</span><span class="p">(</span><span class="s2">&quot;/var/lib/pgsql/data/pg_hba.conf&quot;</span><span class="p">,</span> <span class="s2">&quot;ident&quot;</span><span class="p">,</span> <span class="s2">&quot;md5&quot;</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">load_esgf_schemas</span><span class="p">(</span><span class="n">db_user_password</span><span class="p">):</span>
-    <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">(</span><span class="s2">&quot;dbsuper&quot;</span><span class="p">,</span> <span class="n">db_name</span><span class="o">=</span><span class="s1">&#39;esgcet&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">db_user_password</span><span class="p">)</span>
-    <span class="n">conn</span><span class="o">.</span><span class="n">set_isolation_level</span><span class="p">(</span><span class="n">ISOLATION_LEVEL_AUTOCOMMIT</span><span class="p">)</span>
-    <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-    <span class="c1"># load ESGF schemas</span>
-    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;sqldata/esgf_esgcet.sql&quot;</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;sqldata/esgf_node_manager.sql&quot;</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-    <span class="c1"># cur.execute(open(os.path.join(os.path.dirname(__file__), &quot;sqldata/esgf_security.sql&quot;), &quot;r&quot;).read())</span>
-    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;sqldata/esgf_dashboard.sql&quot;</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-
-    <span class="n">load_esgf_data</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
-    <span class="n">cur</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-
-<span class="k">def</span> <span class="nf">load_esgf_data</span><span class="p">(</span><span class="n">cur</span><span class="p">):</span>
-    <span class="c1"># # load ESGF data</span>
-    <span class="c1"># su --login - postgres --command &quot;psql esgcet &lt; /usr/local/bin/esgf_security_data.sql&quot;</span>
-    <span class="c1"># cur.execute(open(os.path.join(os.path.dirname(__file__), &quot;sqldata/esgf_security_data.sql&quot;), &quot;r&quot;).read())</span>
-
-    <span class="c1"># # initialize migration table</span>
-    <span class="c1"># su --login - postgres --command &quot;psql esgcet &lt; /usr/local/bin/esgf_migrate_version.sql&quot;</span>
-    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;sqldata/esgf_migrate_version.sql&quot;</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-
-
-<span class="k">def</span> <span class="nf">backup_db</span><span class="p">(</span><span class="n">db_name</span><span class="p">,</span> <span class="n">user_name</span><span class="p">,</span> <span class="n">backup_dir</span><span class="o">=</span><span class="s2">&quot;/etc/esgf_db_backup&quot;</span><span class="p">):</span>
-
-    <span class="n">backup_existing_db</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;backup.database&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">backup_existing_db</span> <span class="ow">or</span> <span class="n">backup_existing_db</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
-        <span class="n">backup_db_input</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to backup the current database? [Y/n]: &quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">backup_db_input</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Skipping backup database.&quot;</span><span class="p">)</span>
-            <span class="k">return</span>
-
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">backup_dir</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">(</span><span class="n">db_name</span><span class="p">,</span> <span class="n">user_name</span><span class="p">)</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-        <span class="n">tables</span> <span class="o">=</span> <span class="n">list_tables</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
-            <span class="c1"># cur.execute(&#39;SELECT x FROM t&#39;)</span>
-            <span class="n">backup_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">backup_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{table}</span><span class="s1">_backup_</span><span class="si">{date}</span><span class="s1">.sql&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">table</span><span class="o">=</span><span class="n">table</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span>
-            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">table</span><span class="p">))</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">backup_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
-                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;insert into t values (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;);&quot;</span><span class="p">)</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="k">except</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">DatabaseError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s1">&#39;Error </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">e</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">conn</span><span class="p">:</span>
-            <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">pg_dump</span> <span class="o">=</span> <span class="n">local</span><span class="p">[</span><span class="s2">&quot;pg_dump&quot;</span><span class="p">]</span>
+    <span class="n">local</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PGPASSWORD&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_publisher_password</span><span class="p">()</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">db_name</span><span class="p">,</span> <span class="s2">&quot;-U&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">]]</span>
+    <span class="c1"># This syntax is strange, but correct for plumbum redirection</span>
+    <span class="p">(</span><span class="n">pg_dump</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">backup_file</span><span class="p">)()</span></div>
 
 <span class="c1">#----------------------------------------------------------</span>
 <span class="c1"># Postgresql connections functions</span>
@@ -419,7 +340,7 @@
     <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">db_connection_string</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="connect_to_db"><a class="viewcode-back" href="../api.html#esg_postgres.connect_to_db">[docs]</a><span class="k">def</span> <span class="nf">connect_to_db</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">db_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">host</span><span class="o">=</span><span class="s2">&quot;/tmp&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="connect_to_db"><a class="viewcode-back" href="../api.html#esg_postgres.connect_to_db">[docs]</a><span class="k">def</span> <span class="nf">connect_to_db</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">db_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;/tmp&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39; Connect to database &#39;&#39;&#39;</span>
     <span class="c1"># Using password auth currently;</span>
     <span class="c1"># if the user is postgres, the effective user id (euid) needs to be postgres&#39; user id.</span>
@@ -430,7 +351,6 @@
 
         <span class="n">os</span><span class="o">.</span><span class="n">seteuid</span><span class="p">(</span><span class="n">postgres_id</span><span class="p">)</span>
     <span class="n">db_connection_string</span> <span class="o">=</span> <span class="n">build_connection_string</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;db_connection_string: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">db_connection_string</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_connection_string</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Connected to </span><span class="si">%s</span><span class="s2"> database as user &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="n">db_name</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span>
@@ -443,10 +363,9 @@
             <span class="n">os</span><span class="o">.</span><span class="n">seteuid</span><span class="p">(</span><span class="n">root_id</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">conn</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unable to connect to the database.&quot;</span><span class="p">)</span>
         <span class="k">raise</span></div>
-        <span class="c1"># esg_functions.exit_with_error(error)</span>
 
 <span class="c1">#----------------------------------------------------------</span>
 <span class="c1"># Postgresql user/group management functions</span>
@@ -460,91 +379,6 @@
     <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">pg_pass_file_path</span><span class="p">,</span> <span class="mi">0600</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">check_for_postgres_sys_acct</span><span class="p">():</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">pw_uid</span>
-    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot; Hmmm...: There is no postgres system account user </span><span class="se">\&quot;</span><span class="si">{pg_sys_acct}</span><span class="se">\&quot;</span><span class="s2"> present on system, making one...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pg_sys_acct</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span>
-
-
-<div class="viewcode-block" id="create_postgres_group"><a class="viewcode-back" href="../api.html#esg_postgres.create_postgres_group">[docs]</a><span class="k">def</span> <span class="nf">create_postgres_group</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Creates postgres Unix group&#39;&#39;&#39;</span>
-    <span class="n">groupadd_command</span> <span class="o">=</span> <span class="s2">&quot;/usr/sbin/groupadd -r </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
-        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_group&quot;</span><span class="p">])</span>
-    <span class="n">groupadd_output</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="n">groupadd_command</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">groupadd_output</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">groupadd_output</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">9</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;ERROR: *Could not add postgres system group: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_group&quot;</span><span class="p">])</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;Created postgres group with group id: </span><span class="si">{postgres_group_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">postgres_group_id</span><span class="o">=</span><span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_group&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">gr_gid</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">set_pg_sys_account_password</span><span class="p">():</span>
-    <span class="k">if</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_postgres_password</span><span class="p">():</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Postgres password already set&quot;</span><span class="p">)</span>
-        <span class="k">return</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="n">pg_sys_acct_passwd_input</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span>
-                <span class="s2">&quot;Create password for postgress system account: &quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">pg_sys_acct_passwd_input</span><span class="p">:</span>
-                <span class="nb">print</span> <span class="s2">&quot;Please enter a password: &quot;</span>
-                <span class="k">continue</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_passwd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pg_sys_acct_passwd_input</span>
-                <span class="k">break</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">set_postgres_password</span><span class="p">(</span><span class="n">pg_sys_acct_passwd_input</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="create_postgres_system_user"><a class="viewcode-back" href="../api.html#esg_postgres.create_postgres_system_user">[docs]</a><span class="k">def</span> <span class="nf">create_postgres_system_user</span><span class="p">(</span><span class="n">pg_sys_acct_homedir</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Create Postgres Unix user&#39;&#39;&#39;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Creating account...&quot;</span>
-    <span class="n">useradd_command</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;/usr/sbin/useradd -r -c&#39;PostgreSQL Service ESGF&#39;</span>
-<span class="s1">    -d </span><span class="si">{pg_sys_acct_homedir}</span><span class="s1"> -g </span><span class="si">{pg_sys_acct_group}</span><span class="s1"> -p</span>
-<span class="s1">    </span><span class="si">{pg_sys_acct_passwd}</span><span class="s1"> -s /bin/bash </span><span class="si">{pg_sys_acct}</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pg_sys_acct_homedir</span><span class="o">=</span><span class="n">pg_sys_acct_homedir</span><span class="p">,</span>
-                                                              <span class="n">pg_sys_acct_group</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_group&quot;</span><span class="p">],</span>
-                                                              <span class="n">pg_sys_acct_passwd</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_passwd&quot;</span><span class="p">],</span>
-                                                              <span class="n">pg_sys_acct</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span>
-    <span class="n">useradd_output</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="n">useradd_command</span><span class="p">)</span>
-
-    <span class="n">postgres_user_id</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">pw_uid</span>
-
-    <span class="k">if</span> <span class="n">useradd_output</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">useradd_output</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">9</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;ERROR: Could not add postgres system account user&quot;</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="ow">not</span> <span class="n">postgres_user_id</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot; ERROR: Problem with </span><span class="si">{pg_sys_acct}</span><span class="s2"> creation!!!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pg_sys_acct</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;Created postgres user with group id: </span><span class="si">{postgres_user_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">postgres_user_id</span><span class="o">=</span><span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">pw_uid</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">get_postgres_user_shell</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])[</span><span class="mi">6</span><span class="p">]</span>
-
-
-<span class="k">def</span> <span class="nf">set_postgres_user_shell</span><span class="p">():</span>
-    <span class="nb">print</span> <span class="s2">&quot;Noticed that the existing postgres user [</span><span class="si">{pg_sys_acct}</span><span class="s2">] does not have the bash shell... Hmmm... making it so &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pg_sys_acct</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span>
-    <span class="n">change_shell_command</span> <span class="o">=</span> <span class="s2">&quot;sed -i &#39;s#\(&#39;</span><span class="si">{pg_sys_acct}</span><span class="s2">&#39;.*:\)\(.*\)$#</span><span class="se">\1</span><span class="s2">/</span><span class="se">\b</span><span class="s2">in/</span><span class="se">\b</span><span class="s2">ash#&#39; /etc/passwd&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="n">pg_sys_acct</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="n">change_shell_command</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">get_postgres_user_shell</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;/bin/bash&quot;</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;[OK]&quot;</span>
-        <span class="nb">print</span> <span class="s2">&quot;Postgres user shell is properly configured&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;[FAIL]&quot;</span>
-        <span class="nb">print</span> <span class="s2">&quot;Postgres user shell is not properly configured. The shell is </span><span class="si">{postgres_shell}</span><span class="s2">. It should be /bin/bash&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">postgres_shell</span><span class="o">=</span><span class="n">get_postgres_user_shell</span><span class="p">())</span>
-
-
-<span class="k">def</span> <span class="nf">change_pg_install_dir_ownership</span><span class="p">():</span>
-    <span class="n">postgres_user_id</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">pw_uid</span>
-    <span class="n">postgres_group_id</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_group&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">gr_gid</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_install_dir&quot;</span><span class="p">],</span> <span class="n">postgres_user_id</span><span class="p">,</span> <span class="n">postgres_group_id</span><span class="p">)</span>
-
-
-
 <span class="c1">#----------------------------------------------------------</span>
 <span class="c1"># Postgresql process management functions</span>
 <span class="c1">#----------------------------------------------------------</span>
@@ -554,40 +388,45 @@
     <span class="c1"># if the data directory doesn&#39;t exist or is empty</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="s2">&quot;/var/lib/pgsql/data/&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s2">&quot;/var/lib/pgsql/data/&quot;</span><span class="p">):</span>
         <span class="n">initialize_postgres</span><span class="p">()</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service postgresql start&quot;</span><span class="p">)</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;chkconfig postgresql on&quot;</span><span class="p">)</span>
 
-    <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">])</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    
     <span class="k">if</span> <span class="n">postgres_status</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="stop_postgres"><a class="viewcode-back" href="../api.html#esg_postgres.stop_postgres">[docs]</a><span class="k">def</span> <span class="nf">stop_postgres</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Stops the postgres server&#39;&#39;&#39;</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service postgresql stop&quot;</span><span class="p">)</span></div>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">])</span></div>
 
 
 <div class="viewcode-block" id="postgres_status"><a class="viewcode-back" href="../api.html#esg_postgres.postgres_status">[docs]</a><span class="k">def</span> <span class="nf">postgres_status</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Checks the status of the postgres server&#39;&#39;&#39;</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;service postgresql status&quot;</span><span class="p">)</span>
-    <span class="nb">print</span> <span class="s2">&quot;Postgres server status:&quot;</span><span class="p">,</span> <span class="n">status</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="s2">&quot;running&quot;</span> <span class="ow">in</span> <span class="n">status</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">status</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Postgres status check failed failed&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">raise</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span></div>
+        <span class="nb">print</span> <span class="s2">&quot;Postgres server status:&quot;</span><span class="p">,</span> <span class="n">status</span>
+        <span class="k">if</span> <span class="s2">&quot;running&quot;</span> <span class="ow">in</span> <span class="n">status</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">status</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
 
 
 <div class="viewcode-block" id="restart_postgres"><a class="viewcode-back" href="../api.html#esg_postgres.restart_postgres">[docs]</a><span class="k">def</span> <span class="nf">restart_postgres</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Restarts the postgres server&#39;&#39;&#39;</span>
     <span class="nb">print</span> <span class="s2">&quot;Restarting postgres server&quot;</span>
-    <span class="n">restart_process</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;service postgresql restart&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">restart_process</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;Restart failed.&quot;</span>
-        <span class="nb">print</span> <span class="s2">&quot;Error:&quot;</span><span class="p">,</span> <span class="n">restart_process</span><span class="p">[</span><span class="s2">&quot;stderr&quot;</span><span class="p">]</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="n">restart_process</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span>
-    <span class="n">sleep</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">restart_process</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span> <span class="s2">&quot;restart&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Restarting Postgres failed&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">raise</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">postgres_status</span><span class="p">()</span></div>
 
 
@@ -595,86 +434,56 @@
 <span class="c1"># Postgresql configuration management functions</span>
 <span class="c1">#----------------------------------------------------------</span>
 
-<span class="k">def</span> <span class="nf">setup_postgres_conf_file</span><span class="p">():</span>
-    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;postgres_conf/postgresql.conf&quot;</span><span class="p">),</span> <span class="s2">&quot;/var/lib/pgsql/data/postgresql.conf&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="setup_postgres_conf_file"><a class="viewcode-back" href="../api.html#esg_postgres.setup_postgres_conf_file">[docs]</a><span class="k">def</span> <span class="nf">setup_postgres_conf_file</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Copies postgres.conf file to proper location&#39;&#39;&#39;</span>
+    <span class="n">pg_conf</span> <span class="o">=</span> <span class="s2">&quot;/var/lib/pgsql/data/postgresql.conf&quot;</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;postgres_conf/postgresql.conf&quot;</span><span class="p">),</span> <span class="n">pg_conf</span><span class="p">)</span>
     <span class="n">postgres_user_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
     <span class="n">postgres_group_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="s2">&quot;/var/lib/pgsql/data/postgresql.conf&quot;</span><span class="p">,</span> <span class="n">postgres_user_id</span><span class="p">,</span> <span class="n">postgres_group_id</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">pg_conf</span><span class="p">,</span> <span class="n">postgres_user_id</span><span class="p">,</span> <span class="n">postgres_group_id</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">pg_conf</span><span class="p">,</span> <span class="mi">0600</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="setup_hba_conf_file"><a class="viewcode-back" href="../api.html#esg_postgres.setup_hba_conf_file">[docs]</a><span class="k">def</span> <span class="nf">setup_hba_conf_file</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Modify the pg_hba.conf file for md5 authencation&#39;&#39;&#39;</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/var/lib/pgsql/data/pg_hba.conf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hba_conf_file</span><span class="p">:</span>
-        <span class="n">hba_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;local    all             postgres                    ident</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">hba_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;local    all             all                         md5</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">hba_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;host     all             all         ::1/128         md5</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="download_config_files"><a class="viewcode-back" href="../api.html#esg_postgres.download_config_files">[docs]</a><span class="k">def</span> <span class="nf">download_config_files</span><span class="p">(</span><span class="n">force_install</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39; Download config files &#39;&#39;&#39;</span>
-    <span class="c1"># #Get files</span>
-    <span class="n">esg_dist_url</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">)</span>
-    <span class="n">hba_conf_file</span> <span class="o">=</span> <span class="s2">&quot;pg_hba.conf&quot;</span>
-    <span class="k">if</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">hba_conf_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">,</span> <span class="s2">&quot;externals&quot;</span><span class="p">,</span> <span class="s2">&quot;bootstrap&quot;</span><span class="p">,</span> <span class="n">hba_conf_file</span><span class="p">),</span> <span class="n">force_install</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">hba_conf_file</span><span class="p">,</span> <span class="mi">0600</span><span class="p">)</span>
-
-    <span class="n">postgres_conf_file</span> <span class="o">=</span> <span class="s2">&quot;postgresql.conf&quot;</span>
-    <span class="k">if</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">postgres_conf_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">,</span> <span class="s2">&quot;externals&quot;</span><span class="p">,</span> <span class="s2">&quot;bootstrap&quot;</span><span class="p">,</span> <span class="n">postgres_conf_file</span><span class="p">),</span> <span class="n">force_install</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">postgres_conf_file</span><span class="p">,</span> <span class="mi">0600</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">update_port_in_config_file</span><span class="p">():</span>
-    <span class="n">postgres_port_input</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please Enter PostgreSQL port number [</span><span class="si">{postgress_port}</span><span class="s2">]:&gt; &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="n">postgress_port</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_port&quot;</span><span class="p">]))</span> <span class="ow">or</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_port&quot;</span><span class="p">]</span>
-    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Setting Postgress Port: </span><span class="si">{postgress_port}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">postgress_port</span><span class="o">=</span><span class="n">postgres_port_input</span><span class="p">)</span>
-
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;postgresql.conf&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pg_conf_file</span><span class="p">:</span>
-        <span class="n">filedata</span> <span class="o">=</span> <span class="n">pg_conf_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@postgress_port@@&#39;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_port&quot;</span><span class="p">])</span>
-
-    <span class="c1"># Write the file out again</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;postgresql.conf&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pg_conf_file</span><span class="p">:</span>
-        <span class="n">pg_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filedata</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="update_log_dir_in_config_file"><a class="viewcode-back" href="../api.html#esg_postgres.update_log_dir_in_config_file">[docs]</a><span class="k">def</span> <span class="nf">update_log_dir_in_config_file</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39; Edit postgres config file &#39;&#39;&#39;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Setting Postgress Log Dir in config_file: </span><span class="si">{postgress_install_dir}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">postgress_install_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_install_dir&quot;</span><span class="p">])</span>
-
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;postgresql.conf&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pg_conf_file</span><span class="p">:</span>
-        <span class="n">filedata</span> <span class="o">=</span> <span class="n">pg_conf_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@postgress_install_dir@@&#39;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_install_dir&quot;</span><span class="p">])</span>
-
-    <span class="c1"># Write the file out again</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;postgresql.conf&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pg_conf_file</span><span class="p">:</span>
-        <span class="n">pg_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filedata</span><span class="p">)</span>
-
-    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_install_dir&quot;</span><span class="p">],</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">pw_uid</span><span class="p">,</span>
-             <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_group&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">gr_gid</span><span class="p">)</span></div>
+    <span class="sd">&#39;&#39;&#39;Copy the static pg_hba.conf file to proper location&#39;&#39;&#39;</span>
+    <span class="n">pg_hba_file</span> <span class="o">=</span> <span class="s2">&quot;/var/lib/pgsql/data/pg_hba.conf&quot;</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;postgres_conf/pg_hba.conf&quot;</span><span class="p">),</span> <span class="n">pg_hba_file</span><span class="p">)</span>
+    <span class="n">postgres_user_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
+    <span class="n">postgres_group_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">pg_hba_file</span><span class="p">,</span> <span class="n">postgres_user_id</span><span class="p">,</span> <span class="n">postgres_group_id</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">pg_hba_file</span><span class="p">,</span> <span class="mi">0600</span><span class="p">)</span></div>
 
 
 <span class="c1">#----------------------------------------------------------</span>
 <span class="c1"># Postgresql logging functions</span>
 <span class="c1">#----------------------------------------------------------</span>
-<span class="k">def</span> <span class="nf">log_postgres_properties</span><span class="p">():</span>
+<div class="viewcode-block" id="log_postgres_properties"><a class="viewcode-back" href="../api.html#esg_postgres.log_postgres_properties">[docs]</a><span class="k">def</span> <span class="nf">log_postgres_properties</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Write postgres properties to /esg/config/esgf.properties&#39;&#39;&#39;</span>
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;db.user&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">])</span>
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;db.host&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_host&quot;</span><span class="p">])</span>
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;db.port&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_port&quot;</span><span class="p">])</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;db.database&quot;</span><span class="p">,</span> <span class="s2">&quot;esgcet&quot;</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;db.database&quot;</span><span class="p">,</span> <span class="s2">&quot;esgcet&quot;</span><span class="p">)</span></div>
 
-<span class="k">def</span> <span class="nf">write_postgress_env</span><span class="p">():</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;PGHOME&quot;</span><span class="p">,</span> <span class="s2">&quot;export PGHOME=/usr/bin/postgres&quot;</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;PGUSER&quot;</span><span class="p">,</span> <span class="s2">&quot;export PGUSER=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">]),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;PGPORT&quot;</span><span class="p">,</span> <span class="s2">&quot;export PGPORT=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_port&quot;</span><span class="p">]),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;PGBINDIR&quot;</span><span class="p">,</span> <span class="s2">&quot;export PGBINDIR=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_bin_dir&quot;</span><span class="p">]),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;PGLIBDIR&quot;</span><span class="p">,</span> <span class="s2">&quot;export PGLIBDIR=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_lib_dir&quot;</span><span class="p">]),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">],</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;LD_LIBRARY_PATH&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;myLD_LIBRARY_PATH&quot;</span><span class="p">],</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="write_postgress_env"><a class="viewcode-back" href="../api.html#esg_postgres.write_postgress_env">[docs]</a><span class="k">def</span> <span class="nf">write_postgress_env</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Write postgres environment properties to /etc/esg.env&#39;&#39;&#39;</span>
+    <span class="n">EnvWriter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;PGHOME&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/bin/postgres&quot;</span><span class="p">)</span>
+    <span class="n">EnvWriter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;PGUSER&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">])</span>
+    <span class="n">EnvWriter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;PGPORT&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_port&quot;</span><span class="p">])</span>
+    <span class="n">EnvWriter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;PGBINDIR&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_bin_dir&quot;</span><span class="p">])</span>
+    <span class="n">EnvWriter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;PGLIBDIR&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_lib_dir&quot;</span><span class="p">])</span>
+    <span class="n">EnvWriter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;myPATH&quot;</span><span class="p">])</span>
+    <span class="n">EnvWriter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;LD_LIBRARY_PATH&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;myLD_LIBRARY_PATH&quot;</span><span class="p">],)</span></div>
 
-<span class="k">def</span> <span class="nf">write_postgress_install_log</span><span class="p">(</span><span class="n">psql_path</span><span class="p">):</span>
-    <span class="n">postgres_version_found</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;psql --version&quot;</span><span class="p">)[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span>
-    <span class="n">postgres_version_number</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;\d.*&quot;</span><span class="p">,</span> <span class="n">postgres_version_found</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">write_to_install_manifest</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_install_dir&quot;</span><span class="p">],</span> <span class="n">postgres_version_number</span><span class="p">)</span>
+<div class="viewcode-block" id="write_postgress_install_log"><a class="viewcode-back" href="../api.html#esg_postgres.write_postgress_install_log">[docs]</a><span class="k">def</span> <span class="nf">write_postgress_install_log</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Write postgres version to install manifest&#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">postgres_version_found</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;psql&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;--version&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Postgres version check failed failed&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">raise</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">postgres_version_number</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\d.*&quot;</span><span class="p">,</span> <span class="n">postgres_version_found</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">write_to_install_manifest</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_install_dir&quot;</span><span class="p">],</span> <span class="n">postgres_version_number</span><span class="p">)</span></div>
 
 <span class="c1">#----------------------------------------------------------</span>
 <span class="c1"># Postgresql informational functions</span>
@@ -684,7 +493,8 @@
 <span class="c1">#----------------------------------------------------------</span>
 
 
-<span class="k">def</span> <span class="nf">create_database</span><span class="p">(</span><span class="n">database_name</span><span class="p">,</span> <span class="n">cursor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="create_database"><a class="viewcode-back" href="../api.html#esg_postgres.create_database">[docs]</a><span class="k">def</span> <span class="nf">create_database</span><span class="p">(</span><span class="n">database_name</span><span class="p">,</span> <span class="n">cursor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create database in postgres&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">cursor</span><span class="p">:</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">(</span><span class="s2">&quot;postgres&quot;</span><span class="p">)</span>
         <span class="n">conn</span><span class="o">.</span><span class="n">set_isolation_level</span><span class="p">(</span><span class="n">ISOLATION_LEVEL_AUTOCOMMIT</span><span class="p">)</span>
@@ -694,7 +504,7 @@
     <span class="k">except</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">ProgrammingError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
         <span class="c1"># Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE</span>
         <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">pgcode</span> <span class="o">==</span> <span class="s2">&quot;42P04&quot;</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> database already exists.  Skipping creation.&quot;</span><span class="p">,</span> <span class="n">database_name</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> database already exists.  Skipping creation.&quot;</span><span class="p">,</span> <span class="n">database_name</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="postgres_list_db_schemas"><a class="viewcode-back" href="../api.html#esg_postgres.postgres_list_db_schemas">[docs]</a><span class="k">def</span> <span class="nf">postgres_list_db_schemas</span><span class="p">(</span><span class="n">conn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">user_name</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">,</span> <span class="n">db_name</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -707,7 +517,7 @@
         <span class="n">schemas</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="n">schema_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">schema</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">schema</span> <span class="ow">in</span> <span class="n">schemas</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">schema_list</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not list database schemas&quot;</span><span class="p">)</span></div>
 
 
@@ -721,11 +531,11 @@
         <span class="n">schemas_tables</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;schemas_tables: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">schemas_tables</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">schemas_tables</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not list schema tables&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="postgres_list_dbs"><a class="viewcode-back" href="../api.html#esg_postgres.postgres_list_dbs">[docs]</a><span class="k">def</span> <span class="nf">postgres_list_dbs</span><span class="p">(</span><span class="n">conn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">user_name</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">,</span> <span class="n">db_name</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span> <span class="p">):</span>
+<div class="viewcode-block" id="postgres_list_dbs"><a class="viewcode-back" href="../api.html#esg_postgres.postgres_list_dbs">[docs]</a><span class="k">def</span> <span class="nf">postgres_list_dbs</span><span class="p">(</span><span class="n">conn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">user_name</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">,</span> <span class="n">db_name</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;This prints a list of all databases known to postgres.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">conn</span><span class="p">:</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">(</span><span class="n">user_name</span><span class="p">,</span> <span class="n">db_name</span><span class="p">)</span>
@@ -735,7 +545,7 @@
         <span class="n">databases</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="n">database_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">database</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">database</span> <span class="ow">in</span> <span class="n">databases</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">database_list</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not list databases&quot;</span><span class="p">)</span></div>
 
 
@@ -749,7 +559,7 @@
         <span class="n">users</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="n">user_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">user</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">user_list</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not list users&quot;</span><span class="p">)</span></div>
 
 
@@ -768,25 +578,23 @@
     <span class="sd">&#39;&#39;&#39;List all tables in current database&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">conn</span><span class="p">:</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">(</span><span class="n">user_name</span><span class="p">,</span> <span class="n">db_name</span><span class="p">)</span>
-    <span class="n">current_database</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">get_dsn_parameters</span><span class="p">()[</span><span class="s2">&quot;dbname&quot;</span><span class="p">]</span>
     <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
     <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
         <span class="sd">&quot;&quot;&quot;SELECT * FROM pg_catalog.pg_tables WHERE schemaname != &#39;pg_catalog&#39; AND schemaname != &#39;information_schema&#39;;&quot;&quot;&quot;</span><span class="p">)</span>
     <span class="n">tables</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
     <span class="n">tables_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;schema_name&quot;</span><span class="p">:</span> <span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;table_name&quot;</span><span class="p">:</span><span class="n">table</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;owner&quot;</span><span class="p">:</span> <span class="n">table</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span>
                    <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">tables_list</span>
-    <span class="nb">print</span> <span class="s2">&quot;tables for </span><span class="si">{current_database}</span><span class="s2">: </span><span class="si">{tables_list}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">current_database</span><span class="o">=</span><span class="n">current_database</span><span class="p">,</span> <span class="n">tables_list</span><span class="o">=</span><span class="n">tables_list</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">tables_list</span></div>
 
 
-<span class="k">def</span> <span class="nf">postgres_clean_schema_migration</span><span class="p">(</span><span class="n">repository_id</span><span class="p">):</span>
-    <span class="c1"># Removes entries from the esgf_migrate_version table if any exist</span>
-    <span class="c1"># where repository_id matches an SQL LIKE to the first argument</span>
-    <span class="c1">#</span>
-    <span class="c1"># The SQL LIKE strings are generally defined in</span>
-    <span class="c1"># &quot;src/python/esgf/&lt;reponame&gt;/schema_migration/migrate.cfg&quot; in</span>
-    <span class="c1"># each relevant repository.</span>
-    <span class="n">db_user_password</span><span class="o">=</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_publisher_password</span><span class="p">()</span>
+<div class="viewcode-block" id="postgres_clean_schema_migration"><a class="viewcode-back" href="../api.html#esg_postgres.postgres_clean_schema_migration">[docs]</a><span class="k">def</span> <span class="nf">postgres_clean_schema_migration</span><span class="p">(</span><span class="n">repository_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Removes entries from the esgf_migrate_version table if any exist</span>
+<span class="sd">    where repository_id matches an SQL LIKE to the first argument</span>
+
+<span class="sd">    The SQL LIKE strings are generally defined in</span>
+<span class="sd">    &quot;src/python/esgf/&lt;reponame&gt;/schema_migration/migrate.cfg&quot; in</span>
+<span class="sd">    each relevant repository.&#39;&#39;&#39;</span>
+    <span class="n">db_user_password</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_publisher_password</span><span class="p">()</span>
     <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;node_db_name&quot;</span><span class="p">],</span> <span class="n">password</span><span class="o">=</span><span class="n">db_user_password</span><span class="p">)</span>
     <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
 
@@ -800,11 +608,12 @@
             <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
                 <span class="s2">&quot;delete from esgf_migrate_version where repository_id LIKE &#39;%$</span><span class="si">%s</span><span class="s2">%&#39;&quot;</span><span class="p">,</span> <span class="n">repository_id</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;error: &quot;</span><span class="p">,</span> <span class="n">error</span>
+        <span class="nb">print</span> <span class="s2">&quot;error: &quot;</span><span class="p">,</span> <span class="n">error</span></div>
 
 
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="n">setup_postgres</span><span class="p">()</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../api.html#esg_postgres.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Main function&#39;&#39;&#39;</span>
+    <span class="n">setup_postgres</span><span class="p">()</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>

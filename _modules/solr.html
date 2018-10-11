@@ -179,8 +179,9 @@
 <span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">from</span> <span class="nn">clint.textui</span> <span class="k">import</span> <span class="n">progress</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">pybash</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
+<span class="kn">from</span> <span class="nn">plumbum.commands</span> <span class="k">import</span> <span class="n">ProcessExecutionError</span>
 
 <span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
 
@@ -209,16 +210,16 @@
     <span class="nb">print</span> <span class="s2">&quot;Extracting Solr&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">target_path</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">target_path</span><span class="p">):</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">extract_tarball</span><span class="p">(</span><span class="n">solr_tarball_path</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">solr_tarball_path</span><span class="p">)</span>
-        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">symlink_force</span><span class="p">(</span><span class="s2">&quot;solr-</span><span class="si">{SOLR_VERSION}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_VERSION</span><span class="o">=</span><span class="n">SOLR_VERSION</span><span class="p">),</span> <span class="s2">&quot;solr&quot;</span><span class="p">)</span></div>
+        <span class="n">pybash</span><span class="o">.</span><span class="n">symlink_force</span><span class="p">(</span><span class="s2">&quot;solr-</span><span class="si">{SOLR_VERSION}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_VERSION</span><span class="o">=</span><span class="n">SOLR_VERSION</span><span class="p">),</span> <span class="s2">&quot;solr&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="download_template_directory"><a class="viewcode-back" href="../api.html#solr.download_template_directory">[docs]</a><span class="k">def</span> <span class="nf">download_template_directory</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;download template directory structure for shards home&#39;&#39;&#39;</span>
-    <span class="n">ESGF_REPO</span> <span class="o">=</span> <span class="s2">&quot;http://distrib-coffee.ipsl.jussieu.fr/pub/esgf&quot;</span>
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/usr/local/src&quot;</span><span class="p">):</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{ESGF_REPO}</span><span class="s2">/dist/esg-search/solr-home.tar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ESGF_REPO</span><span class="o">=</span><span class="n">ESGF_REPO</span><span class="p">))</span>
+    <span class="n">esg_dist_url</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/usr/local/src&quot;</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/esg-search/solr-home.tar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">))</span>
 
         <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;solr-home.tar&#39;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -230,10 +231,6 @@
 
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">extract_tarball</span><span class="p">(</span><span class="s2">&quot;/usr/local/src/solr-home.tar&quot;</span><span class="p">)</span></div>
 
-<span class="c1"># #Helper Method to figure out the version of solr-home installation</span>
-<span class="c1"># check_solr_version() {</span>
-<span class="c1">#     [ &quot;$(cat ${solr_install_dir}/VERSION)&quot; = &quot;${solr_version}&quot; ]</span>
-<span class="c1"># }</span>
 
 <span class="k">def</span> <span class="nf">start_solr</span><span class="p">(</span><span class="n">solr_config_type</span><span class="p">,</span> <span class="n">port_number</span><span class="p">,</span> <span class="n">SOLR_INSTALL_DIR</span><span class="o">=</span><span class="s2">&quot;/usr/local/solr&quot;</span><span class="p">,</span> <span class="n">SOLR_HOME</span><span class="o">=</span><span class="s2">&quot;/usr/local/solr-home&quot;</span><span class="p">):</span>
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
@@ -243,54 +240,59 @@
     <span class="c1"># -s Sets the solr.solr.home system property; -p Start Solr on the defined port;</span>
     <span class="c1"># -a Start Solr with additional JVM parameters,</span>
     <span class="c1"># -m Start Solr with the defined value as the min (-Xms) and max (-Xmx) heap size for the JVM</span>
+
     <span class="k">if</span> <span class="n">solr_config_type</span> <span class="o">==</span> <span class="s2">&quot;master&quot;</span><span class="p">:</span>
-        <span class="n">enable_nodes</span> <span class="o">=</span> <span class="s2">&quot;&#39;-Denable.master=true&#39;&quot;</span>
+        <span class="n">enable_nodes</span> <span class="o">=</span> <span class="s2">&quot;-Denable.master=true&quot;</span>
     <span class="k">elif</span> <span class="n">solr_config_type</span> <span class="o">==</span> <span class="s2">&quot;localhost&quot;</span><span class="p">:</span>
-        <span class="n">enable_nodes</span> <span class="o">=</span> <span class="s2">&quot;&#39;-Denable.localhost=true&#39;&quot;</span>
+        <span class="n">enable_nodes</span> <span class="o">=</span> <span class="s2">&quot;-Denable.localhost=true&quot;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">enable_nodes</span> <span class="o">=</span> <span class="s2">&quot;&#39;-Denable.master=true -Denable.slave=true&#39;&quot;</span>
+        <span class="n">enable_nodes</span> <span class="o">=</span> <span class="s2">&quot;-Denable.master=true -Denable.slave=true&quot;</span>
 
-    <span class="n">start_solr_command</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{SOLR_INSTALL_DIR}</span><span class="s2">/bin/solr start -d </span><span class="si">{SOLR_INSTALL_DIR}</span><span class="s2">/server -s </span><span class="si">{SOLR_HOME}</span><span class="s2">/</span><span class="si">{solr_config_type}</span><span class="s2">-</span><span class="si">{port_number}</span><span class="s2"> -p </span><span class="si">{port_number}</span><span class="s2"> -a </span><span class="si">{enable_nodes}</span><span class="s2"> -m 512m&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="o">=</span><span class="n">SOLR_INSTALL_DIR</span><span class="p">,</span> <span class="n">SOLR_HOME</span><span class="o">=</span><span class="n">SOLR_HOME</span><span class="p">,</span> <span class="n">solr_config_type</span><span class="o">=</span><span class="n">solr_config_type</span><span class="p">,</span> <span class="n">port_number</span><span class="o">=</span><span class="n">port_number</span><span class="p">,</span> <span class="n">enable_nodes</span><span class="o">=</span><span class="n">enable_nodes</span><span class="p">)</span>
-    <span class="nb">print</span> <span class="s2">&quot;start solr command:&quot;</span><span class="p">,</span> <span class="n">start_solr_command</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="n">start_solr_command</span><span class="p">)</span>
+    <span class="n">server_directory</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/server&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="p">)</span>
+    <span class="n">solr_solr_home</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_HOME</span><span class="p">,</span> <span class="n">solr_config_type</span><span class="p">,</span> <span class="n">port_number</span><span class="p">)</span>
+    <span class="n">start_solr_options</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="n">server_directory</span><span class="p">,</span> <span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="n">solr_solr_home</span><span class="p">,</span> <span class="s2">&quot;-p&quot;</span><span class="p">,</span> <span class="n">port_number</span><span class="p">,</span> <span class="s2">&quot;-a&quot;</span><span class="p">,</span> <span class="n">enable_nodes</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;512m&quot;</span><span class="p">]</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr/bin/solr&quot;</span><span class="p">,</span> <span class="n">start_solr_options</span><span class="p">)</span>
 
-    <span class="n">solr_status</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="p">)</span>
-
-<div class="viewcode-block" id="solr_status"><a class="viewcode-back" href="../api.html#solr.solr_status">[docs]</a><span class="k">def</span> <span class="nf">solr_status</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="p">):</span>
+<div class="viewcode-block" id="solr_status"><a class="viewcode-back" href="../api.html#solr.solr_status">[docs]</a><span class="k">def</span> <span class="nf">solr_status</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Check the status of solr&#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{SOLR_INSTALL_DIR}</span><span class="s2">/bin/solr status&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="o">=</span><span class="n">SOLR_INSTALL_DIR</span><span class="p">))</span>
-    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-        <span class="k">pass</span></div>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr/bin/solr&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="c1"># 3 is the return code if not running</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">retcode</span><span class="o">==</span><span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">raise</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
 
-<span class="k">def</span> <span class="nf">check_solr_process</span><span class="p">(</span><span class="n">solr_config_type</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">):</span>
+<span class="c1">#TODO: fix and test</span>
+<span class="k">def</span> <span class="nf">check_solr_process</span><span class="p">(</span><span class="n">solr_config_type</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8984</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">solr_pid</span> <span class="o">=</span> <span class="p">[</span><span class="n">proc</span> <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">net_connections</span><span class="p">()</span> <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">laddr</span><span class="o">.</span><span class="n">port</span> <span class="o">==</span> <span class="mi">8984</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pid</span>
-        <span class="nb">print</span> <span class="s2">&quot; Solr process for </span><span class="si">{solr_config_type}</span><span class="s2"> running on port [</span><span class="si">{solr_server_port}</span><span class="s2">] with pid </span><span class="si">{solr_pid}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">solr_config_type</span><span class="p">,</span> <span class="s2">&quot;8984&quot;</span><span class="p">,</span> <span class="n">solr_pid</span><span class="p">)</span>
+        <span class="n">solr_pid</span> <span class="o">=</span> <span class="p">[</span><span class="n">proc</span> <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">net_connections</span><span class="p">()</span> <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">laddr</span><span class="o">.</span><span class="n">port</span> <span class="o">==</span> <span class="n">port</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pid</span>
+        <span class="nb">print</span> <span class="s2">&quot; Solr process for </span><span class="si">{solr_config_type}</span><span class="s2"> running on port [</span><span class="si">{solr_server_port}</span><span class="s2">] with pid </span><span class="si">{solr_pid}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">solr_config_type</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">solr_pid</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">except</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;Solr not running&quot;</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="stop_solr"><a class="viewcode-back" href="../api.html#solr.stop_solr">[docs]</a><span class="k">def</span> <span class="nf">stop_solr</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="o">=</span><span class="s2">&quot;/usr/local/solr&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="stop_solr"><a class="viewcode-back" href="../api.html#solr.stop_solr">[docs]</a><span class="k">def</span> <span class="nf">stop_solr</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="o">=</span><span class="s2">&quot;/usr/local/solr&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="s2">&quot;-all&quot;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Stop the solr process&#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/bin/solr stop&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="p">))</span>
-    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;Could not stop solr with control script. Killing with PID&quot;</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr/bin/solr&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="n">port</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not stop solr with control script. Killing with PID&quot;</span><span class="p">)</span>
         <span class="n">solr_pid_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr/bin/*.pid&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">pid</span> <span class="ow">in</span> <span class="n">solr_pid_files</span><span class="p">:</span>
             <span class="n">solr_pid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">psutil</span><span class="o">.</span><span class="n">pid_exists</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">solr_pid</span><span class="p">)):</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">os</span><span class="o">.</span><span class="n">kill</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">solr_pid</span><span class="p">),</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIGKILL</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-                    <span class="nb">print</span> <span class="s2">&quot;Could not kill process&quot;</span>
-                    <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not kill solr process with pid </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">solr_pid</span><span class="p">)</span>
+                    <span class="k">raise</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
         <span class="k">pass</span>
 
-    <span class="n">solr_status</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="p">)</span></div>
+    <span class="n">solr_status</span><span class="p">()</span></div>
 
 
 <span class="k">def</span> <span class="nf">commit_shard_config</span><span class="p">(</span><span class="n">config_type</span><span class="p">,</span> <span class="n">port_number</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="s2">&quot;/esg/config/esgf_shards.config&quot;</span><span class="p">):</span>
@@ -362,6 +364,16 @@
 
 <div class="viewcode-block" id="setup_solr"><a class="viewcode-back" href="../api.html#solr.setup_solr">[docs]</a><span class="k">def</span> <span class="nf">setup_solr</span><span class="p">(</span><span class="n">index_config</span><span class="p">,</span> <span class="n">SOLR_INSTALL_DIR</span><span class="o">=</span><span class="s2">&quot;/usr/local/solr&quot;</span><span class="p">,</span> <span class="n">SOLR_HOME</span><span class="o">=</span><span class="s2">&quot;/usr/local/solr-home&quot;</span><span class="p">,</span> <span class="n">SOLR_DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;/esg/solr-index&quot;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Setup Apache Solr for faceted search&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr&quot;</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;Solr directory found.&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">setup_solr_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.solr&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
+            <span class="n">setup_solr_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
+                <span class="s2">&quot;Do you want to contine the Solr installation [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
+        <span class="k">if</span> <span class="n">setup_solr_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">]:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Using existing Solr setup. Skipping installation&quot;</span>
+            <span class="k">return</span> <span class="kc">False</span>
 
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;Setting up Solr&quot;</span>
@@ -380,26 +392,24 @@
     <span class="n">solr_extract_to_path</span> <span class="o">=</span> <span class="n">SOLR_INSTALL_DIR</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">extract_solr_tarball</span><span class="p">(</span><span class="s1">&#39;/tmp/solr-</span><span class="si">{SOLR_VERSION}</span><span class="s1">.tgz&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_VERSION</span><span class="o">=</span><span class="n">SOLR_VERSION</span><span class="p">),</span> <span class="n">SOLR_VERSION</span><span class="p">,</span> <span class="n">target_path</span><span class="o">=</span><span class="n">solr_extract_to_path</span><span class="p">)</span>
 
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">SOLR_DATA_DIR</span><span class="p">)</span>
+    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">SOLR_DATA_DIR</span><span class="p">)</span>
 
     <span class="c1"># download template directory structure for shards home</span>
     <span class="n">download_template_directory</span><span class="p">()</span>
 
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">SOLR_HOME</span><span class="p">)</span>
+    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">SOLR_HOME</span><span class="p">)</span>
 
     <span class="c1"># create non-privilged user to run Solr server</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">add_unix_group</span><span class="p">(</span><span class="s2">&quot;solr&quot;</span><span class="p">)</span>
+
+    <span class="n">useradd_options</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="s2">&quot;/sbin/nologin&quot;</span><span class="p">,</span> <span class="s2">&quot;-g&quot;</span><span class="p">,</span> <span class="s2">&quot;solr&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/solr&quot;</span><span class="p">,</span> <span class="s2">&quot;solr&quot;</span><span class="p">]</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;groupadd solr&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;useradd&quot;</span><span class="p">,</span> <span class="n">useradd_options</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">err</span><span class="o">.</span><span class="n">retcode</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
             <span class="k">pass</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;useradd -s /sbin/nologin -g solr -d /usr/local/solr solr&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
-            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
 
     <span class="n">SOLR_USER_ID</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="s2">&quot;solr&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span>
     <span class="n">SOLR_GROUP_ID</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="s2">&quot;solr&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span>
@@ -422,12 +432,8 @@
 
     <span class="c1"># custom logging properties</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;solr_scripts/log4j.properties&quot;</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{SOLR_INSTALL_DIR}</span><span class="s2">/server/resources/log4j.properties&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SOLR_INSTALL_DIR</span><span class="o">=</span><span class="n">SOLR_INSTALL_DIR</span><span class="p">))</span>
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/esg/solr-logs&quot;</span><span class="p">)</span>
+    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/esg/solr-logs&quot;</span><span class="p">)</span></div>
 
-    <span class="c1">#start solr</span>
-    <span class="n">solr_shards</span> <span class="o">=</span> <span class="n">read_shard_config</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">config_type</span><span class="p">,</span> <span class="n">port_number</span> <span class="ow">in</span> <span class="n">solr_shards</span><span class="p">:</span>
-        <span class="n">start_solr</span><span class="p">(</span><span class="n">config_type</span><span class="p">,</span> <span class="n">port_number</span><span class="p">,</span> <span class="n">SOLR_INSTALL_DIR</span><span class="p">,</span> <span class="n">SOLR_HOME</span><span class="p">)</span></div>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">index_config</span><span class="p">):</span>
     <span class="n">setup_solr</span><span class="p">(</span><span class="n">index_config</span><span class="p">)</span>

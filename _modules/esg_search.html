@@ -179,7 +179,7 @@
 <span class="kn">from</span> <span class="nn">clint.textui</span> <span class="k">import</span> <span class="n">progress</span>
 <span class="kn">from</span> <span class="nn">git</span> <span class="k">import</span> <span class="n">Repo</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">pybash</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_version_manager</span>
 <span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_tomcat_manager</span>
@@ -205,11 +205,13 @@
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;publishing_service_app_home&quot;</span><span class="p">,</span> <span class="n">search_web_service_dir</span><span class="p">)</span>
 
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_publisher_resources_home&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">])</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_publisher_resources_home&quot;</span><span class="p">,</span> <span class="s2">&quot;https://github.com/ESGF/esgf-publisher-resources.git&quot;</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_publisher_resources_repo&quot;</span><span class="p">,</span> <span class="s2">&quot;https://github.com/ESGF/esgf-publisher-resources.git&quot;</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">setup_publisher_resources</span><span class="p">():</span>
-     <span class="n">esgf_publisher_resources_repo</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/ESGF/esgf-publisher-resources.git&quot;</span>
-     <span class="n">Repo</span><span class="o">.</span><span class="n">clone_from</span><span class="p">(</span><span class="n">esgf_publisher_resources_repo</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span><span class="s2">&quot;esgf-publisher-resources&quot;</span><span class="p">))</span>
+    <span class="n">esgf_publisher_resources_repo</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/ESGF/esgf-publisher-resources.git&quot;</span>
+    <span class="n">esgf_publisher_resources_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span><span class="s2">&quot;esgf-publisher-resources&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">esgf_publisher_resources_dir</span><span class="p">):</span>
+        <span class="n">Repo</span><span class="o">.</span><span class="n">clone_from</span><span class="p">(</span><span class="n">esgf_publisher_resources_repo</span><span class="p">,</span> <span class="n">esgf_publisher_resources_dir</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">search_startup_hook</span><span class="p">():</span>
@@ -231,7 +233,9 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config_facets_props_path</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">esg_search_facets_props_path</span><span class="p">):</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">esg_search_facets_props_path</span><span class="p">,</span> <span class="n">config_facets_props_path</span><span class="p">)</span>
 
-    <span class="n">solr</span><span class="o">.</span><span class="n">start_solr</span><span class="p">()</span>
+    <span class="n">solr_shards</span> <span class="o">=</span> <span class="n">solr</span><span class="o">.</span><span class="n">read_shard_config</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">config_type</span><span class="p">,</span> <span class="n">port_number</span> <span class="ow">in</span> <span class="n">solr_shards</span><span class="p">:</span>
+        <span class="n">solr</span><span class="o">.</span><span class="n">start_solr</span><span class="p">(</span><span class="n">config_type</span><span class="p">,</span> <span class="n">port_number</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">stop_search_services</span><span class="p">():</span>
     <span class="nb">print</span> <span class="s2">&quot;Stopping search services...&quot;</span>
@@ -242,8 +246,7 @@
 <span class="c1">#---------------------------------------------------------</span>
 
 <span class="k">def</span> <span class="nf">check_for_existing_solr_install</span><span class="p">():</span>
-    <span class="n">esg_search_version</span> <span class="o">=</span> <span class="s2">&quot;4.9.2&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Checking for search service </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;Checking for search service </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_search_version&quot;</span><span class="p">])</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">installed_esg_search_version</span> <span class="o">=</span> <span class="n">esg_version_manager</span><span class="o">.</span><span class="n">get_current_webapp_version</span><span class="p">(</span><span class="s2">&quot;esg-search&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">IOError</span><span class="p">,</span><span class="n">error</span><span class="p">:</span>
@@ -251,45 +254,45 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No existing version of esg-search found.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-search&quot;</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.esg.search&quot;</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
             <span class="n">esg_search_install</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.esg.search&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
             <span class="n">esg_search_install</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Existing esg-search installation found.  Do you want to continue with the esg-search installation [y/N]: &quot;</span> <span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
         <span class="k">if</span> <span class="n">esg_search_install</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">]:</span>
             <span class="nb">print</span> <span class="s2">&quot;Using existing esg-search installation. Skipping setup.&quot;</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;backup.esg.search&quot;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
                 <span class="n">backup_esg_search</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;backup.esg.search&quot;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
+            <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
                 <span class="n">backup_esg_search</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to make a back up of the existing distribution?? [Y/n] &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;y&quot;</span>
             <span class="k">if</span> <span class="n">backup_esg_search</span><span class="o">.</span><span class="n">lower</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
                 <span class="n">esg_functions</span><span class="o">.</span><span class="n">backup</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-search&quot;</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">download_esg_search</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">):</span>
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">])</span>
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">]):</span>
-        <span class="n">search_service_dist_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/devel/esg-search/esg-search-</span><span class="si">{}</span><span class="s2">.tar.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">download_esg_search</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">):</span>
+    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">])</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">]):</span>
+        <span class="n">search_service_dist_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/esg-search/esg-search-</span><span class="si">{}</span><span class="s2">.tar.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">,</span> <span class="n">esg_search_version</span><span class="p">)</span>
         <span class="n">search_service_dist_file</span> <span class="o">=</span> <span class="s2">&quot;esg-search-</span><span class="si">{}</span><span class="s2">.tar.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">)</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">search_service_dist_file</span><span class="p">,</span> <span class="n">search_service_dist_url</span><span class="p">)</span>
 
         <span class="c1">#Extract in workdir to get esg-search.war file</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">esg_functions</span><span class="o">.</span><span class="n">extract_tarball</span><span class="p">(</span><span class="n">search_service_dist_file</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarError</span><span class="p">:</span>
+            <span class="k">raise</span>
 
 <span class="k">def</span> <span class="nf">copy_esg_search_war_to_tomcat</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">,</span> <span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">search_service_war_file</span><span class="p">):</span>
     <span class="n">search_service_dist_dir</span> <span class="o">=</span> <span class="s2">&quot;esg-search-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">],</span><span class="n">search_service_dist_dir</span><span class="p">)):</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">],</span><span class="n">search_service_dist_dir</span><span class="p">)):</span>
         <span class="n">esg_tomcat_manager</span><span class="o">.</span><span class="n">stop_tomcat</span><span class="p">()</span>
 
-        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">)</span>
+        <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">)</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">search_service_war_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">search_service_war_file</span><span class="p">))</span>
 
 
 <span class="k">def</span> <span class="nf">extract_esg_search_war</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">search_service_war_file</span><span class="p">):</span>
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">):</span>
         <span class="nb">print</span> <span class="s2">&quot;Expanding war </span><span class="si">{search_service_war_file}</span><span class="s2"> in </span><span class="si">{pwd}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_service_war_file</span><span class="o">=</span><span class="n">search_service_war_file</span><span class="p">,</span> <span class="n">pwd</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
         <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-search/esg-search.war&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
             <span class="n">zf</span><span class="o">.</span><span class="n">extractall</span><span class="p">()</span>
@@ -327,12 +330,13 @@
     <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;Setting up The ESGF Search Service...&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
-    <span class="n">esg_search_version</span> <span class="o">=</span> <span class="s2">&quot;4.9.2&quot;</span>
     <span class="n">search_web_service_dir</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/tomcat/webapps/esg-search&quot;</span>
     <span class="n">search_service_war_file</span> <span class="o">=</span> <span class="s2">&quot;esg-search.war&quot;</span>
-    <span class="n">download_esg_search</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">)</span>
+    <span class="n">esg_dist_url</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">)</span>
 
-    <span class="n">copy_esg_search_war_to_tomcat</span><span class="p">(</span><span class="n">esg_search_version</span><span class="p">,</span> <span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">search_service_war_file</span><span class="p">)</span>
+    <span class="n">download_esg_search</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_search_version&quot;</span><span class="p">],</span> <span class="n">esg_dist_url</span><span class="p">)</span>
+
+    <span class="n">copy_esg_search_war_to_tomcat</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_search_version&quot;</span><span class="p">],</span> <span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">search_service_war_file</span><span class="p">)</span>
     <span class="n">extract_esg_search_war</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">search_service_war_file</span><span class="p">)</span>
     <span class="n">update_solr_cores_schema</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">)</span>
 
@@ -341,16 +345,18 @@
 
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">TOMCAT_USER_ID</span><span class="p">,</span> <span class="n">TOMCAT_GROUP_ID</span><span class="p">)</span>
 
-    <span class="n">write_search_service_install_log</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">esg_search_version</span><span class="p">)</span>
+    <span class="n">write_search_service_install_log</span><span class="p">(</span><span class="n">search_web_service_dir</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_search_version&quot;</span><span class="p">])</span>
     <span class="n">write_search_rss_properties</span><span class="p">()</span>
     <span class="n">setup_publisher_resources</span><span class="p">()</span>
 
+
     <span class="c1">#Get utility script for crawling thredds sites</span>
-    <span class="n">fetch_crawl_launcher</span><span class="p">()</span>
-    <span class="n">fetch_index_optimization_launcher</span><span class="p">()</span>
+    <span class="n">fetch_crawl_launcher</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">)</span>
+    <span class="n">fetch_index_optimization_launcher</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">)</span>
+    <span class="n">fetch_static_shards_file</span><span class="p">()</span></div>
 
     <span class="c1">#restart tomcat to put modifications in effect.</span>
-    <span class="n">esg_tomcat_manager</span><span class="o">.</span><span class="n">start_tomcat</span><span class="p">()</span></div>
+    <span class="c1"># esg_tomcat_manager.start_tomcat()</span>
 
 <span class="k">def</span> <span class="nf">write_search_rss_properties</span><span class="p">():</span>
     <span class="n">node_short_name</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;node.short.name&quot;</span><span class="p">)</span>
@@ -363,24 +369,25 @@
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_feed_datasets_link&quot;</span><span class="p">,</span> <span class="n">esgf_feed_datasets_link</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">fetch_crawl_launcher</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">fetch_crawl_launcher</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">):</span>
     <span class="n">esgf_crawl_launcher</span> <span class="o">=</span> <span class="s2">&quot;esgf-crawl&quot;</span>
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">]):</span>
-        <span class="n">esgf_crawl_launcher_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/devel/esg-search/esgf-crawl&quot;</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">]):</span>
+        <span class="n">esgf_crawl_launcher_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/esg-search/esgf-crawl&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">)</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">esgf_crawl_launcher</span><span class="p">,</span> <span class="n">esgf_crawl_launcher_url</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">esgf_crawl_launcher</span><span class="p">,</span> <span class="mi">0755</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">fetch_index_optimization_launcher</span><span class="p">():</span>
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">]):</span>
+<span class="k">def</span> <span class="nf">fetch_index_optimization_launcher</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">]):</span>
         <span class="n">esgf_index_optimization_launcher</span> <span class="o">=</span> <span class="s2">&quot;esgf-optimize-index&quot;</span>
-        <span class="n">esgf_index_optimization_launcher_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/devel/esg-search/esgf-optimize-index&quot;</span>
+        <span class="n">esgf_index_optimization_launcher_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/esg-search/esgf-optimize-index&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">)</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">esgf_index_optimization_launcher</span><span class="p">,</span> <span class="n">esgf_index_optimization_launcher_url</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">esgf_index_optimization_launcher</span><span class="p">,</span> <span class="mi">0755</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">fetch_static_shards_file</span><span class="p">():</span>
-    <span class="n">static_shards_file</span> <span class="o">=</span> <span class="s2">&quot;esgf_shards_static.xml&quot;</span>
-    <span class="n">static_shards_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/devel/lists/esgf_shards_static.xml&quot;</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">static_shards_file</span><span class="p">,</span> <span class="n">static_shards_url</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">]):</span>
+        <span class="n">static_file</span> <span class="o">=</span> <span class="s2">&quot;esgf_shards_static.xml&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/xml/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_config_repo&quot;</span><span class="p">],</span> <span class="n">static_file</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">static_file</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">download_esg_search_war</span><span class="p">(</span><span class="n">esg_search_war_url</span><span class="p">):</span>
@@ -397,35 +404,11 @@
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
 
-<div class="viewcode-block" id="setup_esg_search"><a class="viewcode-back" href="../api.html#esg_search.setup_esg_search">[docs]</a><span class="k">def</span> <span class="nf">setup_esg_search</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Setting up the ESG Search application&#39;&#39;&#39;</span>
-
-    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Setting up ESG Search&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
-
-    <span class="n">ESGF_REPO</span> <span class="o">=</span> <span class="s2">&quot;http://aims1.llnl.gov/esgf&quot;</span>
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-search&quot;</span><span class="p">)</span>
-    <span class="n">esg_search_war_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{ESGF_REPO}</span><span class="s2">/dist/esg-search/esg-search.war&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ESGF_REPO</span><span class="o">=</span><span class="n">ESGF_REPO</span><span class="p">)</span>
-    <span class="n">download_esg_search_war</span><span class="p">(</span><span class="n">esg_search_war_url</span><span class="p">)</span>
-    <span class="c1">#Extract esg-search war</span>
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-search&quot;</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-search/esg-search.war&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
-            <span class="n">zf</span><span class="o">.</span><span class="n">extractall</span><span class="p">()</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;esg-search.war&quot;</span><span class="p">)</span>
-
-    <span class="n">TOMCAT_USER_ID</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_tomcat_user_id</span><span class="p">()</span>
-    <span class="n">TOMCAT_GROUP_ID</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_tomcat_group_id</span><span class="p">()</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-search&quot;</span><span class="p">,</span> <span class="n">TOMCAT_USER_ID</span><span class="p">,</span> <span class="n">TOMCAT_GROUP_ID</span><span class="p">)</span></div>
-
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="c1"># setup_esg_search()</span>
     <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;Setting up The ESGF Search Sub-Project...&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
-
     <span class="n">setup_search_service</span><span class="p">()</span>
-
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>

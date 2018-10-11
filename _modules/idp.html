@@ -1,0 +1,409 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>idp &mdash; esgf-installer alpha documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> esgf-installer
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.0.0-alpha
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cert_howto.html">ESGF Certificate Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">ESGF Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">ESGF CLI</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Base Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#data-node-components">Data Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#index-node-components">Index Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#idp-node-components">IDP Node Components</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contributing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute_docs.html">Contributing to Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">esgf-installer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>idp</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for idp</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">zipfile</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">ConfigParser</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">git</span> <span class="k">import</span> <span class="n">Repo</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">pybash</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
+<span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_tomcat_manager</span>
+<span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_postgres</span>
+
+<span class="c1">#####</span>
+<span class="c1"># Install The ESGF Idp Services</span>
+<span class="c1">#####</span>
+<span class="c1"># - Takes boolean arg: 0 = setup / install mode (default)</span>
+<span class="c1">#                      1 = updated mode</span>
+<span class="c1">#</span>
+<span class="c1"># In setup mode it is an idempotent install (default)</span>
+<span class="c1"># In update mode it will always pull down latest after archiving old</span>
+<span class="c1">#</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
+<span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="write_idp_install_log"><a class="viewcode-back" href="../api.html#idp.write_idp_install_log">[docs]</a><span class="k">def</span> <span class="nf">write_idp_install_log</span><span class="p">(</span><span class="n">idp_service_app_home</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Write IDP properties to install manifest and property file&#39;&#39;&#39;</span>
+    <span class="n">esgf_idp_version</span> <span class="o">=</span> <span class="s2">&quot;1.1.4&quot;</span>
+    <span class="n">idp_service_host</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+    <span class="n">idp_service_port</span> <span class="o">=</span> <span class="s2">&quot;443&quot;</span>
+    <span class="n">idp_service_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://</span><span class="si">{}</span><span class="s2">:443/esgf-idp/idp/openidServer.htm&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idp_service_host</span><span class="p">)</span>
+    <span class="n">idp_security_attribute_service_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://</span><span class="si">{}</span><span class="s2">:443/esgf-idp/saml/soap/secure/attributeService.htm&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idp_service_host</span><span class="p">)</span>
+    <span class="n">idp_security_registration_service_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://</span><span class="si">{}</span><span class="s2">:443/esgf-idp/secure/registrationService.htm&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idp_service_host</span><span class="p">)</span>
+
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">write_to_install_manifest</span><span class="p">(</span><span class="s2">&quot;webapp:esgf-idp&quot;</span><span class="p">,</span> <span class="n">idp_service_app_home</span><span class="p">,</span> <span class="n">esgf_idp_version</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;idp_service_app_home&quot;</span><span class="p">,</span> <span class="n">idp_service_app_home</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;idp_service_endpoint&quot;</span><span class="p">,</span> <span class="n">idp_service_endpoint</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;idp_security_attribute_service_app_home&quot;</span><span class="p">,</span> <span class="n">idp_service_app_home</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;idp_security_attribute_service_endpoint&quot;</span><span class="p">,</span> <span class="n">idp_security_attribute_service_endpoint</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;idp_security_registration_service_app_home&quot;</span><span class="p">,</span> <span class="n">idp_service_app_home</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;idp_security_registration_service_endpoint&quot;</span><span class="p">,</span> <span class="n">idp_security_registration_service_endpoint</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="setup_idp"><a class="viewcode-back" href="../api.html#idp.setup_idp">[docs]</a><span class="k">def</span> <span class="nf">setup_idp</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Setup IDP service&#39;&#39;&#39;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up The ESGF Idp Services&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="n">idp_service_app_home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_install_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;esgf-idp&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">idp_service_app_home</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;Detected an existing idp services installation...&quot;</span>
+        <span class="n">continue_install</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to continue with idp services installation and setup? [Y/n]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;y&quot;</span>
+        <span class="k">if</span> <span class="n">continue_install</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Skipping IDP installation.&quot;</span>
+            <span class="k">return</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">backup_idp</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;backup.idp&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
+        <span class="n">backup_idp</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to make a back up of the existing distribution?? [Y/n] &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;y&quot;</span>
+
+    <span class="k">if</span> <span class="n">backup_idp</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]:</span>
+        <span class="s2">&quot;Creating a backup archive of this web application </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idp_service_app_home</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">backup</span><span class="p">(</span><span class="n">idp_service_app_home</span><span class="p">)</span>
+
+    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">idp_service_app_home</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">idp_service_app_home</span><span class="p">):</span>
+        <span class="n">idp_dist_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">&quot;esgf-idp.war&quot;</span><span class="p">)</span>
+        <span class="n">esg_dist_url</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">)</span>
+        <span class="n">idp_dist_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/esgf-idp/esgf-idp.war&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">idp_dist_file</span><span class="p">,</span> <span class="n">idp_dist_url</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">esg_tomcat_manager</span><span class="o">.</span><span class="n">check_tomcat_status</span><span class="p">():</span>
+            <span class="n">esg_tomcat_manager</span><span class="o">.</span><span class="n">stop_tomcat</span><span class="p">()</span>
+
+        <span class="nb">print</span> <span class="s2">&quot;Expanding war </span><span class="si">{idp_dist_file}</span><span class="s2"> in </span><span class="si">{pwd}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idp_dist_file</span><span class="o">=</span><span class="n">idp_dist_file</span><span class="p">,</span> <span class="n">pwd</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">idp_dist_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">idp_dist_zip</span><span class="p">:</span>
+            <span class="n">idp_dist_zip</span><span class="o">.</span><span class="n">extractall</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;esgf-idp.war&quot;</span><span class="p">)</span>
+
+        <span class="n">tomcat_user</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+        <span class="n">tomcat_group</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="n">idp_service_app_home</span><span class="p">,</span> <span class="n">tomcat_user</span><span class="p">,</span> <span class="n">tomcat_group</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">]):</span>
+        <span class="n">static_file</span> <span class="o">=</span> <span class="s2">&quot;esgf_idp_static.xml&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/xml/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_config_repo&quot;</span><span class="p">],</span> <span class="n">static_file</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">static_file</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">]):</span>
+        <span class="n">static_file</span> <span class="o">=</span> <span class="s2">&quot;esgf_ats_static.xml&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/xml/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_config_repo&quot;</span><span class="p">],</span> <span class="n">static_file</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">static_file</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+
+    <span class="n">write_idp_install_log</span><span class="p">(</span><span class="n">idp_service_app_home</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">write_security_lib_install_log</span><span class="p">()</span></div>
+
+    <span class="c1"># esg_tomcat_manager.start_tomcat()</span>
+
+<span class="k">def</span> <span class="nf">clone_slcs</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;/usr/local/src/esgf-slcs-server-playbook&quot;</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;SLCS repo already exists.  Skipping cloning from Github.&quot;</span>
+        <span class="k">return</span>
+    <span class="n">Repo</span><span class="o">.</span><span class="n">clone_from</span><span class="p">(</span><span class="s2">&quot;https://github.com/ESGF/esgf-slcs-server-playbook.git&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot;/esgf-slcs-server-playbook&quot;</span><span class="p">)</span>
+
+<span class="c1">#TODO: convert slcs to use Ansible python API</span>
+<div class="viewcode-block" id="setup_slcs"><a class="viewcode-back" href="../api.html#idp.setup_slcs">[docs]</a><span class="k">def</span> <span class="nf">setup_slcs</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Setup the slcs_server&#39;&#39;&#39;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up SLCS Oauth Server&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">install_slcs</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.slcs&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
+        <span class="n">install_slcs</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Would you like to install the SLCS OAuth server on this node? [y/N] &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;n&quot;</span>
+
+    <span class="k">if</span> <span class="n">install_slcs</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
+        <span class="nb">print</span> <span class="s2">&quot;Skipping installation of SLCS server&quot;</span>
+        <span class="k">return</span>
+
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;ansible&quot;</span><span class="p">])</span>
+
+    <span class="c1">#create slcs Database</span>
+    <span class="n">esg_postgres</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="s2">&quot;slcsdb&quot;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/usr/local/src&quot;</span><span class="p">):</span>
+        <span class="n">clone_slcs</span><span class="p">()</span>
+
+        <span class="n">apache_user</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;apache&quot;</span><span class="p">)</span>
+        <span class="n">apache_group</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;apache&quot;</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;esgf-slcs-server-playbook&quot;</span><span class="p">,</span> <span class="n">apache_user</span><span class="p">,</span> <span class="n">apache_group</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;esgf-slcs-server-playbook&quot;</span><span class="p">):</span>
+            <span class="c1">#TODO: extract to function</span>
+            <span class="n">publisher_repo_local</span> <span class="o">=</span> <span class="n">Repo</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+            <span class="n">publisher_repo_local</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="s2">&quot;devel&quot;</span><span class="p">)</span>
+
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;/var/lib/globus-connect-server/myproxy-ca/&quot;</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">apache_group</span><span class="p">)</span>
+
+            <span class="n">current_mode</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="s2">&quot;/var/lib/globus-connect-server/myproxy-ca/&quot;</span><span class="p">)</span>
+            <span class="c1">#add group read and execute permissions</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;/var/lib/globus-connect-server/myproxy-ca/&quot;</span><span class="p">,</span> <span class="n">current_mode</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXGRP</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;/var/lib/globus-connect-server/myproxy-ca/private&quot;</span><span class="p">,</span> <span class="n">current_mode</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXGRP</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem&quot;</span><span class="p">,</span> <span class="n">current_mode</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;playbook/overrides/production_venv_only.yml&quot;</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">yaml_file</span><span class="p">:</span>
+                <span class="n">production_venv_only</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">)</span>
+            <span class="n">production_venv_only</span><span class="p">[</span><span class="s2">&quot;server_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+            <span class="n">production_venv_only</span><span class="p">[</span><span class="s2">&quot;server_email&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;mail_admin_address&quot;</span><span class="p">)</span>
+            <span class="n">db_password</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_postgres_password</span><span class="p">()</span>
+            <span class="n">production_venv_only</span><span class="p">[</span><span class="s2">&quot;esgf_slcsdb&quot;</span><span class="p">][</span><span class="s2">&quot;password&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_password</span>
+            <span class="n">production_venv_only</span><span class="p">[</span><span class="s2">&quot;esgf_userdb&quot;</span><span class="p">][</span><span class="s2">&quot;password&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_password</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;playbook/overrides/production_venv_only.yml&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">yaml_file</span><span class="p">:</span>
+                <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">production_venv_only</span><span class="p">,</span> <span class="n">yaml_file</span><span class="p">)</span>
+
+            <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;short.lived.certificate.server&quot;</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">())</span>
+
+            <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/usr/local/esgf-slcs-server&quot;</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;/usr/local/esgf-slcs-server&quot;</span><span class="p">,</span> <span class="s2">&quot;apache&quot;</span><span class="p">,</span> <span class="s2">&quot;apache&quot;</span><span class="p">)</span>
+
+            <span class="c1">#TODO: check if there&#39;s an ansible Python module</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;ansible-playbook&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="s2">&quot;playbook/inventories/localhost&quot;</span><span class="p">,</span> <span class="s2">&quot;-e&quot;</span><span class="p">,</span> <span class="s2">&quot;@playbook/overrides/production_venv_only.yml&quot;</span><span class="p">,</span> <span class="s2">&quot;playbook/playbook.yml&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../api.html#idp.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Main function&#39;&#39;&#39;</span>
+    <span class="n">setup_idp</span><span class="p">()</span></div>
+    <span class="c1"># setup_slcs()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, William Hill.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'alpha',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

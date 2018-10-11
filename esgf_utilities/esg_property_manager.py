@@ -5,7 +5,7 @@ import os
 import logging
 import ConfigParser
 import yaml
-from configobj import ConfigObj
+from backports import configparser
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -40,8 +40,10 @@ def set_property(property_name, property_value=None, property_file=config["prope
         arg 2 - The value to set the variable to (default: None)
     '''
     property_name = property_name.replace("_", separator)
-    parser = ConfigObj(property_file)
+    parser = configparser.ConfigParser()
+    parser.read(property_file)
     if section_name not in parser:
         parser[section_name] = {}
-    parser[section_name][property_name] = property_value
-    parser.write()
+    parser[section_name][property_name] = str(property_value)
+    with open(property_file, "w") as file_object:
+        parser.write(file_object, space_around_delimiters=False)

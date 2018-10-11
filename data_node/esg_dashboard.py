@@ -11,6 +11,9 @@ from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
+from esgf_utilities.esg_env_manager import EnvWriter
+from plumbum import BG
+from plumbum import local
 from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -94,21 +97,34 @@ def setup_dashboard():
     args = ["--dburl", dburl, "-c"]
 
     egg_file = "esgf_node_manager-0.1.5-py2.7.egg"
-    remote = "{}/{}/{}".format(dist_root_url, "esgf-node-manager", egg_file)
+    remote = "{}/{}/{}".format(dist_url, "esgf-node-manager", egg_file)
     migration_egg(remote, "esgf_node_manager_initialize", args)
 
     egg_file = "esgf_dashboard-0.0.2-py2.7.egg"
-    remote = "{}/{}/{}".format(dist_root_url, "esgf-dashboard", egg_file)
+    remote = "{}/{}/{}".format(dist_url, "esgf-dashboard", egg_file)
     migration_egg(remote, "esgf_dashboard_initialize", args)
 
-    start_dashboard_service()
+    # Required properties for ip.service start, copied from 2.x
+    # TODO Figure out what these do and if they are valid
+    registration_xml_path = "/esg/config/dashboard"
+    pybash.mkdir_p(registration_xml_path)
+    esg_property_manager.set_property(
+        "esgf.registration.xml.path",
+        registration_xml_path
+    )
+    esgf_host = esg_property_manager.get_property("esgf.host")
+    registration_xml_download_url = "http://{}/esgf-nm/registration.xml".format(esgf_host)
+    esg_property_manager.set_property(
+        "esgf.registration.xml.download.url",
+        registration_xml_download_url
+    )
 
 def start_dashboard_service():
-    # TODO Have a better system for LD_LIBRARY_PATH
-    os.environ["LD_LIBRARY_PATH"] = "/usr/local/conda/envs/esgf-pub/lib"
-    os.chmod("/usr/local/esgf-dashboard-ip/bin/ip.service", 0555)
-    esg_functions.stream_subprocess_output("/usr/local/esgf-dashboard-ip/bin/ip.service start")
 
+    EnvWriter.prepend_to_path("LD_LIBRARY_PATH", "/usr/local/conda/envs/esgf-pub/lib")
+    os.chmod("/usr/local/esgf-dashboard-ip/bin/ip.service", 0555)
+    ip_service = local.get("/usr/local/esgf-dashboard-ip/bin/ip.service")
+    result = ip_service.__getitem__(["start"]) & BG
 
 def clone_dashboard_repo():
     ''' Clone esgf-dashboard repo from Github'''
@@ -129,24 +145,29 @@ def clone_dashboard_repo():
 
 def run_dashboard_script():
     #default values
-    DashDir = "/usr/local/esgf-dashboard-ip"
-    GeoipDir = "/usr/local/geoip"
-    Fed="no"
+    dashdir = "/usr/local/esgf-dashboard-ip"
+    # Required property for ip.service start, copied from 2.x
+    # TODO Figure out what this does and if it is valid
+    esg_property_manager.set_property("dashboard.ip.app.home", dashdir)
+    geoipdir = "/usr/local/geoip"
+    fed = "no"
     esg_functions.call_binary("yum", ["install", "-y", "geoip-devel"])
     with pybash.pushd("/usr/local"):
         clone_dashboard_repo()
         os.chdir("esgf-dashboard")
 
         dashboard_repo_local = Repo(".")
-        dashboard_repo_local.git.checkout("work_plana")
+        dashboard_repo_local.git.checkout("v1.5.19")
 
         os.chdir("src/c/esgf-dashboard-ip")
 
         print "\n*******************************"
         print "Running ESGF Dashboard Script"
         print "******************************* \n"
+        print "automake"
+        esg_functions.call_binary("automake", silent=True)
 
-        esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
+        esg_functions.stream_subprocess_output("./configure --prefix={} --with-geoip-prefix-path={} --with-allow-federation={}".format(dashdir, geoipdir, fed))
         print "make"
         esg_functions.call_binary("make", silent=True)
         print "make install"

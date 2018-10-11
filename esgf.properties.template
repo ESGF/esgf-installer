@@ -39,7 +39,7 @@ update.node.manager=
 update.thredds=
 update.dashboard=
 update.publisher=
-gridftp-config=bdm end-user
+gridftp.config=bdm end-user
 
 #Index node components
 update.esg.search=

@@ -16,6 +16,7 @@ Welcome to esgf-installer's documentation!
    cert_howto
    usage
    cli
+   autoinstall_usage
 
 
 .. toctree::

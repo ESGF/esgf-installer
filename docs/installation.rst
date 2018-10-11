@@ -1,3 +1,5 @@
+**ESGF 3.0 currently supports RHEL/CentOS 6**
+
 Installation
 ******************************************
 

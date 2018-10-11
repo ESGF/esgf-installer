@@ -220,7 +220,7 @@ def purge_solr():
 
     try:
         solr.stop_solr()
-    except SubprocessError:
+    except (OSError, ProcessExecutionError):
         pass
 
     for directory in glob.glob("/usr/local/esgf-solr-*"):

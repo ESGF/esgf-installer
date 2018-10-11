@@ -6,6 +6,7 @@ import shutil
 import logging
 import tarfile
 import datetime
+import random
 import re
 import ConfigParser
 import yaml
@@ -228,7 +229,7 @@ def generate_ssl_key_and_csr(private_key="/usr/local/tomcat/hostkey.pem", public
 
     print "Generating 30 day temporary self-signed certificate... "
 
-    newcert = create_certificate(careq, (careq, private_key), 0, (0, 30*60*24*365*5))
+    newcert = create_certificate(careq, (careq, private_key), random.randint(1, pow(2,30)), (0, 30*60*24*365*5))
 
     with open('/usr/local/tomcat/{}-esg-node.pem'.format(esg_functions.get_esgf_host()), 'w') as ca_file:
         ca_file.write(

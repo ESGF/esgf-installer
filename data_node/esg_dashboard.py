@@ -149,7 +149,7 @@ def run_dashboard_script():
     # Required property for ip.service start, copied from 2.x
     # TODO Figure out what this does and if it is valid
     esg_property_manager.set_property("dashboard.ip.app.home", dashdir)
-    geoipdir = "/usr/local/geoip"
+    geoipdir = "/usr"
     fed = "no"
     esg_functions.call_binary("yum", ["install", "-y", "geoip-devel"])
     with pybash.pushd("/usr/local"):

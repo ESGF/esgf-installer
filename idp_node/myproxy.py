@@ -290,7 +290,7 @@ def copy_myproxy_certificate_apps():
 def edit_pam_pgsql_conf():
     pgsql_conf_file = "/etc/pam_pgsql.conf"
     logger.info("Copy and Modifying pam pgsql configuration file: pam_pgsql.conf")
-    shutil.copyfile(os.path.join(current_directory, "myproxy_conf_files/etc_pam_pgsql.conf"), "pam_pgsql.conf")
+    shutil.copyfile(os.path.join(current_directory, "myproxy_conf_files/etc_pam_pgsql.conf"), pgsql_conf_file)
     os.chmod(pgsql_conf_file, 0600)
 
     #Replace placeholder values

@@ -15,7 +15,6 @@ from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_truststore_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager, esg_postgres
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
@@ -174,37 +173,24 @@ def register(remote_host):
 
                 esg_truststore_manager.sync_with_java_truststore(config["truststore_file"])
 
-
-def select_idp_peer():
-    '''called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags'''
-
+def get_idp_peer_from_config():
     node_type_list = esg_functions.get_node_type()
-
     if "INDEX" in node_type_list and not set(["idp", "data", "compute"]).issubset(node_type_list):
-        #TODO: check if esgf_idp_peer = esgf.host
-        #TODO: esg_property_manager.get_property("esgf_idp_peer") == esg_property_manager.get_property("esgf.host"); then no external IDP
-        #TODO: check esgf.properties first
         try:
-            external_idp = esg_property_manager.get_property("use_external_idp")
+            esgf_idp_peer = esg_property_manager.get_property("esgf.idp.peer")
         except ConfigParser.NoOptionError:
-            external_idp = raw_input("Do you wish to use an external IDP peer?(N/y): ") or 'n'
+            default_idp_peer = esg_functions.get_esgf_host()
+            esgf_idp_peer = raw_input("Please specify your IDP peer node's FQDN [{}]: ".format(default_idp_peer)) or default_idp_peer
 
-        if external_idp.lower() in ["no", 'n']:
-            esgf_idp_peer = esg_functions.get_esgf_host()
-            esgf_idp_peer_name = esgf_idp_peer.upper()
+        return esgf_idp_peer
 
-        else:
-            while True:
-                idp_fqdn = raw_input("Please specify your IDP peer node's FQDN: ")
-                if not idp_fqdn:
-                    print "IDP peer node's FQDN can't be blank."
-                    continue
 
-            esgf_idp_peer = idp_fqdn
-            esgf_idp_peer_name = esgf_idp_peer.upper()
-    else:
-        esgf_idp_peer = esg_functions.get_esgf_host()
-        esgf_idp_peer_name = esgf_idp_peer.upper()
+def select_idp_peer(esgf_idp_peer=None):
+    '''called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags'''
+    if not esgf_idp_peer:
+        esgf_idp_peer = get_idp_peer_from_config()
+
+    esgf_idp_peer_name = esgf_idp_peer.upper()
 
     myproxy_endpoint = esgf_idp_peer
     esgf_host = esg_functions.get_esgf_host()

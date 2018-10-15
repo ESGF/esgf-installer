@@ -6,7 +6,7 @@ import datetime
 import logging
 import ConfigParser
 import yaml
-from esgf_utilities import esg_functions
+from esgf_utilities import esg_functions, esg_truststore_manager
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities.esg_exceptions import SubprocessError
@@ -165,7 +165,7 @@ def set_index_peer(host=None, index_type="p2p"):
     print "Setting Index Peer... to => [{}] (endpoint type = {})".format(index_peer, index_type)
 
     #Fetch and Insert the Certificate for Index Peer (to let in index peer's publishingService callback)
-    register(index_peer)
+    esg_truststore_manager.install_peer_node_cert(index_peer)
 
     try:
         publishing_service_endpoint = esg_property_manager.get_property("publishing_service_endpoint")

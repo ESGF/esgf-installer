@@ -1,7 +1,7 @@
 import logging
 
 from .installer import Installer
-from .components.components import ALL
+from .components import ALL
 
 class Director(object):
     ''' A class for managing the flow of the program '''

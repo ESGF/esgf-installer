@@ -1,17 +1,17 @@
 import os
 import os.path as path
 
-from ..methods.distribution import FileManager
-from ..methods.git import Git
-from ..methods.command import Command
-from ..methods.conda import Conda
-from ..methods.package_manager import PackageManager, Pip
-from ..methods.easy_install import EasyInstall
-from ..methods.make import Make
-from ..methods.users_groups import UserMethod, GroupMethod
-from ..controllers.service import Service
+from .controllers.service import Service
+from .methods.command import Command
+from .methods.conda import Conda
+from .methods.distribution import FileManager
+from .methods.easy_install import EasyInstall
+from .methods.git import Git
+from .methods.make import Make
+from .methods.package_manager import PackageManager, Pip
+from .methods.users_groups import UserMethod, GroupMethod
 
-_CONF_DIR = path.join(path.dirname(__file__), "config")
+_FILE_DIR = path.join(path.dirname(__file__), "files")
 
 _BASE = {
     "httpd": {
@@ -21,12 +21,12 @@ _BASE = {
     "esgf-httpd.conf": {
         "method": FileManager,
         "requires": ["httpd"],
-        "source": path.join(_CONF_DIR, "httpd", "${name}"),
+        "source": path.join(_FILE_DIR, "httpd", "${name}"),
         "dest": path.join(os.sep, "etc", "httpd", "conf", "httpd.conf")
     },
     "esgf-ca-bundle.crt": {
         "method": FileManager,
-        "source": path.join(_CONF_DIR, "httpd", "${name}"),
+        "source": path.join(_FILE_DIR, "httpd", "${name}"),
         "dest": path.join(os.sep, "etc", "certs", "${name}")
     },
     "postgres": {
@@ -45,7 +45,7 @@ _BASE = {
     "postgresql.conf": {
         "method": FileManager,
         "requires": ["postgres-init"],
-        "source": path.join(_CONF_DIR, "postgres", "${name}"),
+        "source": path.join(_FILE_DIR, "postgres", "${name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "${name}"),
         "owner_user": "postgres",
         "owner_group": "postgres"
@@ -53,7 +53,7 @@ _BASE = {
     "pg_hba.conf": {
         "method": FileManager,
         "requires": ["postgres-init"],
-        "source": path.join(_CONF_DIR, "postgres", "${name}"),
+        "source": path.join(_FILE_DIR, "postgres", "${name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "${name}"),
         "owner_user": "postgres",
         "owner_group": "postgres"

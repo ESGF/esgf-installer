@@ -5,6 +5,7 @@ import logging
 from backports import configparser
 
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
+from .parameters import ESGF_PARAMS
 
 class Installer(object):
     '''
@@ -206,7 +207,7 @@ class Installer(object):
 
     def _interpolate(self, requirements):
 
-        string_only = {}
+        string_only = ESGF_PARAMS
         for name in requirements:
             config = requirements[name]
             string_only[name] = {"name": name}

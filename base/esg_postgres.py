@@ -134,7 +134,7 @@ def create_pg_publisher_user(cursor, db_user_password):
         if error.pgcode == "42710":
             print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
 
-def backup_db(db_name, backup_dir="/etc/esgf_db_backup"):
+def backup_db(db_name, schema=None, backup_dir="/etc/esgf_db_backup"):
     '''Backup database to directory specified by backup_dir'''
     try:
         backup_db_input = esg_property_manager.get_property("backup.database")
@@ -152,6 +152,9 @@ def backup_db(db_name, backup_dir="/etc/esgf_db_backup"):
     pg_dump = local["pg_dump"]
     local.env["PGPASSWORD"] = esg_functions.get_publisher_password()
     args = [db_name, "-U", config["postgress_user"]]
+    if schema:
+        args.append("-n")
+        args.append("schema")
     # This syntax is strange, but correct for plumbum redirection
     (pg_dump.__getitem__(args) > backup_file)()
 
@@ -223,7 +226,7 @@ def start_postgres():
 
     esg_functions.call_binary("service", ["postgresql", "start"])
     sleep(1)
-    
+
     if postgres_status():
         return True
 

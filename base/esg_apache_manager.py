@@ -9,6 +9,7 @@ import yaml
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
+from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -37,7 +38,14 @@ def restart_apache():
 
 def check_apache_status():
     '''Check httpd status'''
-    esg_functions.call_binary("service", ["httpd", "status"])
+    try:
+        esg_functions.call_binary("service", ["httpd", "status"])
+    except ProcessExecutionError as error:
+        # Return code of 3 indicates process is not running
+        if error.retcode == 3:
+            return False
+        raise
+    return True
 
 
 def run_apache_config_test():

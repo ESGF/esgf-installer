@@ -4,19 +4,17 @@ import shutil
 import logging
 import argparse
 import psutil
-import pprint
 import ConfigParser
 from time import sleep
 import yaml
 from esgf_utilities import esg_functions
-from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
-from esgf_utilities import esg_cert_manager, esg_truststore_manager
+from esgf_utilities import esg_truststore_manager
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
-from data_node import esg_publisher, orp
+from data_node import esg_dashboard, esg_publisher, orp
 from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError
 from idp_node import globus, gridftp, myproxy, esg_security
 from index_node import solr, esg_search
@@ -92,6 +90,11 @@ def start(node_types):
         except ProcessExecutionError, error:
             logger.error("Could not start globus: %s", error)
             raise
+        try:
+            esg_dashboard.start_dashboard_service()
+        except ProcessExecutionError, error:
+            logger.error("Could not start esgf-dashboard-ip: %s", error)
+            raise
 
     if "IDP" in node_types:
         try:
@@ -100,9 +103,7 @@ def start(node_types):
             logger.error("Could not start globus: %s", error)
 
     if "INDEX" in node_types:
-        solr_shards = solr.read_shard_config()
-        for config_type, port_number in solr_shards:
-            solr.start_solr(config_type, port_number)
+        esg_search.start_search_services()
 
     return get_node_status()
 
@@ -190,7 +191,7 @@ def get_node_status():
         print "\n*******************************"
         print "Solr status"
         print "******************************* \n"
-        if not solr.check_solr_process():
+        if not solr.solr_status():
             node_running = False
 
     print "\n*******************************"

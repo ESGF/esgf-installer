@@ -64,17 +64,17 @@ def config_gridftp_metrics_logging():
     gridftp_server_usage_config_dir = os.path.join(config["esg_config_dir"], "gridftp", "esg-server-usage-gridftp")
     pybash.mkdir_p(gridftp_server_usage_config_dir)
 
-    with open(gridftp_server_usage_config, "w") as config_file:
-        config_file.write("DBNAME={}\n".format(esg_property_manager.get_property("db.database")))
-        config_file.write("DBHOST={}\n".format(esg_property_manager.get_property("db.host")))
-        config_file.write("DBPORT={}\n".format(esg_property_manager.get_property("db.port")))
-        config_file.write("DBUSER={}\n".format(esg_property_manager.get_property("db.user")))
-        config_file.write("DBPASS={}\n".format(esg_functions.get_postgres_password()))
+    with open(gridftp_server_usage_config, "w") as usage_config_file:
+        usage_config_file.write("DBNAME={}\n".format(esg_property_manager.get_property("db.database")))
+        usage_config_file.write("DBHOST={}\n".format(esg_property_manager.get_property("db.host")))
+        usage_config_file.write("DBPORT={}\n".format(esg_property_manager.get_property("db.port")))
+        usage_config_file.write("DBUSER={}\n".format(esg_property_manager.get_property("db.user")))
+        usage_config_file.write("DBPASS={}\n".format(esg_functions.get_postgres_password()))
         gridftp_server_usage_log = "{}/esg-server-usage-gridftp.log".format(config["esg_log_dir"])
-        config_file.write("USAGEFILE={}\n".format(gridftp_server_usage_log))
-        config_file.write("TMPFILE={}\n".format(os.path.join(config["esg_log_dir"], "__up_tmpfile")))
-        config_file.write("DEBUG=0\n")
-        config_file.write("NODBWRITE=0\n")
+        usage_config_file.write("USAGEFILE={}\n".format(gridftp_server_usage_log))
+        usage_config_file.write("TMPFILE={}\n".format(os.path.join(config["esg_log_dir"], "__up_tmpfile")))
+        usage_config_file.write("DEBUG=0\n")
+        usage_config_file.write("NODBWRITE=0\n")
 
     print 'Setting up a cron job, /etc/cron.d/esg_usage_parser ...'
     with open("/etc/cron.d/esg_usage_parser", "w") as cron_file:
@@ -128,39 +128,39 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
             pybash.mkdir_p(gridftp_mount_dir)
             esg_functions.call_binary("mount", ["--bind", mount_dir, gridftp_mount_dir])
 
-def post_gridftp_jail_setup():
-    '''Write our trimmed version of /etc/password in the chroot location'''
-    gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
-    if not os.path.exists(gridftp_chroot_jail):
-        logger.error("%s does not exist. Exiting.", gridftp_chroot_jail)
-        return
-
-    # Add a test data file if already not added
+def create_test_data_file(gridftp_chroot_jail):
+    '''Add a test data file if already not added'''
     test_data_file = os.path.join(gridftp_chroot_jail, "esg_dataroot", "test", "sftlf.nc")
     if not os.path.isfile(test_data_file):
         pybash.mkdir_p(os.path.join(gridftp_chroot_jail, "esg_dataroot", "test"))
         with open(test_data_file, "w") as test_file:
             test_file.write("test")
 
-    print "writing sanitized passwd file to [{}/etc/passwd]".format(gridftp_chroot_jail)
-    pybash.mkdir_p(os.path.join(gridftp_chroot_jail, "etc"))
+def copy_sanitized_passwd_file(gridftp_chroot_jail):
+    '''Write our trimmed version of /etc/passwd in the chroot location'''
     sanitized_passwd = os.path.join(gridftp_chroot_jail, "etc", "passwd")
-    if not os.path.exists(sanitized_passwd):
-        with open(sanitized_passwd, "w") as sanitized_passwd_file:
-            sanitized_passwd_file.write("root:x:0:0:root:/root:/bin/bash\n")
-            sanitized_passwd_file.write("bin:x:1:1:bin:/bin:/dev/null\n")
-            sanitized_passwd_file.write("ftp:x:14:50:FTP User:/var/ftp:/dev/null\n")
-            sanitized_passwd_file.write("globus:x:101:156:Globus System User:/home/globus:/bin/bash\n")
+    if os.path.exists(sanitized_passwd):
+        logger.info("Copying sanitized passwd file to [%s/etc/passwd]", gridftp_chroot_jail)
+        shutil.copyfile(os.path.join(current_directory, "../config/sanitized_passwd"), sanitized_passwd)
 
-    #Write our trimmed version of /etc/group in the chroot location
-    print "writing sanitized group file to [{}/etc/group]".format(gridftp_chroot_jail)
+def copy_sanitized_group_file(gridftp_chroot_jail):
+    '''Write our trimmed version of /etc/group in the chroot location'''
     sanitized_group = os.path.join(gridftp_chroot_jail, "etc", "group")
-    if not os.path.exists(sanitized_group):
-        with open(sanitized_group, "w") as santized_group_file:
-            santized_group_file.write("root:x:0:root\n")
-            santized_group_file.write("bin:x:1:root,bin,daemon\n")
-            santized_group_file.write("ftp:x:50:\n")
-            santized_group_file.write("globus:x:156:\n")
+    if os.path.exists(sanitized_group):
+        logger.info("Copying sanitized group file to [%s/etc/group]", gridftp_chroot_jail)
+        shutil.copyfile(os.path.join(current_directory, "../config/sanitized_group"), sanitized_group)
+
+def post_gridftp_jail_setup():
+    '''Write our trimmed version of /etc/password in the chroot location'''
+    gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
+    if not os.path.exists(gridftp_chroot_jail):
+        logger.error("%s does not exist. Exiting.", gridftp_chroot_jail)
+        raise RuntimeError()
+
+    create_test_data_file(gridftp_chroot_jail)
+    pybash.mkdir_p(os.path.join(gridftp_chroot_jail, "etc"))
+    copy_sanitized_passwd_file(gridftp_chroot_jail)
+    copy_sanitized_group_file(gridftp_chroot_jail)
 
 
 def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{}/gridftp_root".format(config["esg_root_dir"])):
@@ -177,17 +177,7 @@ def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{}/gridftp_root"
 
     dnode_root_dn_wildcard = '^.*$'
     esg_functions.call_binary("grid-mapfile-add-entry", ["-dn", dnode_root_dn_wildcard, "-ln", globus_sys_acct])
-
-    with open("/etc/gridftp.d/globus-esgf", "w") as globus_esgf_file:
-        globus_esgf_file.write("chroot_path {}\n".format(gridftp_chroot_jail))
-        globus_esgf_file.write("usage_stats_id 2811\n")
-        globus_esgf_file.write("usage_stats_target localhost:0\!all\n")
-        globus_esgf_file.write("acl customgsiauthzinterface\n")
-        gridftp_server_usage_log = "{}/esg-server-usage-gridftp.log".format(config["esg_log_dir"])
-        globus_esgf_file.write('$GLOBUS_USAGE_DEBUG "MESSAGES,{}\n"'.format(gridftp_server_usage_log))
-        globus_esgf_file.write('$GSI_AUTHZ_CONF "/etc/grid-security/authz_callouts_esgsaml.conf"\n')
-        globus_esgf_file.write('#$GLOBUS_GSI_AUTHZ_DEBUG_FILE "/var/log/gridftp-debug.log"\n')
-        globus_esgf_file.write('#$GLOBUS_GSI_AUTHZ_DEBUG_LEVEL "10"\n')
+    shutil.copyfile(os.path.join(current_directory, "../config/globus-esgf"), "/etc/gridftp.d/globus-esgf")
 
 def write_esgsaml_auth_conf():
     '''By making this a separate function it may be called directly in the
@@ -243,10 +233,78 @@ def gridftp_server_status():
     else:
         return False
 
-def check_gridftp_process(port_number):
+def check_gridftp_process():
     gridftp_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "globus-gridftp-server" in proc.info["name"]]
+    logger.info("gridftp_processes: %s", gridftp_processes)
     # print " gridftp-server process is running on port [${port}]..."
 
+def get_globus_username():
+    try:
+        globus_user = esg_property_manager.get_property("globus.user")
+    except ConfigParser.NoOptionError:
+        while True:
+            globus_user = raw_input("Please provide a Globus username: ")
+            if not globus_user:
+                print "Globus username cannot be blank."
+            else:
+                esg_property_manager.set_property("globus.user", globus_user)
+                break
+    return globus_user
+
+def get_globus_password():
+    try:
+        globus_password = esg_property_manager.get_property("globus.password")
+    except ConfigParser.NoOptionError:
+        while True:
+            globus_password = raw_input("Please enter your Globus password: ")
+            if not globus_password:
+                print "The Globus password can not be blank"
+                continue
+            else:
+                esg_property_manager.set_property("globus.password", globus_password)
+                break
+
+    return globus_password
+
+def copy_gcs_esgf_conf(gcs_esgf_path="/etc/globus-connect-server-esgf.conf"):
+    '''Setups up the globus-connect-server-esgf.conf config file to be used with the globus-connect-server-io-setup binary'''
+    shutil.copyfile(os.path.join(current_directory, "../config/globus-connect-server-esgf.conf"), gcs_esgf_path)
+
+    parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+    parser.optionxform = lambda option: option
+    parser.read(gcs_esgf_path)
+
+    try:
+        register_gridftp_answer = esg_property_manager.get_property("register.gridftp")
+    except ConfigParser.NoOptionError:
+        register_gridftp_answer = raw_input(
+            "Do you want to register the GridFTP server with Globus?: ") or "Y"
+
+    if register_gridftp_answer.lower() in ["y", "yes"]:
+        globus_setup = True
+    else:
+        globus_setup = False
+
+    if globus_setup:
+        globus_user = get_globus_username()
+        globus_password = get_globus_password()
+        parser.set('Globus', "User", globus_user)
+        parser.set('Globus', "Password", globus_password)
+
+
+        parser.set('Endpoint', "Name", esg_property_manager.get_property("node.short.name"))
+        parser.set('GridFTP', "Server", esg_functions.get_esgf_host())
+        gridftp_server_port_range = "50000,51000"
+        parser.set('GridFTP', "IncomingPortRange", gridftp_server_port_range)
+        gridftp_server_source_range = "50000,51000"
+        parser.set('GridFTP', "OutgoingPortRange", gridftp_server_source_range)
+        gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
+        parser.set('GridFTP', "SharingStateDir", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_user))
+
+        with open(gcs_esgf_path, "w") as conf_file:
+            parser.write(conf_file)
+
+        esg_functions.call_binary("globus-connect-server-io-setup", ["-c", "/etc/globus-connect-server-esgf.conf", "-v"])
 
 def setup_gcs_io(first_run=None):
     if first_run == "firstrun":
@@ -273,108 +331,11 @@ def setup_gcs_io(first_run=None):
     print 'This step can be skipped, but users will not be able to download datasets'
     print 'from the GridFTP server on the data node through the ESGF web interface.'
 
-    try:
-        register_gridftp_answer = esg_property_manager.get_property("register.gridftp")
-    except ConfigParser.NoOptionError:
-        register_gridftp_answer = raw_input(
-            "Do you want to register the GridFTP server with Globus?: ") or "Y"
+    copy_gcs_esgf_conf()
 
-    if register_gridftp_answer.lower() in ["y", "yes"]:
-        globus_setup = True
-    else:
-        globus_setup = False
-
-    if globus_setup:
-        try:
-            globus_user = esg_property_manager.get_property("globus.user")
-        except ConfigParser.NoOptionError:
-            while True:
-                globus_user = raw_input("Please provide a Globus username: ")
-                if not globus_user:
-                    print "Globus username cannot be blank."
-                else:
-                    esg_property_manager.set_property("globus.user", globus_user)
-                    break
-
-        try:
-            globus_password = esg_property_manager.get_property("globus.password")
-        except ConfigParser.NoOptionError:
-            while True:
-                globus_password = raw_input("Please enter your Globus password: ")
-                if not globus_password:
-                    print "The Globus password can not be blank"
-                    continue
-                else:
-                    esg_property_manager.set_property("globus.password", globus_password)
-                    break
-
-        try:
-            myproxy_hostname = esg_property_manager.get_property("myproxy.endpoint")
-        except ConfigParser.NoOptionError:
-            myproxy_hostname = esg_functions.get_esgf_host().upper()
-
-        parser = ConfigParser.SafeConfigParser(allow_no_value=True)
-        parser.read("/etc/globus-connect-server-esgf.conf")
-
-        try:
-            parser.add_section("Globus")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('Globus', "User", globus_user)
-        parser.set('Globus', "Password", globus_password)
-
-        try:
-            parser.add_section("Endpoint")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('Endpoint', "Name", esg_property_manager.get_property("node.short.name"))
-        parser.set('Endpoint', "Public", "True")
-
-        try:
-            parser.add_section("Security")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('Security', "FetchCredentialFromRelay", "False")
-        parser.set('Security', "CertificateFile", "/etc/grid-security/hostcert.pem")
-        parser.set('Security', "KeyFile", "/etc/grid-security/hostkey.pem")
-        parser.set('Security', "TrustedCertificateDirectory", "/etc/grid-security/certificates/")
-        parser.set('Security', "IdentityMethod", "MyProxy")
-        parser.set('Security', "AuthorizationMethod", "Gridmap")
-
-        try:
-            parser.add_section("GridFTP")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('GridFTP', "Server", esg_functions.get_esgf_host())
-        gridftp_server_port_range = "50000,51000"
-        parser.set('GridFTP', "IncomingPortRange", gridftp_server_port_range)
-        gridftp_server_source_range = "50000,51000"
-        parser.set('GridFTP', "OutgoingPortRange", gridftp_server_source_range)
-        parser.set('GridFTP', "RestrictPaths", "R/,N/etc,N/tmp,N/dev")
-        parser.set('GridFTP', "Sharing", "False")
-        parser.set('GridFTP', "SharingRestrictPaths", "R/")
-        gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
-        parser.set('GridFTP', "SharingStateDir", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_user))
-
-        with open("/etc/globus-connect-server-esgf.conf", "w") as config_file_object:
-            parser.write(config_file_object)
-
-        esg_functions.call_binary("globus-connect-server-io-setup", ["-c", "/etc/globus-connect-server-esgf.conf", "-v"])
-
-    # Create a substitution of GCS configuration files for GridFTP server
     pybash.mkdir_p("/etc/gridftp.d")
+    copy_globus_connect_esgf_gridftp()
 
-    with open("/etc/gridftp.d/globus-connect-esgf", "w") as globus_connect_file:
-        globus_connect_file.write("port_range 50000,51000\n")
-        globus_connect_file.write("$GLOBUS_TCP_SOURCE_RANGE 50000,51000\n")
-        globus_connect_file.write("restrict_paths R/,N/etc,N/tmp,N/dev\n")
-        globus_connect_file.write("$GRIDMAP '/etc/grid-security/grid-mapfile'\n")
-        globus_connect_file.write("$X509_USER_CERT '/etc/grid-security/hostcert.pem'\n")
-        globus_connect_file.write("$X509_USER_KEY '/etc/grid-security/hostkey.pem'\n")
-        globus_connect_file.write("log_single /var/log/gridftp.log\n")
-        globus_connect_file.write("log_level ALL\n")
-        globus_connect_file.write("$X509_CERT_DIR '/etc/grid-security/certificates'\n")
+def copy_globus_connect_esgf_gridftp():
+    '''Create a substitution of GCS configuration files for GridFTP server'''
+    shutil.copyfile(os.path.join(current_directory, "../config/globus-connect-esgf_gridftp"), "/etc/gridftp.d/globus-connect-esgf")

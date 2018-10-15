@@ -308,7 +308,7 @@ def edit_pam_pgsql_conf():
         file_handle.write(filedata)
 
 def fetch_etc_pam_d_myproxy():
-    myproxy_file "/etc/pam.d/myproxy"
+    myproxy_file = "/etc/pam.d/myproxy"
     logger.info("Copying pam's MyProxy resource file to %s", myproxy_file)
     shutil.copyfile(os.path.join(current_directory, "myproxy_conf_files/etc_pam.d_myproxy"), myproxy_file)
 

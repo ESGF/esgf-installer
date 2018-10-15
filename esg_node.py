@@ -97,21 +97,6 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8")
         esg_property_manager.set_property("esg.root.url", selected_mirror)
         esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
 
-def download_esg_installarg(esg_dist_url):
-    ''' Downloading esg-installarg file '''
-    if not os.path.isfile(config["esg_installarg_file"]) or force_install or os.path.getmtime(config["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
-        esg_installarg_file_name = pybash.trim_string_from_head(
-            config["esg_installarg_file"])
-        esg_functions.download_update(config["esg_installarg_file"], os.path.join(
-            esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
-        try:
-            if not os.path.getsize(config["esg_installarg_file"]) > 0:
-                os.remove(config["esg_installarg_file"])
-            pybash.touch(config["esg_installarg_file"])
-        except IOError:
-            logger.exception("Unable to access esg-installarg file")
-
-
 def get_installation_type(script_version):
     '''Determining if devel or master directory of the ESGF distribution mirror
     will be use for download of binaries'''
@@ -295,7 +280,6 @@ def main():
 
     set_esg_dist_url(install_type)
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    download_esg_installarg(esg_dist_url)
 
     logger.debug("node_type_list: %s", node_type_list)
 
@@ -407,7 +391,8 @@ def remove_unused_esgf_webapps():
 def install_bash_completion_file(esg_dist_url):
     '''Install bash_completion file from distribution mirror'''
     if os.path.exists("/etc/bash_completion") and not os.path.exists("/etc/bash_completion.d/esg-node"):
-        esg_functions.download_update("/etc/bash_completion.d/esg-node", "{}/esgf-installer/esg-node.completion".format(esg_dist_url))
+        current_directory = os.path.join(os.path.dirname(__file__))
+        shutil.copyfile(os.path.join(current_directory, "../config/esg-node.completion"), "/etc/bash_completion.d/esg-node")
 
 def write_script_version_file(script_version):
     '''Write version file'''

@@ -1,0 +1,246 @@
+#!/bin/bash
+
+#***************************************************************************
+#                                                                          *
+#  Organization: Earth System Grid Federation                              *
+#	Project: Earth Systems Grid Fed (ESGF) Node Software Stack        *
+#  First Author: Gavin M. Bell (gavin@llnl.gov)                            *
+#                                                                          *
+#***************************************************************************
+#                                                                          *
+#   Copyright (c) 2009, Lawrence Livermore National Security, LLC.         *
+#   Produced at the Lawrence Livermore National Laboratory                 *
+#   LLNL-CODE-420962                                                       *
+#                                                                          *
+#   All rights reserved. This file is part of the:                         *
+#   Earth System Grid (ESG) Data Node Software Stack, Version 1.0          *
+#                                                                          *
+#   For details, see http://esg-repo.llnl.gov/esg-node/                    *
+#   Please also read this link                                             *
+#    http://esg-repo.llnl.gov/LICENSE                                      *
+#                                                                          *
+#   * Redistribution and use in source and binary forms, with or           *
+#   without modification, are permitted provided that the following        *
+#   conditions are met:                                                    *
+#                                                                          *
+#   * Redistributions of source code must retain the above copyright       *
+#   notice, this list of conditions and the disclaimer below.              *
+#                                                                          *
+#   * Redistributions in binary form must reproduce the above copyright    *
+#   notice, this list of conditions and the disclaimer (as noted below)    *
+#   in the documentation and/or other materials provided with the          *
+#   distribution.                                                          *
+#                                                                          *
+#   Neither the name of the LLNS/LLNL nor the names of its contributors    *
+#   may be used to endorse or promote products derived from this           *
+#   software without specific prior written permission.                    *
+#                                                                          *
+#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS    *
+#   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT      *
+#   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS      *
+#   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE    *
+#   LIVERMORE NATIONAL SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR     *
+#   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,           *
+#   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT       *
+#   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF       *
+#   USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND    *
+#   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,     *
+#   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT     *
+#   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     *
+#   SUCH DAMAGE.                                                           *
+#                                                                          *
+#**************************************************************************/
+
+envfile="/etc/esg.env"
+[ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
+
+DEBUG=${DEBUG:-0}
+VERBOSE=${VERBOSE:-0}
+version=0.0.1
+verbatim=0
+
+esgf_policy_check() {
+    [ ! -e "${envfile}" ] && printf "Sorry must be able to source ${envfile}, aborting..." && exit 1
+
+    local esg_dist_url_root=http://198.128.245.140/dist
+    local esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+
+    #Determining the security jar version and name...
+    local security_version=$(sed -n 's/.*esgf-security=\(.[^ ]*\).*/\1/p' $ESGF_HOME/esgf-install-manifest)
+    [ -z "${security_version}" ] && echo "ERROR: Unable to determine security library version for policy check" && exit 1
+    local security_jarfile=esgf-security-${security_version}.jar
+
+    #Determining the node manager's common jar version and name...
+    local node_manager_version=$(sed -n 's/.*esgf-node-manager=\(.[^ ]*\).*/\1/p' $ESGF_HOME/esgf-install-manifest)
+    [ -z "${node_manager_version}" ] && echo "ERROR: Unable to determine node manager version for policy check" && exit 1
+    local manager_common_jarfile=esgf-node-manager-common-${node_manager_version}.jar
+
+    #Determining the commons logging jar and version to use (referencing the one in the node manager's lib)...
+    local node_manager_service_app_home=$(sed -n 's@^[ ]*node.manager.service.app.home[ ]*=[ ]*\(.*\)$@\1@p' $ESGF_HOME/config/esgf.properties)
+    local commons_logging_version=$(ls ${node_manager_service_app_home}/WEB-INF/lib/commons-logging-*.jar | sort -r | head -n1 | sed -n 's#.*commons-logging-\([0-9]\+\.[0-9]\+\.[0-9]\+\).jar#\1#p')
+
+    #------------------
+    #Fetching necessary files for PolicyChecker execution...
+    #------------------
+
+    pushd $ESGF_HOME/tools >& /dev/null
+    #http://rainbow.llnl.gov/dist/devel/esgf-security/esgf-security-1.5.2.jar
+    checked_get ${security_jarfile} ${esg_dist_url}/esgf-security/${security_jarfile} $((force)) >& /dev/null
+    (( $? > 1 )) && echo " ERROR: Could not download policy check utility... aborting." && popd && return 1
+    ((VERBOSE)) && echo "  $JAVA_HOME/bin/java -jar ${security_jarfile} $@"
+
+    #http://rainbow.llnl.gov/dist/devel/esgf-node-manager/esgf-node-manager-common-0.6.8.jar
+    checked_get ${manager_common_jarfile} ${esg_dist_url}/esgf-node-manager/${manager_common_jarfile} $((force)) >& /dev/null
+    (( $? > 1 )) && echo " ERROR: Could not download policy check utility... aborting." && popd && return 1
+    ((VERBOSE)) && echo "  $JAVA_HOME/bin/java -jar ${manager_common_jarfile} $@"
+
+    #------------------
+    #Setting up classpath and excuting PolicyChecker program...
+    #------------------
+
+    CLASSPATH=${node_manager_service_app_home}/WEB-INF/lib/commons-logging-${commons_logging_version}.jar:$ESGF_HOME/tools/esgf-node-manager-common-${node_manager_version}.jar:$ESGF_HOME/tools/esgf-security-${security_version}.jar $JAVA_HOME/bin/java esg.common.security.PolicyChecker $@ 2>&1 | tee /tmp/${0##*/}.out
+    popd >& /dev/null
+    return 0
+}
+
+#---------
+# Utility fuction (cut and past from esg-node script)
+
+# This will no longer need to be here once the esg-node script has
+# been split out into sourceable function scripts
+
+#---------
+
+check_for_update() {
+    local local_file
+    local remote_file
+    if (( $# == 1 )); then
+	remote_file=${1}
+	local_file=$(readlink -f ${1##*/})
+    elif (( $# >= 2 )); then
+	local_file=${1}
+	remote_file=${2}
+    else
+	echo "function \"checked_for_update\":	Called with incorrect number of args! (fatal)"
+	exit 1
+    fi
+
+    [ ! -e ${local_file} ] && echo " Hmmm... Could not find local file ${local_file}" && return 0
+   #[ ! -x ${local_file} ] && echo " Hmmm... local file ${local_file} not executible" && chmod 755 ${local_file}
+    diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+    [ $? != 0 ] && echo " Update Available @ ${remote_file}" && return 0
+    echo " ==> ${local_file} is up to date"
+    return 1
+}
+
+checked_get() {
+    local force_get=${3:-0}
+    local make_backup_file=${4:-1} #default to make backup *.bak files if necessary
+
+    local local_file
+    local remote_file
+    if (( $# == 1 )); then
+	remote_file=${1}
+	local_file=${1##*/}
+    elif (( $# >= 2 )); then
+	local_file=${1}
+	remote_file=${2}
+    else
+	echo "function \"checked_get\":	 Called with incorrect number of args! (fatal) args[$@]"
+	echo " usage: checked_get [<local dest>] <remote source> [force_get (0*|1)] [make_backup_file(0|1*)]"
+	exit 1
+    fi
+
+    if ((use_local_files)) && [ -e "${local_file}" ]; then
+        printf "
+    ***************************************************************************
+    ALERT....
+    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
+    file: $(readlink -f ${local_file})
+    ***************************************************************************\n\n"
+        return 0
+    fi
+
+    if ((force_get == 0)); then
+	check_for_update $@
+	[ $? != 0 ] && return 1
+    fi
+
+    if [ -e ${local_file} ] && ((make_backup_file)) ; then
+	cp -v ${local_file} ${local_file}.bak
+	chmod 600 ${local_file}.bak
+    fi
+    echo "Fetching file from ${remote_file} -to-> ${local_file}"
+    wget --no-check-certificate --progress=bar:force -O ${local_file} ${remote_file}
+    [ $? != 0 ] && echo " ERROR: Problem pulling down [${remote_file##*/}] from esg distribution site" && return 2
+    diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+    [ $? != 0 ] && echo " WARNING: Could not verify file! ${local_file}" && return 3
+    echo "[VERIFIED]"
+    return 0
+}
+
+esgf_policy_check_usage() {
+    printf "
+   Usage:
+
+      -----------------------------------------------------
+      > ${0##*/} [--help] [--force] [--devel] [--verbose] [--debug] <resource>
+      -----------------------------------------------------
+
+      (optional flags)
+      --devel   - pull wrapped jar file from development distribution area
+      --force   - force download of wrapped jar into tools dir regardless of checksum validation
+      --verbose - provide more output
+      --debug   - provide debug output
+      --help    - this usage output
+      --version - version information
+
+      Ex:
+      > ${0##*/} https://resource_host/some/path/resource_file.nc
+
+"
+    exit 0
+}
+
+############################################
+# Main
+############################################
+main() {
+    myargs=""
+    while [ -n "$1" ]; do
+        case $1 in
+	    -v | --version)
+                echo "Version ${version}"
+	        echo "Earth Systems Grid Federation (http://esgf.org)"
+	        echo "ESGF P2P Security Resource/Policy Check Utility"
+	        echo ""
+	        exit 0
+                ;;
+            --help)
+                esgf_policy_check_usage
+                ;;
+            --force)
+                force=1
+                ;;
+            --devel)
+                devel=1
+                ;;
+            --verbose)
+                VERBOSE=1
+                ;;
+            --debug)
+                DEBUG=1
+                ;;
+            *)
+                myargs=( ${myargs[@]} $1)
+                ;;
+        esac
+        shift
+    done
+
+    ((DEBUG)) && echo "args = [${myargs[@]}]"
+    esgf_policy_check ${myargs[@]}
+}
+
+main $@
+exit $?

@@ -256,22 +256,15 @@ def clean_security_webapp_subsystem():
 def fetch_user_migration_launcher(node_type_list, esg_dist_url):
     if "IDP" in node_type_list:
         with pybash.pushd(config["scripts_dir"]):
-            security_web_service_name = "esgf-security"
-            esgf_user_migration_launcher = "esgf-user-migrate"
-            esgf_user_migration_launcher_url = "{}/{}/{}".format(esg_dist_url, security_web_service_name, esgf_user_migration_launcher)
-            esg_functions.download_update(esgf_user_migration_launcher, esgf_user_migration_launcher_url)
-            os.chmod(esgf_user_migration_launcher, 0755)
+            shutil.copyfile(os.path.join(current_directory, "esgf_security_scripts/esgf-user-migrate"), "esgf-user-migrate")
+            os.chmod("esgf-user-migrate", 0755)
     else:
         logger.debug("This function, fetch_user_migration_launcher(), is not applicable to current node type (%s)", set(node_type_list))
 
 def fetch_policy_check_launcher(node_type_list, esg_dist_url):
     if "IDP" in node_type_list and "DATA" in node_type_list:
         with pybash.pushd(config["scripts_dir"]):
-            security_web_service_name = "esgf-security"
-            esgf_policy_check_launcher = "esgf-policy-check"
-            esgf_user_migration_launcher = "esgf-user-migrate"
-            esgf_policy_check_launcher_url = "{}/{}/{}".format(esg_dist_url, security_web_service_name, esgf_policy_check_launcher)
-            esg_functions.download_update(esgf_policy_check_launcher, esgf_policy_check_launcher_url)
-            os.chmod(esgf_user_migration_launcher, 0755)
+            shutil.copyfile(os.path.join(current_directory, "esgf_security_scripts/esgf-policy-check"), "esgf-policy-check")
+            os.chmod("esgf-policy-check", 0755)
     else:
         logger.debug("This function, fetch_policy_check_launcher(), is not applicable to current node type (%s)", set(node_type_list))

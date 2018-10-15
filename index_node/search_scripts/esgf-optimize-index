@@ -1,0 +1,78 @@
+#!/bin/bash
+
+lock_dir=/var/lock
+lock_file=${lock_dir}/${0##*/}.lock
+
+
+clear_lock() {
+    [ -e "${lock_file}" ] && rm ${lock_file} && ( ((debug)) && echo "cleared lockfile: ${lock_file}" )
+    exit 0
+}
+
+optimize_index() {
+    if ((!force)) && [ -e "${lock_file}" ]; then
+        echo "Aborting: lock file detected (${lock_file}), indicates that process already running"
+        exit 1
+    fi
+    trap clear_lock INT TERM
+
+    local badcounter=0
+    touch ${lock_file}
+    [ $? != 0 ] && echo "Could not write lock file... " && exit 1
+
+    local status
+
+    local solr_replica_ports=($(sed -n 's/.*:\([0-9]*\).*/\1/p' ${esg_config_dir:-/esg/config}/esgf_shards.config | uniq | xargs))
+    local solr_cores=(${solr_cores[@]:-datasets files aggregations})
+
+    for ((i=0;i<${#solr_replica_ports[@]};i++)) ; do
+        for ((j=0;j<${#solr_cores[@]};j++)) ; do
+            echo -n "optimizing ${solr_replica_ports[i]} ->  ${solr_cores[j]}... "
+            status=-1
+            status=$(curl -s http://localhost:${solr_replica_ports[i]}/solr/${solr_cores[j]}/update?commit=true -H "Content-Type:text/xml" --data-binary '<optimize/>' | sed -n 's/.*status">\([0-9]\)<.*/\1/p')
+            if ((status == 0)); then
+                echo "[OK]"
+            else
+                ((badcounter++))
+                echo "[FAIL]"
+                return ${badcounter}
+            fi
+        done
+    done
+
+    ((debug)) && echo "returning ${badcounter}"
+    return ${badcounter}
+}
+
+
+debug=0
+force=0
+my_args=()
+
+while [ -n "$1" ] ; do
+    case $1 in
+        --help | -h)
+            echo
+            echo "  %> $0 [--force]"
+            echo
+            exit 0
+            ;;
+        --force)
+            force=1
+            ;;
+        --debug)
+            debug=1
+            ;;
+        *)
+            myargs=(${myargs[@]} $1)
+            ;;
+    esac
+    shift
+done
+
+echo "Beginning index optimization... @ $(date)"
+
+optimize_index ${my_args[@]}
+echo "${0##*/} done"
+trap - INT TERM
+clear_lock

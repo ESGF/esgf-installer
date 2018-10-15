@@ -29,6 +29,7 @@ class FileManager(Generic):
 
             filepath = self._extract(source, component)
             self._chown(component, filepath)
+            self._chmod(component, filepath)
 
     def _chmod(self, component, filepath):
         try:

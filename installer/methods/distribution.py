@@ -30,6 +30,14 @@ class FileManager(Generic):
             filepath = self._extract(source, component)
             self._chown(component, filepath)
 
+    def _chmod(self, component, filepath):
+        try:
+            mode = component["mode"]
+        except KeyError:
+            pass
+        else:
+            os.chmod(filepath, mode)
+
     def _chown(self, component, filepath):
         try:
             owner_user = component["owner_user"]

@@ -11,46 +11,16 @@ class Generic(object):
         self._uninstall()
 
     def _uninstall(self):
-        for component in self.components:
-            try:
-                component.uninstall()
-            except AttributeError:
-                self.log.warning("Do not know how to uninstall %s", component.name)
-
-    def pre_install(self):
-        ''' Entry function to perform pre installation '''
-        self._pre_install()
+        ''' Generic version, should be reimplemented by children '''
+        pass
 
     def install(self, names):
         ''' Entry function to perform an installation '''
         self._install(names)
 
-    def post_install(self):
-        ''' Entry function to perform post installation '''
-        self._post_install()
-
-    def _pre_install(self):
-        ''' Allows for components to take actions before installation '''
-        for component in self.components:
-            try:
-                component.pre_install()
-            except AttributeError:
-                continue
-
     def _install(self, names):
         ''' Generic version, should be reimplemented by children '''
-        for component in self.components:
-            if component.name not in names:
-                continue
-            component.install()
-
-    def _post_install(self):
-        ''' Allows for components to take actions after installation '''
-        for component in self.components:
-            try:
-                component.post_install()
-            except AttributeError:
-                continue
+        pass
 
     def statuses(self):
         ''' Entry function to get the statuses '''

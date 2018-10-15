@@ -5,7 +5,7 @@ import logging
 from backports import configparser
 
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
-from .parameters import ESGF_PARAMS
+from .parameters import PARAMS
 
 class Installer(object):
     '''
@@ -207,12 +207,19 @@ class Installer(object):
 
     def _interpolate(self, requirements):
 
-        string_only = ESGF_PARAMS
+        string_only = {}
         for name in requirements:
             config = requirements[name]
             string_only[name] = {"name": name}
             for param in config:
-                if isinstance(param, basestring):
+                if isinstance(config[param], basestring):
+                    string_only[name][param] = config[param]
+
+        for name in PARAMS:
+            config = PARAMS[name]
+            string_only[name] = {"name": name}
+            for param in config:
+                if isinstance(config[param], basestring):
                     string_only[name][param] = config[param]
 
         parser = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
@@ -220,6 +227,9 @@ class Installer(object):
 
         for name in parser:
             for param in parser[name]:
-                requirements[name][param] = parser[name][param]
+                try:
+                    requirements[name][param] = parser[name][param]
+                except KeyError:
+                    pass
 
         return requirements

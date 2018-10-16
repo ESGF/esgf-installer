@@ -111,19 +111,20 @@ def clone_slcs():
 
 #TODO: convert slcs to use Ansible python API
 def setup_slcs():
+    if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
+        try:
+            install_slcs = esg_property_manager.get_property("update.slcs")
+        except ConfigParser.NoOptionError:
+            install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "n"
+
+        if install_slcs.lower() in ["n", "no"]:
+            print "Skipping installation of SLCS server"
+            return
+
     '''Setup the slcs_server'''
     print "*******************************"
     print "Setting up SLCS Oauth Server"
     print "*******************************"
-
-    try:
-        install_slcs = esg_property_manager.get_property("update.slcs")
-    except ConfigParser.NoOptionError:
-        install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "n"
-
-    if install_slcs.lower() in ["n", "no"]:
-        print "Skipping installation of SLCS server"
-        return
 
     esg_functions.call_binary("yum", ["-y", "install", "ansible"])
 
@@ -166,7 +167,6 @@ def setup_slcs():
             pybash.mkdir_p("/usr/local/esgf-slcs-server")
             esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
 
-            #TODO: check if there's an ansible Python module
             esg_functions.call_binary("ansible-playbook", ["-i", "playbook/inventories/localhost", "-e", "@playbook/overrides/production_venv_only.yml", "playbook/playbook.yml"])
 
 def main():

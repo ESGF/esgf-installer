@@ -85,17 +85,15 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
 def remove_example_webapps():
     '''remove Tomcat example applications'''
     with pybash.pushd("/usr/local/tomcat/webapps"):
-        try:
-            shutil.rmtree("docs")
-            shutil.rmtree("examples")
-            shutil.rmtree("host-manager")
-            shutil.rmtree("manager")
-        except OSError, error:
-            if error.errno == errno.ENOENT:
-                pass
-            else:
-                logger.exception()
-
+        webapps = os.listdir("/usr/local/tomcat/webapps")
+        for webapp in webapps:
+            try:
+                shutil.rmtree(webapp)
+            except OSError, error:
+                if error.errno == errno.ENOENT:
+                    pass
+                else:
+                    raise
 
 def copy_config_files():
     '''copy custom configuration

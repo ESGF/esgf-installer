@@ -101,13 +101,11 @@ def setup_idp():
     write_idp_install_log(idp_service_app_home)
     esg_functions.write_security_lib_install_log()
 
-    # esg_tomcat_manager.start_tomcat()
-
 def clone_slcs():
     if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
         print "SLCS repo already exists.  Skipping cloning from Github."
         return
-    Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
+    Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", "/usr/local/src/esgf-slcs-server-playbook")
 
 #TODO: convert slcs to use Ansible python API
 def setup_slcs():
@@ -126,7 +124,7 @@ def setup_slcs():
     print "Setting up SLCS Oauth Server"
     print "*******************************"
 
-    esg_functions.call_binary("yum", ["-y", "install", "ansible"])
+    esg_functions.call_binary("yum", ["-y", "-q", "install", "epel-release", "ansible"])
 
     #create slcs Database
     esg_postgres.create_database("slcsdb")

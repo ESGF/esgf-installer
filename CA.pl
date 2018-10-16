@@ -136,7 +136,7 @@ foreach (@ARGV) {
 	    system ("$CA -policy policy_anything -infiles newreq.pem");
 	    $RET=$?;
 	} elsif (/^(-sign|-signreq)$/) {
-	    system ("$CA -policy policy_anything -passin pass:placeholderpass -out newcert.pem " .
+	    system ("$CA -policy policy_anything -passin pass:placeholderpass -extfile altnames -out newcert.pem " .
 							"-infiles newreq.pem");
 	    $RET=$?;
 	    print "Signed certificate is in newcert.pem\n";

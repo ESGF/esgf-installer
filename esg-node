@@ -2029,7 +2029,7 @@ setup_temp_ca() {
 	[ -z "${esgf_host}" ] && get_property esgf_host
 	hostname=$esgf_host;
 	mkdir -p /etc/tempcerts;
-	cd /etc/tempcerts && rm -rf CA; rm -f *.pem; rm -f *.gz; rm -f *.ans; rm -f *.tmpl
+	cd /etc/tempcerts && rm -rf CA; rm -f *.pem; rm -f *.gz; rm -f *.ans; rm -f *.tmpl altnames
 	mkdir CA
 	write_ca_ans_templ >setupca.ans.tmpl
 	write_reqhost.ans_templ >reqhost.ans.tmpl
@@ -2042,6 +2042,7 @@ setup_temp_ca() {
 	perl CA.pl -newca <setupca.ans
 	openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
 	perl CA.pl -newreq-nodes <reqhost.ans
+    echo "subjectAltName=DNS:$hostname" >altnames
 	perl CA.pl -sign <setuphost.ans
 	openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem
 	cp CA/private/cakey.pem cakey.pem

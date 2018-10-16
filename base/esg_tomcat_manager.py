@@ -96,42 +96,6 @@ def remove_example_webapps():
             else:
                 logger.exception()
 
-def setup_root_app():
-    '''Install ROOT appplication'''
-    try:
-        if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
-            print "ROOT app in place.."
-            return
-    except IOError:
-        print "Don't see ESGF ROOT web application"
-
-    try:
-        esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
-    except OSError, error:
-        if error.errno == errno.ENOENT:
-            pass
-
-
-    print "*******************************"
-    print "Setting up Apache Tomcat...(v{}) ROOT webapp".format(config["tomcat_version"])
-    print "*******************************"
-
-    pybash.mkdir_p(config["workdir"])
-    with pybash.pushd(config["workdir"]):
-        esg_root_url = esg_property_manager.get_property("esg.root.url")
-        root_app_dist_url = "{}/ROOT.tgz".format(esg_root_url)
-        esg_functions.download_update("ROOT.tgz", root_app_dist_url)
-
-        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/tomcat/webapps")
-
-        if os.path.exists("/usr/local/tomcat/webapps/esgf-node-manager"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html.nm", "/usr/local/tomcat/webapps/ROOT/index.html")
-        if os.path.exists("/usr/local/tomcat/webapps/esgf-web-fe"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html.fe", "/usr/local/tomcat/webapps/ROOT/index.html")
-
-        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
-        print "ROOT application \"installed\""
-
 
 def copy_config_files():
     '''copy custom configuration
@@ -454,9 +418,7 @@ def main():
         copy_config_files()
         configure_tomcat()
         remove_example_webapps()
-        setup_root_app()
         migrate_tomcat_credentials_to_esgf()
-        # start_tomcat()
         write_tomcat_install_log()
 
 

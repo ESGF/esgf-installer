@@ -296,7 +296,7 @@ def define_acceptable_arguments():
     parser.add_argument("--get-idp-peer", dest="getidppeer", help="Displays the IDP peer node name", action="store_true")
     parser.add_argument("--set-idp-peer", "--set-admin-peer", dest="setidppeer", help="Selects the IDP peer node", action="store_true")
     parser.add_argument("--get-index-peer", dest="getindexpeer", help="Displays the index peer node name", action="store_true")
-    parser.add_argument("--set-index-peer", dest="setindexpeer", help="Sets the (index peer) node to which we will publish", nargs="1")
+    parser.add_argument("--set-index-peer", dest="setindexpeer", help="Sets the (index peer) node to which we will publish", nargs="+")
     parser.add_argument("--set-publication-target", dest="setpublicationtarget", help="Sets the publication target", action="store_true")
     parser.add_argument("--get-default-peer", dest="getdefaultpeer", help="Displays the default peer", action="store_true")
     parser.add_argument("--set-default-peer", dest="setdefaultpeer", help="Sets the default peer", action="store_true")

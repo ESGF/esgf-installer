@@ -7,7 +7,6 @@ from .methods.conda import Conda
 from .methods.distribution import FileManager
 from .methods.easy_install import EasyInstall
 from .methods.git import Git
-from .methods.make import Make
 from .methods.package_manager import PackageManager, Pip
 from .methods.users_groups import UserMethod, GroupMethod
 
@@ -238,11 +237,61 @@ _DATA = {
     }
 }
 _INDEX = {
-    "transfer_api_client_python-mkproxy": {
-        "method": Make,
+    "cog": {
+        "method": Git,
+        "requires": ["httpd"],
+        "source": "https://github.com/William-Hill/COG.git",
+        "dest": path.join(os.sep, "usr", "local", "cog", "cog-install"),
+        "tag": "ESGF_3.0",
+        "owner_user": "apache",
+        "owner_group": "apache"
+    },
+    "cog-requirements": {
+        "method": Command,
+        "requires": ["cog"],
+        "command": "pip",
+        "args": ["-r", "requirements.txt"],
+        "working_dir": "${cog:dest}"
+    },
+    "cog-setup-install": {
+        "method": Command,
+        "requires": ["cog"],
+        "command": "python",
+        "args": ["setup.py", "install"],
+        "working_dir": "${cog:dest}"
+    },
+    "cog-setup-setup": {
+        "method": Command,
+        "requires": ["cog"],
+        "command": "python",
+        "args": ["setup.py", "setup_cog", "--esgf=true"],
+        "working_dir": "${cog:dest}"
+    },
+    "cog-setup-manage": {
+        "method": Command,
+        "requires": ["cog"],
+        "command": "python",
+        "args": ["manage.py", "collectstatic", "--no-input"],
+        "working_dir": "${cog:dest}"
+    },
+    "transfer_api_client_python": {
+        "method": Git,
+        "requires": ["cog"],
         "source": "https://github.com/globusonline/transfer-api-client-python.git",
-        "dest": "/usr/local/cog/transfer-api-client-python",
-        "make_dir": "${dest}/mkproxy"
+        "dest": path.join(os.sep, "usr", "local", "cog", "transfer-api-client-python")
+    },
+    "make_transfer_api_client": {
+        "method": Command,
+        "requires": ["transfer_api_client_python"],
+        "command": "make",
+        "working_dir": "${transfer_api_client_python:dest}"
+    },
+    "install_transfer_api_client": {
+        "method": Command,
+        "requires": ["make_transfer_api_client"],
+        "command": "make",
+        "args": ["install"],
+        "working_dir": "${transfer_api_client_python:dest}"
     },
     "mod-wsgi": {
         "method": Pip,

@@ -3,6 +3,7 @@ from plumbum import local
 from plumbum import TEE
 
 from .generic import Generic
+from ..utils import pushd
 
 class Command(Generic):
     ''' Install components using and arbibtrary command '''
@@ -14,14 +15,21 @@ class Command(Generic):
         for component in self.components:
             if component["name"] not in names:
                 continue
-            cmd = local.get(component["command"])
             try:
-                args = component["args"]
+                with pushd(component["working_dir"]):
+                    self._execute(component)
             except KeyError:
-                result = cmd.run_tee()
-            else:
-                result = cmd.__getitem__(args) & TEE
-            self.executed.add(component["name"])
+                self._execute(component)
+
+    def _execute(self, component):
+        cmd = local.get(component["command"])
+        try:
+            args = component["args"]
+        except KeyError:
+            result = cmd.run_tee()
+        else:
+            result = cmd.__getitem__(args) & TEE
+        self.executed.add(component["name"])
 
     def _uninstall(self):
         pass

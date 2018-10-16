@@ -14,6 +14,7 @@ from time import sleep
 import yaml
 import requests
 import psutil
+from lxml import etree
 from clint.textui import progress
 from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions
@@ -66,6 +67,19 @@ def download_tomcat():
 
     return True
 
+def remove_default_error_page():
+    '''Removes the default Tomcat error page.
+    From https://www.owasp.org/index.php/Securing_tomcat:
+    The default error page shows a full stacktrace which is a disclosure of sensitive information. Place the following within the web-app tag (after the welcome-file-list tag is fine). The following solution is not ideal as it produces a blank page because Tomcat cannot find the file specified, but without a better solution this, at least, achieves the desired result. A well configured web application will override this default in CATALINA_HOME/webapps/APP_NAME/WEB-INF/web.xml so it won't cause problems.'''
+
+    tree = etree.parse("/usr/local/tomcat/conf/web.xml")
+    root = tree.getroot()
+    error_subelement = etree.SubElement(root, "error-page")
+    exception_subelement = etree.SubElement(error_subelement, "exception-type")
+    exception_subelement.text = "java.lang.Throwable"
+    location_subelement = etree.SubElement(error_subelement, "location")
+    location_subelement.text = "/error.jsp"
+    tree.write(open("/usr/local/tomcat/conf/web.xml", "w"), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 def extract_tomcat_tarball(dest_dir="/usr/local"):
     '''Extract tomcat tarball that was downloaded from the distribution mirror'''
@@ -80,7 +94,18 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
             os.remove(
                 "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
         except OSError, error:
-            print "error:", error
+            logger.error(error)
+
+        #From https://www.owasp.org/index.php/Securing_tomcat
+        tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
+        tomcat_group_id = grp.getgrnam("tomcat").gr_gid
+        os.chown("/usr/local/tomcat", tomcat_user_id, tomcat_group_id)
+
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/conf", 0400)
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/logs", 0300)
+        remove_default_error_page()
+
+
 
 def remove_example_webapps():
     '''remove Tomcat example applications'''
@@ -152,8 +177,6 @@ def create_tomcat_user():
     tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
     tomcat_group_id = grp.getgrnam("tomcat").gr_gid
     esg_functions.change_ownership_recursive(tomcat_directory, tomcat_user_id, tomcat_group_id)
-
-    os.chmod("/usr/local/tomcat/webapps", 0775)
 
 
 def start_tomcat():
@@ -410,8 +433,8 @@ def main():
     print "Setting up Tomcat {TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
     print "******************************* \n"
     if download_tomcat():
-        extract_tomcat_tarball()
         create_tomcat_user()
+        extract_tomcat_tarball()
         os.environ["CATALINA_PID"] = "/tmp/catalina.pid"
         copy_config_files()
         configure_tomcat()

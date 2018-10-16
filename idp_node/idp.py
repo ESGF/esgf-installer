@@ -2,6 +2,7 @@ import os
 import zipfile
 import logging
 import ConfigParser
+import distutils.spawn
 import stat
 import yaml
 from git import Repo
@@ -156,6 +157,7 @@ def setup_slcs():
             db_password = esg_functions.get_postgres_password()
             production_venv_only["esgf_slcsdb"]["password"] = db_password
             production_venv_only["esgf_userdb"]["password"] = db_password
+            production_venv_only["virtualenv_command"] = distutils.spawn.find_executable("virtualenv")
 
             with open('playbook/overrides/production_venv_only.yml', 'w') as yaml_file:
                 yaml.dump(production_venv_only, yaml_file)

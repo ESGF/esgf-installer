@@ -394,7 +394,8 @@ def process_arguments():
         logger.debug("args: %s", args)
         node_type_list = esg_functions.get_node_type()
         logger.debug("START SERVICES: %s", node_type_list)
-        return start(node_type_list)
+        start(node_type_list)
+        sys.exit(0)
     elif args.stop:
         logger.debug("STOP SERVICES")
         node_type_list = esg_functions.get_node_type()

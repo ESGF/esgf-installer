@@ -120,7 +120,7 @@ class Pip(Conda):
             if component["name"] not in names:
                 continue
             try:
-                env = component["env"]
+                env = component["conda_env"]
             except KeyError:
                 env = self.installer_env
             if env not in envs:
@@ -146,7 +146,7 @@ class Pip(Conda):
         envs = {}
         for component in self.components:
             try:
-                env = component["env"]
+                env = component["conda_env"]
             except KeyError:
                 env = self.installer_env
             if env not in envs:
@@ -171,7 +171,7 @@ class Pip(Conda):
         envs = {}
         for component in self.components:
             try:
-                env = component["env"]
+                env = component["conda_env"]
             except KeyError:
                 env = self.installer_env
             if env not in envs:

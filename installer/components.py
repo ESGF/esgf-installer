@@ -309,17 +309,17 @@ _INDEX = {
 _TEST = {
     "plumbum": {
         "method": Pip,
-        "env": "test-env"
+        "conda_env": "test-env"
     },
     "pyopenssl": {
         "method": Conda,
-        "env": "test-env",
+        "conda_env": "test-env",
     },
     "echo-env-command": {
         "method": Command,
         "command": "echo",
         "args": ["$CONDA_PREFIX"],
-        "env": "test-env"
+        "conda_env": "test-env"
     }
 }
 ALL = {

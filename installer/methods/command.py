@@ -26,7 +26,7 @@ class Command(Conda):
     def _execute(self, component):
         args = []
         try:
-            env = component["env"]
+            env = component["conda_env"]
             args += [env, component["command"]]
         except KeyError:
             cmd = local.get(component["command"])

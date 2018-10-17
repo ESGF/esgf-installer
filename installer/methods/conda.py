@@ -37,7 +37,7 @@ class Conda(Generic):
             if component["name"] not in names:
                 continue
             try:
-                env = component["env"]
+                env = component["conda_env"]
             except KeyError:
                 env = self.installer_env
             if env not in envs:
@@ -75,7 +75,7 @@ class Conda(Generic):
         envs = {}
         for component in self.components:
             try:
-                env = component["env"]
+                env = component["conda_env"]
             except KeyError:
                 env = self.installer_env
             try:
@@ -94,7 +94,7 @@ class Conda(Generic):
         envs = {}
         for component in self.components:
             try:
-                env = component["env"]
+                env = component["conda_env"]
             except KeyError:
                 env = self.installer_env
             try:

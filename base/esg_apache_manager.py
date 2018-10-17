@@ -81,15 +81,7 @@ def install_mod_wsgi():
     print "******************************* \n"
 
     esg_functions.pip_install("mod_wsgi==4.5.3")
-    with pybash.pushd("/etc/httpd/modules"):
-        # If installer running in a conda env
-        # TODO Make this more resilient to potential changes
-        if "conda" in find_executable("python"):
-            pybash.symlink_force(
-                "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
-        else:
-            pybash.symlink_force(
-                "/usr/local/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
+    esg_functions.call_binary("mod_wsgi-express", ["install-module"])
 
 def make_python_eggs_dir():
     '''Create Python egg directories'''

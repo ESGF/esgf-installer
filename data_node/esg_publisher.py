@@ -9,7 +9,6 @@ import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
-from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 
@@ -22,10 +21,6 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 def check_publisher_version():
     '''Check if an existing version of the Publisher is found on the system'''
     return esg_functions.pip_version("esgcet")
-
-def symlink_pg_binary():
-    '''Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version'''
-    pybash.symlink_force("/usr/pgsql-9.6/bin/pg_config", "/usr/bin/pg_config")
 
 def edit_esg_ini(node_short_name="test_node"):
     '''Edit placeholder values in the generated esg.ini file'''
@@ -112,7 +107,6 @@ def setup_publisher(tag=config["publisher_tag"]):
     subdir = "src/python/esgcet"
     pkg_name = "esgcet"
     repo = "https://github.com/ESGF/esg-publisher.git"
-    symlink_pg_binary()
     esg_functions.pip_install_git(repo, pkg_name, tag, subdir)
     pybash.mkdir_p("/esg/data/test")
 

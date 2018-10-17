@@ -306,8 +306,25 @@ _INDEX = {
         "pip_name": "git+${repo}#egg=${egg}"
     }
 }
+_TEST = {
+    "plumbum": {
+        "method": Pip,
+        "env": "test-env"
+    },
+    "pyopenssl": {
+        "method": Conda,
+        "env": "test-env",
+    },
+    "echo-env-command": {
+        "method": Command,
+        "command": "echo",
+        "args": ["$CONDA_PREFIX"],
+        "env": "test-env"
+    }
+}
 ALL = {
     "base": _BASE,
     "data": _DATA,
-    "index": _INDEX
+    "index": _INDEX,
+    "test": _TEST
 }

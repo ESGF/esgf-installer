@@ -2,12 +2,14 @@
 import json
 import logging
 import os
+import os.path as path
 
 from plumbum import local
 from plumbum import TEE
 from plumbum.commands import ProcessExecutionError
 
 from .generic import Generic
+from .conda import Conda
 
 class PackageManager(Generic):
     ''' System package managers, does not include pip (could it though?) '''
@@ -102,47 +104,81 @@ class PackageManager(Generic):
             args = self.installers[self.installer_name]["uninstall"] + pkg_list
             result = self.installer.__getitem__(args) & TEE
 
-class Pip(Generic):
+class Pip(Conda):
     ''' Install components using the pip command line tool '''
     def __init__(self, components):
-        Generic.__init__(self, components)
+        Conda.__init__(self, components)
         self.pip = local.get("pip")
         self.install_cmd = ["install"]
         self.uninstall_cmd = ["uninstall", "-y"]
         self.version_cmd = ["list", "--format=json"]
+        self.run_in_env = local.get(path.join(path.dirname(__file__), "run_in_env.sh"))
 
     def _install(self, names):
-        pip_list = []
+        envs = {}
         for component in self.components:
             if component["name"] not in names:
                 continue
             try:
+                env = component["env"]
+            except KeyError:
+                env = self.installer_env
+            if env not in envs:
+                envs[env] = {
+                    "pip_list": []
+                }
+            try:
                 pip_name = component["pip_name"]
             except KeyError:
                 pip_name = component["name"]
-            pip_list.append(pip_name)
-        if pip_list:
-            args = self.install_cmd + pip_list
-            result = self.pip.__getitem__(args) & TEE
+            envs[env]["pip_list"].append(pip_name)
+        for env in envs:
+            if self._get_env(env) is None:
+                self._create_env(env, ["python<3"], [])
+                upgrade_args = [env, "pip", "install", "--upgrade", "pip"]
+                result = self.run_in_env.__getitem__(upgrade_args) & TEE
+            pip_list = envs[env]["pip_list"]
+            args = [env, "pip"] + self.install_cmd + pip_list
+            result = self.run_in_env.__getitem__(args) & TEE
 
     def _versions(self):
         versions = {}
-        args = self.version_cmd
-        result = self.pip.run(args)
-        info = json.loads(result[1])
+        envs = {}
         for component in self.components:
-            # Get the dictionary with "name" matching pkg_name, if not present get None
-            pkg = next((pkg for pkg in info if pkg["name"].lower() == component["name"].lower()), None)
-            if pkg is None:
-                versions[component["name"]] = None
-            else:
-                versions[component["name"]] = str(pkg['version'])
+            try:
+                env = component["env"]
+            except KeyError:
+                env = self.installer_env
+            if env not in envs:
+                envs[env] = {
+                    "pip_list": []
+                }
+            envs[env]["pip_list"].append(component)
+
+        for env in envs:
+            args = [env, "pip"] + self.version_cmd
+            result = self.run_in_env.run(args)
+            info = json.loads(result[1])
+            for component in envs[env]["pip_list"]:
+                # Get the dictionary with "name" matching pkg_name, if not present get None
+                versions[component["name"]] = next(
+                    (pkg["version"] for pkg in info if pkg["name"].lower() == component["name"].lower()),
+                    None
+                )
         return versions
 
     def _uninstall(self):
-        pip_list = []
+        envs = {}
         for component in self.components:
-            pip_list.append(component["name"])
-        if pip_list:
-            args = self.uninstall_cmd + pip_list
-            result = self.pip.__getitem__(args) & TEE
+            try:
+                env = component["env"]
+            except KeyError:
+                env = self.installer_env
+            if env not in envs:
+                envs[env] = {
+                    "pip_list": []
+                }
+            envs[env]["pip_list"].append(component["name"])
+        for env in envs:
+            args = [env, "pip"] + self.uninstall_cmd + envs[env]["pip_list"]
+            result = self.run_in_env.__getitem__(args) & TEE

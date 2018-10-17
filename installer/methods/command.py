@@ -1,3 +1,4 @@
+import os.path as path
 
 from plumbum import local
 from plumbum import TEE
@@ -10,6 +11,7 @@ class Command(Generic):
     def __init__(self, components):
         Generic.__init__(self, components)
         self.executed = set()
+        self.run_in_env = local.get(path.join(path.dirname(__file__), "run_in_env.sh"))
 
     def _install(self, names):
         for component in self.components:
@@ -22,13 +24,21 @@ class Command(Generic):
                 self._execute(component)
 
     def _execute(self, component):
-        cmd = local.get(component["command"])
+        args = []
         try:
-            args = component["args"]
+            args += [component["env"], component["command"]]
         except KeyError:
-            result = cmd.run_tee()
+            cmd = local.get(component["command"])
         else:
+            cmd = self.run_in_env
+        try:
+            args += component["args"]
+        except KeyError:
+            pass
+        if args:
             result = cmd.__getitem__(args) & TEE
+        else:
+            result = cmd.run_tee()
         self.executed.add(component["name"])
 
     def _uninstall(self):

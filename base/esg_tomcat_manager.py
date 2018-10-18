@@ -14,6 +14,7 @@ from time import sleep
 import yaml
 import requests
 import psutil
+from lxml import etree
 from clint.textui import progress
 from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions
@@ -66,6 +67,19 @@ def download_tomcat():
 
     return True
 
+def remove_default_error_page():
+    '''Removes the default Tomcat error page.
+    From https://www.owasp.org/index.php/Securing_tomcat:
+    The default error page shows a full stacktrace which is a disclosure of sensitive information. Place the following within the web-app tag (after the welcome-file-list tag is fine). The following solution is not ideal as it produces a blank page because Tomcat cannot find the file specified, but without a better solution this, at least, achieves the desired result. A well configured web application will override this default in CATALINA_HOME/webapps/APP_NAME/WEB-INF/web.xml so it won't cause problems.'''
+
+    tree = etree.parse("/usr/local/tomcat/conf/web.xml")
+    root = tree.getroot()
+    error_subelement = etree.SubElement(root, "error-page")
+    exception_subelement = etree.SubElement(error_subelement, "exception-type")
+    exception_subelement.text = "java.lang.Throwable"
+    location_subelement = etree.SubElement(error_subelement, "location")
+    location_subelement.text = "/error.jsp"
+    tree.write(open("/usr/local/tomcat/conf/web.xml", "w"), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 def extract_tomcat_tarball(dest_dir="/usr/local"):
     '''Extract tomcat tarball that was downloaded from the distribution mirror'''
@@ -80,58 +94,31 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
             os.remove(
                 "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
         except OSError, error:
-            print "error:", error
+            logger.error(error)
+
+        #From https://www.owasp.org/index.php/Securing_tomcat
+        tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
+        tomcat_group_id = grp.getgrnam("tomcat").gr_gid
+        os.chown("/usr/local/tomcat", tomcat_user_id, tomcat_group_id)
+
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/conf", 0400)
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/logs", 0300)
+        remove_default_error_page()
+
+
 
 def remove_example_webapps():
     '''remove Tomcat example applications'''
     with pybash.pushd("/usr/local/tomcat/webapps"):
-        try:
-            shutil.rmtree("docs")
-            shutil.rmtree("examples")
-            shutil.rmtree("host-manager")
-            shutil.rmtree("manager")
-        except OSError, error:
-            if error.errno == errno.ENOENT:
-                pass
-            else:
-                logger.exception()
-
-def setup_root_app():
-    '''Install ROOT appplication'''
-    try:
-        if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
-            print "ROOT app in place.."
-            return
-    except IOError:
-        print "Don't see ESGF ROOT web application"
-
-    try:
-        esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
-    except OSError, error:
-        if error.errno == errno.ENOENT:
-            pass
-
-
-    print "*******************************"
-    print "Setting up Apache Tomcat...(v{}) ROOT webapp".format(config["tomcat_version"])
-    print "*******************************"
-
-    pybash.mkdir_p(config["workdir"])
-    with pybash.pushd(config["workdir"]):
-        esg_root_url = esg_property_manager.get_property("esg.root.url")
-        root_app_dist_url = "{}/ROOT.tgz".format(esg_root_url)
-        esg_functions.download_update("ROOT.tgz", root_app_dist_url)
-
-        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/tomcat/webapps")
-
-        if os.path.exists("/usr/local/tomcat/webapps/esgf-node-manager"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html.nm", "/usr/local/tomcat/webapps/ROOT/index.html")
-        if os.path.exists("/usr/local/tomcat/webapps/esgf-web-fe"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html.fe", "/usr/local/tomcat/webapps/ROOT/index.html")
-
-        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
-        print "ROOT application \"installed\""
-
+        webapps = os.listdir("/usr/local/tomcat/webapps")
+        for webapp in webapps:
+            try:
+                shutil.rmtree(webapp)
+            except OSError, error:
+                if error.errno == errno.ENOENT:
+                    pass
+                else:
+                    raise
 
 def copy_config_files():
     '''copy custom configuration
@@ -190,8 +177,6 @@ def create_tomcat_user():
     tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
     tomcat_group_id = grp.getgrnam("tomcat").gr_gid
     esg_functions.change_ownership_recursive(tomcat_directory, tomcat_user_id, tomcat_group_id)
-
-    os.chmod("/usr/local/tomcat/webapps", 0775)
 
 
 def start_tomcat():
@@ -448,15 +433,13 @@ def main():
     print "Setting up Tomcat {TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
     print "******************************* \n"
     if download_tomcat():
-        extract_tomcat_tarball()
         create_tomcat_user()
+        extract_tomcat_tarball()
         os.environ["CATALINA_PID"] = "/tmp/catalina.pid"
         copy_config_files()
         configure_tomcat()
         remove_example_webapps()
-        setup_root_app()
         migrate_tomcat_credentials_to_esgf()
-        # start_tomcat()
         write_tomcat_install_log()
 
 

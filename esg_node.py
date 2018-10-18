@@ -420,7 +420,6 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     #System Launch...
     #---------------------------------------
     sanity_check_web_xmls()
-    esg_tomcat_manager.setup_root_app()
     clear_tomcat_cache()
     remove_unused_esgf_webapps()
 

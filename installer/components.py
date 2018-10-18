@@ -226,7 +226,8 @@ _DATA = {
         "version": "0.0.2",
         "source": "${ESGF_PARAMS:mirror}/2.6/8/esgf-dashboard/esgf_dashboard-${version}-py2.7.egg",
         "dest": "/tmp/esgf_dashboard/esgf_dashboard.egg",
-        "extract": False
+        "extract": False,
+        "conda_env": "test-env"
     },
     "esgf-node-manager": {
         "method": EasyInstall,

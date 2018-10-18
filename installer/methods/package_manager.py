@@ -134,12 +134,15 @@ class Pip(Conda):
             envs[env]["pip_list"].append(pip_name)
         for env in envs:
             if self._get_env(env) is None:
-                self._create_env(env, ["python<3"], [])
-                upgrade_args = [env, "pip", "install", "--upgrade", "pip"]
-                result = self.run_in_env.__getitem__(upgrade_args) & TEE
+                self._create_env_w_pip(env)
             pip_list = envs[env]["pip_list"]
             args = [env, "pip"] + self.install_cmd + pip_list
             result = self.run_in_env.__getitem__(args) & TEE
+
+    def _create_env_w_pip(self, env):
+        self._create_env(env, ["pip", "python<3"], [])
+        upgrade_args = [env, "pip", "install", "--upgrade", "pip"]
+        result = self.run_in_env.__getitem__(upgrade_args) & TEE
 
     def _versions(self):
         versions = {}
@@ -156,6 +159,10 @@ class Pip(Conda):
             envs[env]["pip_list"].append(component)
 
         for env in envs:
+            if self._get_env(env) is None:
+                for component in envs[env]["pip_list"]:
+                    versions[component["name"]] = None
+                continue
             args = [env, "pip"] + self.version_cmd
             result = self.run_in_env.run(args)
             info = json.loads(result[1])

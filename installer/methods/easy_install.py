@@ -1,5 +1,4 @@
 
-from plumbum import local
 from plumbum import TEE
 
 from .package_manager import Pip
@@ -9,15 +8,20 @@ class EasyInstall(Pip, FileManager):
     def __init__(self, components):
         Pip.__init__(self, components)
         FileManager.__init__(self, components)
-        self.easy_install = local["easy_install"]
 
     def _install(self, names):
         FileManager._install(self, names)
         for component in self.components:
             if component["name"] not in names:
                 continue
-            args = [component["dest"]]
-            result = self.easy_install.__getitem__(args) & TEE
+            try:
+                env = component["conda_env"]
+            except KeyError:
+                env = self.installer_env
+            if self._get_env(env) is None:
+                self._create_env_w_pip(env)
+            args = [env, "easy_install", component["dest"]]
+            result = self.run_in_env.__getitem__(args) & TEE
 
     def _uninstall(self):
         Pip._uninstall(self)

@@ -4,7 +4,7 @@ import logging
 
 from backports import configparser
 
-from .constants import NOT_INSTALLED, INFO_FILE
+from .constants import NOT_INSTALLED, INFO_FILE, LIST_KEY_SCHEME, LIST_KEYWORD
 from .parameters import PARAMS
 
 class Installer(object):
@@ -214,6 +214,10 @@ class Installer(object):
             for param in config:
                 if isinstance(config[param], basestring):
                     string_only[name][param] = config[param]
+                if isinstance(config[param], list):
+                    for i in range(len(config[param])):
+                        key = LIST_KEY_SCHEME.format(name=name, key=param, index=i)
+                        string_only[name][key] = config[param][i]
 
         for name in PARAMS:
             config = PARAMS[name]
@@ -221,6 +225,10 @@ class Installer(object):
             for param in config:
                 if isinstance(config[param], basestring):
                     string_only[name][param] = config[param]
+                if isinstance(config[param], list):
+                    for i in range(len(config[param])):
+                        key = LIST_KEY_SCHEME.format(name=name, key=param, index=i)
+                        string_only[name][key] = config[param][i]
 
         parser = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
         parser.read_dict(string_only)
@@ -229,7 +237,15 @@ class Installer(object):
         for name in parser:
             for param in parser[name]:
                 try:
-                    requirements[name][param] = parser[name][param]
+                    if LIST_KEYWORD.lower() in str(param):
+                        value = parser[name][param]
+                        res = param.split(LIST_KEYWORD.lower())
+                        param = res[0]
+                        index = int(res[1])
+                        requirements[name][param][index] = value
+                    else:
+                        requirements[name][param] = parser[name][param]
+
                 except KeyError:
                     pass
 

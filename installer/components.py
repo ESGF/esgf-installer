@@ -319,7 +319,7 @@ _TEST = {
     "echo-env-command": {
         "method": Command,
         "command": "echo",
-        "args": ["$CONDA_PREFIX"],
+        "args": ["My conda environment: ${conda_env} $$CONDA_PREFIX"], #Double dollar sign to escape dollar sign, will resolve to a single dollar sign
         "conda_env": "test-env"
     },
     "sample_template": {
@@ -331,8 +331,13 @@ _TEST = {
     "sample_template2": {
         "method": FileManager,
         "source": path.join(_FILE_DIR, "test", "sample.tmpl"),
-        "dest": "/tmp/sample.txt",
+        "dest": "/tmp/sample2.txt",
         "template": True
+    },
+    "sample_echo_command": {
+        "method": Command,
+        "command": "echo",
+        "args": ["Fill this value ${ESGF_PARAMS:mirror}", "Filling values in lists ${ESGF_PARAMS:mirror}"]
     }
 }
 ALL = {

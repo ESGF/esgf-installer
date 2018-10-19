@@ -394,38 +394,7 @@ def configure_tomcat():
         tomcat_group = esg_functions.get_group_id("tomcat")
         os.chmod("/usr/local/tomcat/conf/server.xml", 0600)
         os.chown("/usr/local/tomcat/conf/server.xml", tomcat_user, tomcat_group)
-
-        #Find or create keystore file
-        if os.path.exists(config["keystore_file"]):
-            print "Found existing keystore file {}".format(config["keystore_file"])
-        else:
-            print "creating keystore... "
-            #create a keystore with a self-signed cert
-            distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
-
-            #if previous keystore is found; backup
-            esg_keystore_manager.backup_previous_keystore(config["keystore_file"])
-
-            #-------------
-            #Make empty keystore...
-            #-------------
-            keystore_password = esg_functions.get_java_keystore_password()
-            esg_keystore_manager.create_empty_java_keystore(config["keystore_file"], config["keystore_alias"], keystore_password, distinguished_name)
-
-
-            #Setup temp CA
-            CA.setup_temp_ca()
-
-            #Fetch/Copy truststore to $tomcat_conf_dir
-            if not os.path.exists(config["truststore_file"]):
-                shutil.copyfile(os.path.join(os.path.dirname(__file__), "tomcat_certs/esg-truststore.ts"), config["truststore_file"])
-
-            esg_truststore_manager.add_my_cert_to_truststore()
-
-            esg_functions.change_ownership_recursive(config["tomcat_install_dir"], tomcat_user, tomcat_group)
-            esg_functions.change_ownership_recursive(config["tomcat_conf_dir"], tomcat_user, tomcat_group)
-
-
+        CA.setup_temp_ca()
 
 def main():
     '''Main function'''

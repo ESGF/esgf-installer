@@ -198,7 +198,7 @@ get_orp_libs() {
     xml_apis_version=${xml_apis_version:-"1.4.01"}
     xmlsec_version=${xmlsec_version:-"1.5.7"}
     joda_version=${joda_version:-"2.2"}
-    commons_io_version=${commons_io_version:-"2.6"}
+    commons_io_version=${commons_io_version:-"2.4"}
     slf4j_version="1.7.6"
 
     #------------------------------------------------------------------

@@ -219,18 +219,54 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
     cert_files = create_certificate_chain_list()
     create_certificate_chain(cert_files)
 
-    os.chmod("/etc/certs/hostkey.pem", 0400)
-    os.chmod("/etc/certs/hostcert.pem", 0644)
-    os.chmod("/etc/certs/cachain.pem", 0644)
+    signed_cert_file = "/etc/certs/hostcert.pem"
+    key_file = "/etc/certs/hostkey.pem"
+    ca_chain_file = "/etc/certs/cachain.pem"
+
+    os.chmod(key_file, 0400)
+    os.chmod(signed_cert_file, 0644)
+    os.chmod(ca_chain_file, 0644)
 
     try:
-        esg_functions.call_binary("openssl",  ["verify", "-verbose", "-purpose", "sslserver", "-CAfile", "/etc/certs/cachain.pem", "/etc/certs/hostcert.pem"])
+        esg_functions.call_binary("openssl",  ["verify", "-verbose", "-purpose", "sslserver", "-CAfile", ca_chain_file, signed_cert_file])
     except ProcessExecutionError:
         logger.error("Incomplete or incorrect chain. Try again")
         raise
 
+    tmp_pkcs12_file = "/tmp/keystore.p12"
+    pkcs12_export = [
+        "pkcs12",
+        "-export",
+        "-nodes",
+        "-in", signed_cert_file,
+        "-inkey", key_file,
+        "-certfile", ca_chain_file,
+        "-passout", "pass:"+esg_functions.get_java_keystore_password(),
+        "-out", tmp_pkcs12_file
+    ]
+    try:
+        esg_functions.call_binary("openssl", pkcs12_export)
+    except ProcessExecutionError:
+        logger.error("Could not export pkcs12 keystore")
+        raise
 
-    generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cert_files)
+    pkcs12_import = [
+        "-importkeystore",
+        "-srckeystore", tmp_pkcs12_file,
+        "-srcstoretype", "pkcs12",
+        "-destkeystore", keystore_name,
+        "-deststoretype", "JKS",
+        "-srcstorepass", esg_functions.get_java_keystore_password(),
+        "-deststorepass", esg_functions.get_java_keystore_password(),
+        "-srcalias", "1",
+        "-destalias", keystore_alias
+    ]
+    try:
+        esg_functions.call_binary("/usr/local/java/bin/keytool", pkcs12_import)
+    except ProcessExecutionError:
+        logger.error("Could not import pkcs12 keystore")
+        raise
+    #generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cert_files)
 
     copy_cert_to_tomcat_conf(public_cert)
 

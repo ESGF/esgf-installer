@@ -4,10 +4,12 @@ import shutil
 import tarfile
 import zipfile
 
+from backports import configparser
 import requests
 
-from ..utils import mkdir_p, chown_R
 from .generic import Generic
+from ..constants import INFO_FILE, UNIQUE_KEY
+from ..utils import mkdir_p, chown_R
 
 class FileManager(Generic):
     ''' Install file, git, and compressed components from a local or remote location '''
@@ -16,6 +18,22 @@ class FileManager(Generic):
         self.log = logging.getLogger(__name__)
         self.tmp = os.path.join(os.sep, "tmp")
         self.chunk_size = 1*1024
+        parser = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
+        parser.read(INFO_FILE)
+        parser.add_section(UNIQUE_KEY)
+        for component in self.components:
+            try:
+                is_tmpl = component["template"]
+            except KeyError:
+                is_tmpl = False
+
+            if not is_tmpl:
+                continue
+
+            with open(component["source"], "r") as tmpl:
+                tmpl_contents = tmpl.read()
+                parser.set(UNIQUE_KEY, "content", tmpl_contents)
+                component["content"] = parser.get(UNIQUE_KEY, "content")
 
     def _install(self, names):
         for component in self.components:
@@ -94,7 +112,11 @@ class FileManager(Generic):
         elif os.path.isfile(filepath):
             dest_dir = os.path.dirname(component["dest"].rstrip(os.sep))
             mkdir_p(dest_dir)
-            shutil.copy(filepath, component["dest"])
+            try:
+                with open(component["dest"], "w") as dest:
+                    dest.write(component["content"])
+            except KeyError:
+                shutil.copy(filepath, component["dest"])
             return component["dest"]
 
     def _versions(self):

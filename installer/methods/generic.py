@@ -1,6 +1,6 @@
 import logging
 
-from ..install_codes import OK, NOT_INSTALLED, BAD_VERSION
+from ..constants import OK, NOT_INSTALLED, BAD_VERSION
 
 class Generic(object):
     def __init__(self, components):

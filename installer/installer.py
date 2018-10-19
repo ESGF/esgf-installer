@@ -4,7 +4,7 @@ import logging
 
 from backports import configparser
 
-from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
+from .constants import NOT_INSTALLED, INFO_FILE
 from .parameters import PARAMS
 
 class Installer(object):
@@ -224,7 +224,8 @@ class Installer(object):
 
         parser = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
         parser.read_dict(string_only)
-
+        with open(INFO_FILE, "w") as info_file:
+            parser.write(info_file)
         for name in parser:
             for param in parser[name]:
                 try:

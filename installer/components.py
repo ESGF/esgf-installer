@@ -321,6 +321,18 @@ _TEST = {
         "command": "echo",
         "args": ["$CONDA_PREFIX"],
         "conda_env": "test-env"
+    },
+    "sample_template": {
+        "method": FileManager,
+        "source": path.join(_FILE_DIR, "test", "sample.tmpl"),
+        "dest": "/tmp/sample.txt",
+        "template": True
+    },
+    "sample_template2": {
+        "method": FileManager,
+        "source": path.join(_FILE_DIR, "test", "sample.tmpl"),
+        "dest": "/tmp/sample.txt",
+        "template": True
     }
 }
 ALL = {

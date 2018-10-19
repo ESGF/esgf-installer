@@ -43,3 +43,4 @@ generated/
 /.project
 *.swp
 /shell_scripts
+*.info

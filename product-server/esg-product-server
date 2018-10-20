@@ -78,12 +78,6 @@ las_version=${las_version:-"8.6.8"}
 #There seems to be two different variables keeping track of the LAS version; this makes no sense smh.
 VERSION=8.6.8
 
-#The following script_maj_version, script_sub_version, and script_version values are NOT to be changed in this file that resides in the repository.
-#There versions are meant to be changed by the esgf-build scripts, prior to pushing onto the distribution mirrors. They are to stay as 2.6, 0, and v2.6.0-devel-release for good.
-script_maj_version="2.6"
-script_sub_version="0"
-script_version="v2.6.0-devel-release"
-
 esg_install_prefix=${esg_install_prefix:-"/usr/local"}
 INSTALLPATH=${esg_install_prefix}/las-esgf/$VERSION
 las_server_dir=${content_dir}/las #why did you decide to make it there and not /esg/content/las/[conf/server] ??

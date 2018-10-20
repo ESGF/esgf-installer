@@ -25,6 +25,7 @@ def install_keypair(key_file=None, cert_file=None):
 
     # Place the certs will be looked for by httpd
     cert_dir = os.path.join(os.sep, "etc", "certs")
+    mkdir_p(cert_dir)
     key_location = os.path.join(cert_dir, "hostkey.pem")
     shutil.copy(key_file, key_location)
     cert_location = os.path.join(cert_dir, "hostcert.pem")

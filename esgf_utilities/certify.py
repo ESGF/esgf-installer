@@ -8,7 +8,7 @@ import jks
 import OpenSSL.crypto as crypto
 import yaml
 
-from .esg_functions import get_esgf_host
+from .esg_functions import get_esgf_host, get_java_keystore_password
 import esg_property_manager
 from .pybash import mkdir_p, touch
 
@@ -30,6 +30,8 @@ def install_keypair(key_file=None, cert_file=None):
     shutil.copy(key_file, key_location)
     cert_location = os.path.join(cert_dir, "hostcert.pem")
     shutil.copy(cert_file, cert_location)
+    ca_chain_location = os.path.join(cert_dir, "cachain.pem")
+    shutil.copy(ca_chain_file, ca_chain_location)
 
     # Load the files
     with open(key_file, "r") as key_filep:
@@ -53,7 +55,7 @@ def install_keypair(key_file=None, cert_file=None):
     alias = config["keystore_alias"]
     pke = jks.PrivateKeyEntry.new(alias, [dumped_cert, dumped_ca_chain], dumped_key, 'rsa_raw')
     keystore = jks.KeyStore.new('jks', [pke])
-    keystore.save("samplekeystore.jks", "test") # Name, password
+    keystore.save(config["keystore_file"], get_java_keystore_password()) # File, password
 
     # Add cert to TrustStore
     static_truststore = os.path.join(
@@ -65,12 +67,10 @@ def install_keypair(key_file=None, cert_file=None):
     )
     truststore = jks.KeyStore.load(static_truststore, "changeit")
     entries = [truststore.entries[ts_alias] for ts_alias in truststore.entries]
-    print truststore.entries
     new_entry = jks.TrustedCertEntry.new(alias, dumped_cert)
     entries += [new_entry]
-    print entries
     new_truststore = jks.KeyStore.new('jks', entries)
-    new_truststore.save("sampletruststore.ts", "changeit")
+    new_truststore.save(config["truststore_file"], "changeit")
 
 def self_signed():
     # Make a CA
@@ -172,14 +172,12 @@ def build_cachain():
             touch(default_cachain)
         cert_files_list = [default_cachain]
     #Copy the tmpchain and rename to cachain
-    with open("/etc/certs/tmpchain", "w") as tmpchain_file:
+    tmp_cachain = os.path.join(os.sep, "etc", "certs", "tmpchain")
+    with open(tmp_cachain, "w") as tmpchain_file:
         for cert in cert_files:
             if not os.path.isfile(cert):
                 raise OSError("{} not found. Exiting.".format(cert))
-
             with open(cert, "r") as cert_file_handle:
                 cert_file_contents = cert_file_handle.read()
             tmpchain_file.write(cert_file_contents+"\n")
-    ca_chain_file = "/etc/certs/cachain.pem"
-    shutil.copyfile("/etc/certs/tmpchain", ca_chain_file)
-    return ca_chain_file
+    return tmp_cachain

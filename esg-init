@@ -13,6 +13,7 @@ pg_secret_file=${esg_config_dir}/.esg_pg_pass
 pub_secret_file=${esg_config_dir}/.esg_pg_publisher_pass
 ks_secret_file=${esg_config_dir}/.esg_keystore_pass
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
+chosen_dist_url_vals_file=${chosen_dist_url_vals_file:-"${esg_root_dir}/chosen_dist_url_vals_file"}
 install_logfile=${install_manifest}
 logfile=${logfile:-"/tmp/${_t##*/}.out"}
 #--------------

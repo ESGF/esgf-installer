@@ -17,17 +17,20 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 def install_keypair(key_file=None, cert_file=None):
 
+    # Generate self-signed or use existing
     if key_file is None and cert_file is None:
         key_file, cert_file, ca_chain_file = self_signed()
     else:
         ca_chain_file = build_cachain()
 
+    # Place the certs will be looked for by httpd
     cert_dir = os.path.join(os.sep, "etc", "certs")
     key_location = os.path.join(cert_dir, "hostkey.pem")
     shutil.copy(key_file, key_location)
     cert_location = os.path.join(cert_dir, "hostcert.pem")
     shutil.copy(cert_file, cert_location)
 
+    # Load the files
     with open(key_file, "r") as key_filep:
         key_contents = key_filep.read()
         key = crypto.load_privatekey(crypto.FILETYPE_PEM, key_contents)
@@ -39,15 +42,34 @@ def install_keypair(key_file=None, cert_file=None):
     with open(ca_chain_file, "r") as ca_chain_filep:
         ca_chain_contents = ca_chain_filep.read()
         ca_chain = crypto.load_certificate(crypto.FILETYPE_PEM, ca_chain_contents)
-    # Dump to string encoded in DER aka ASN1
+
+    # Dump to string encoded in DER aka ASN1 for JKS
     dumped_key = crypto.dump_privatekey(crypto.FILETYPE_ASN1, key)
     dumped_cert = crypto.dump_certificate(crypto.FILETYPE_ASN1, cert)
     dumped_ca_chain = crypto.dump_certificate(crypto.FILETYPE_ASN1, ca_chain)
 
+    # Generate KeyStore
     alias = config["keystore_alias"]
-    pke = jks.PrivateKeyEntry.new(alias, [dumped_cert, dumped_ca_chain], dumped_key, "rsa_raw")
+    pke = jks.PrivateKeyEntry.new(alias, [dumped_cert, dumped_ca_chain], dumped_key, 'rsa_raw')
     keystore = jks.KeyStore.new('jks', [pke])
-    keystore.save("samplekeystore.jks", "test")
+    keystore.save("samplekeystore.jks", "test") # Name, password
+
+    # Add cert to TrustStore
+    static_truststore = os.path.join(
+        os.path.dirname(__file__),
+        os.pardir,
+        "base",
+        "tomcat_certs",
+        "esg-truststore.ts"
+    )
+    truststore = jks.KeyStore.load(static_truststore, "changeit")
+    entries = [truststore.entries[ts_alias] for ts_alias in truststore.entries]
+    print truststore.entries
+    new_entry = jks.TrustedCertEntry.new(alias, dumped_cert)
+    entries += [new_entry]
+    print entries
+    new_truststore = jks.KeyStore.new('jks', entries)
+    new_truststore.save("sampletruststore.ts", "changeit")
 
 def self_signed():
     # Make a CA
@@ -92,7 +114,7 @@ def self_signed():
     # Begin "client" cert
 
     client_key = crypto.PKey()
-    client_key.generate_key(crypto.TYPE_RSA, 2048)
+    client_key.generate_key(crypto.TYPE_RSA, 4096)
 
     client_cert = crypto.X509()
     client_cert.set_version(2)

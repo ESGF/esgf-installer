@@ -6348,7 +6348,7 @@ main() {
         [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
     mkdir -p /esg
     touch ${chosen_dist_url_vals_file}
-    echo "esg_dist_url_root=${esg_dist_url_root}" >>${chosen_dist_url_vals_file}
+    echo "esg_dist_url_root=${esg_dist_url_root}" >${chosen_dist_url_vals_file}
     echo "esg_dist_url=$esg_dist_url" >>${chosen_dist_url_vals_file}
     dedup ${chosen_dist_url_vals_file}
 	# Downloading esg-installarg file

@@ -102,8 +102,8 @@ esg_node_file=${esg_install_prefix}/bin/esg-node
 esgf_host=${esgf_host}
 [ -z "${esgf_host}" ] && get_property esgf_host
 
-esg_dist_url_root=`cat ${chosen_dist_url_vals_file}|grep 'esg_dist_url_root='|cut -d '=' -f1`;
-esg_dist_url=`cat ${chosen_dist_url_vals_file}|grep 'esg_dist_url='|cut -d '=' -f1`;
+esg_dist_url_root=`cat ${chosen_dist_url_vals_file}|grep 'esg_dist_url_root='|cut -d '=' -f2`;
+esg_dist_url=`cat ${chosen_dist_url_vals_file}|grep 'esg_dist_url='|cut -d '=' -f2`;
 
 thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl
 las_config_file_template_url=${esg_dist_url}/esgf-product-server/las_tds.xml.tmpl

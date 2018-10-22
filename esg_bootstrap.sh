@@ -84,7 +84,7 @@ install_dependencies_yum(){
   libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel \
   lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel \
   perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel \
-  gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel *ExtUtils*
+  gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel *ExtUtils* bzip2
 
 }
 

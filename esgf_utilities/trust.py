@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import shutil
+import tarfile
 
 import jks
 import OpenSSL.crypto as crypto
@@ -16,19 +17,115 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 
-def install_keypair(key_file=None, cert_file=None):
+def globus_services(identity=None, ca=None):
+    '''
+    If a host identity (ESGF signed key-cert pair) and a CA (another ESGF signed key-cert pair) are
+    provided, use those. Otherwise, generate a temporary identity and CA. Additionally, if signed
+    certs are not provided, generate two private keys, a certifcate signing request (CSR) for
+    each and a so called 'globus pack' for the generated temporary CA.
+    '''
 
-    # Generate self-signed or use existing
-    if key_file is None and cert_file is None:
-        key_file, cert_file, ca_key, ca_chain_file = self_signed()
-        ca_cert = ca_chain_file
+    gen_temp = identity is None and ca is None
+    if gen_temp:
+        key, cert, ca_key, ca_cert = self_signed()
+        # CA certifcate signing request
+        generate_csr(
+            "globus_ca_key.pem",
+            "globus_ca_csr.pem",
+            O="ESGF",
+            OU="ESGF.ORG",
+            CN=esg_functions.get_esgf_host()+"-CA"
+        )
+        # Identity certificate signing request
+        generate_csr(
+            "globus_id_key.pem",
+            "globus_id_csr.pem",
+            O="ESGF",
+            OU="ESGF.ORG",
+            CN=esg_functions.get_esgf_host()
+        )
+        globus_pack = generate_globus_pack(ca_cert)
     else:
-        ca_chain_file = build_cachain()
-        ca_key, ca_cert = None, None
+        key, cert = identity
+        ca_key, ca_cert, globus_pack = ca
 
-    tomcat(key_file, cert_file, ca_chain_file, ca_cert)
-    httpd(key_file, cert_file, ca_chain_file, ca_cert)
-    globus(key_file, cert_file, ca_chain_file, ca_cert, ca_key)
+    # Install trusted certs into the globus certs directory
+    globus_trusted_certs()
+
+    # Copy identity key and cert as well as CA key and cert into place for globus
+    globus_local_certs(key, cert, ca_key, ca_cert, globus_pack)
+
+def web_services(key=None, cert=None):
+    '''
+    If a key and certificate is provided it is assumed to be signed by a known CA. Otherwise, a
+    temporary, self-signed, CA is generated and used to sign a certificate. If a key and certificate
+    is provided a CA chain will be generated, first referencing the 'cachain.path' property, if this
+    is not populated it will then prompt the user for a comma seperated list of CA certificate
+    files. These files will be placed into places that httpd and tomcat will look for them.
+    '''
+    # Generate self-signed or use existing
+    if key is None and cert is None:
+        key, cert, _, ca_chain = self_signed()
+        ca_cert = ca_chain
+    else:
+        ca_chain = build_cachain()
+        ca_cert = None
+
+    tomcat(key, cert, ca_chain, ca_cert)
+    httpd(key, cert, ca_chain, ca_cert)
+
+def globus_local_certs(key, cert, ca_key, ca_cert, globus_pack):
+
+    # Copy identity key and cert into place for globus
+    grid_sec_dir = os.path.join(os.sep, "etc", "grid-security")
+    key_dest = os.path.join(grid_sec_dir, "hostkey.pem")
+    shutil.copy(key, key_dest)
+    cert_dest = os.path.join(grid_sec_dir, "hostcert.pem")
+    shutil.copy(cert, cert_dest)
+
+    # Copy CA key and cert into required places
+    myproxy_ca_dir = os.path.join(os.sep, "var", "lib", "globus-connect-server", "myproxy-ca")
+    myproxy_private = os.path.join(myproxy_ca_dir, "private")
+    mkdir_p(myproxy_private)
+    ca_key_dest = os.path.join(myproxy_private, "cakey.pem")
+    shutil.copy(ca_key, ca_key_dest)
+    ca_cert_dest = os.path.join(myproxy_ca_dir, "cacert.pem")
+    shutil.copy(ca_cert, ca_cert_dest)
+
+    # Extract "globus pack" and copy contents into the globus certificate directory
+    globus_cert_dir = os.path.join(os.sep, "etc", "grid-security", "certificates")
+    globus_pack_name = os.path.basename(globus_pack).split(".tar")[0]
+    extracted_location = os.path.join(os.sep, "tmp", globus_pack_name)
+    shutil.rmtree(extracted_location)
+    with tarfile.open(globus_pack, "r") as globus_pack_tar:
+        globus_pack_tar.extractall(os.path.join(os.sep, "tmp"))
+    for entry in os.listdir(extracted_location):
+        if os.path.isfile(entry):
+            full_file_name = os.path.join(extracted_location, entry)
+            dest = os.path.join(globus_cert_dir, entry)
+            shutil.copy(full_file_name, dest)
+
+
+def globus_trusted_certs():
+    # Retrieve trusted certificates
+    trustcerts_file_name = "esg_trusted_certificates.tar"
+    remote_file = "{}/certs/{}".format(
+        esg_property_manager.get_property("esgf.root.url"),
+        trustcerts_file_name
+    )
+    globus_cert_dir = os.path.join(os.sep, "etc", "grid-security", "certificates")
+    mkdir_p(globus_cert_dir)
+    trustcerts_file = os.path.join(globus_cert_dir, trustcerts_file_name)
+    esg_functions.download_update(trustcerts_file, remote_file)
+
+    # Extract trusted certificates
+    esg_functions.extract_tarball(trustcerts_file, globus_cert_dir)
+    extracted_certs_dir = os.path.join(globus_cert_dir, "esg_trusted_certificates")
+    cert_files = os.listdir(extracted_certs_dir)
+    for file_name in cert_files:
+        full_file_name = os.path.join(extracted_certs_dir, file_name)
+        if os.path.isfile(full_file_name):
+            shutil.copy(full_file_name, globus_cert_dir)
 
 def tomcat(key_file, cert_file, ca_chain_file, ca_cert_file=None):
 
@@ -94,48 +191,6 @@ def httpd(key_file, cert_file, ca_chain_file, ca_cert_file=None):
             with open(ca_cert_file, "r") as new_trusted_ca:
                 ca_bundle.write(new_trusted_ca.read())
 
-
-def globus(key_file, cert_file, ca_chain_file, ca_cert_file=None, ca_key_file=None):
-
-    # Retrieve trusted certificates
-    trustcerts_file_name = "esg_trusted_certificates.tar"
-    remote_file = "{}/certs/{}".format(
-        esg_property_manager.get_property("esgf.root.url"),
-        trustcerts_file_name
-    )
-    globus_cert_dir = os.path.join(os.sep, "etc", "grid-security", "certificates")
-    mkdir_p(globus_cert_dir)
-    trustcerts_file = os.path.join(globus_cert_dir, trustcerts_file_name)
-    esg_functions.download_update(trustcerts_file, remote_file)
-
-    # Extract trusted certificates
-    esg_functions.extract_tarball(trustcerts_file, globus_cert_dir)
-    extracted_certs_dir = os.path.join(globus_cert_dir, "esg_trusted_certificates")
-    cert_files = os.listdir(extracted_certs_dir)
-    for file_name in cert_files:
-        full_file_name = os.path.join(extracted_certs_dir, file_name)
-        if os.path.isfile(full_file_name):
-            shutil.copy(full_file_name, globus_cert_dir)
-
-    # Copy key pair into place for globus
-    grid_sec_dir = os.path.join(os.sep, "etc", "grid-security")
-    key_dest = os.path.join(grid_sec_dir, "hostkey.pem")
-    shutil.copy(key_file, key_dest)
-    cert_dest = os.path.join(grid_sec_dir, "hostcert.pem")
-    shutil.copy(cert_file, cert_dest)
-
-    # Use Temp CA to issue/sign myproxy certificates
-    if ca_key_file is not None:
-        myproxy_ca_dir = os.path.join(os.sep, "var", "lib", "globus-connect-server", "myproxy-ca")
-        myproxy_private = os.path.join(myproxy_ca_dir, "private")
-        mkdir_p(myproxy_private)
-        ca_key_dest = os.path.join(myproxy_private, "cakey.pem")
-        shutil.copy(ca_key_file, ca_key_dest)
-        ca_cert_dest = os.path.join(myproxy_ca_dir, "cacert.pem")
-        shutil.copy(ca_cert_file, ca_cert_dest)
-
-
-
 def self_signed():
     # Make a CA
     ca_key = crypto.PKey()
@@ -156,7 +211,7 @@ def self_signed():
     ca_cert.set_pubkey(ca_key)
 
     ca_cert.gmtime_adj_notBefore(0)
-    ca_cert.gmtime_adj_notAfter(10*365*24*60*60)
+    ca_cert.gmtime_adj_notAfter(30*24*60*60)
 
     ca_cert.sign(ca_key, 'sha256')
 
@@ -195,7 +250,7 @@ def self_signed():
     client_cert.set_pubkey(client_key)
 
     client_cert.gmtime_adj_notBefore(0)
-    client_cert.gmtime_adj_notAfter(10*365*24*60*60)
+    client_cert.gmtime_adj_notAfter(30*24*60*60)
 
     client_cert.sign(ca_key, 'sha256')
 
@@ -213,37 +268,105 @@ def self_signed():
     return client_key_file, client_cert_file, ca_key_file, ca_cert_file
 
 def build_cachain():
-    default_cachain = "/etc/esgfcerts/cachain.pem"
-
+    ''' Append intermediate certs until the root cert is reached, intermediates first '''
     try:
         cert_files = esg_property_manager.get_property("cachain.path")
     except ConfigParser.NoOptionError:
         print "Please enter your Certificate Authority's certificate chain file(s).  If there are multiple files, enter them separated by commas."
-        cert_files = raw_input("Enter certificate chain file name: ")
+        cert_files = raw_input("Enter certificate file names: ")
 
-    if cert_files:
-        cert_files_list = [cert_path.strip() for cert_path in cert_files.split(",")]
-        for filename in cert_files_list:
-            if not os.path.isfile(filename.strip()):
-                raise OSError
-    else:
-        print "Adding default certificate chain file {}".format(default_cachain)
-        if not os.path.isfile(default_cachain):
-            print "{} does not exist".format(default_cachain)
-            print "Creating {}".format(default_cachain)
-            mkdir_p("/etc/esgfcerts")
-            touch(default_cachain)
-        cert_files_list = [default_cachain]
+    cert_files_list = [cert_path.strip() for cert_path in cert_files.split(",")]
+    for filename in cert_files_list:
+        if not os.path.isfile(filename.strip()):
+            raise OSError
+
     #Copy the tmpchain and rename to cachain
     tmp_cachain = os.path.join(os.sep, "etc", "certs", "tmpchain")
     with open(tmp_cachain, "w") as tmpchain_file:
-        for cert in cert_files:
-            if not os.path.isfile(cert):
-                raise OSError("{} not found. Exiting.".format(cert))
-            with open(cert, "r") as cert_file_handle:
+        for cert in cert_files_list:
+            with open(cert.strip(), "r") as cert_file_handle:
                 cert_file_contents = cert_file_handle.read()
             tmpchain_file.write(cert_file_contents+"\n")
+
     return tmp_cachain
+
+def generate_csr(keyout, csrout, **name):
+    '''modified from: https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py'''
+    """
+    Create a certificate request.
+    Argument:  **name - The name of the subject of the request, possible
+                        arguments are:
+                          C     - Country name
+                          ST    - State or province name
+                          L     - Locality name
+                          O     - Organization name
+                          OU    - Organizational unit name
+                          CN    - Common name
+                          emailAddress - E-mail address
+    """
+    pkey = crypto.PKey()
+    pkey.generate_key(crypto.TYPE_RSA, 4096)
+
+    req = crypto.X509Req()
+    subj = req.get_subject()
+
+    setattr(subj, "O", name["O"])
+    setattr(subj, "OU", name["OU"])
+    setattr(subj, "CN", name["CN"])
+
+    req.set_pubkey(pkey)
+    req.sign(pkey, "sha256")
+    with open(keyout, "w") as keyout_file:
+        keyout_file.write(
+            crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey)
+        )
+    with open(csrout, "w") as keyout_file:
+        keyout_file.write(
+            crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
+        )
+
+def generate_globus_pack(cert_file):
+
+    # Load certificate object
+    with open(cert_file, "r") as cert_filep:
+        cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, cert_filep.read())
+
+    # Get unique hash of the subject name
+    local_hash = esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())
+
+    # Make the directory to store the needed files for a "globus pack"
+    globus_pack = "globus_simple_ca_{}_setup-0".format(local_hash)
+    globus_pack = os.path.join(os.sep, "etc", "tempcerts", globus_pack)
+    mkdir_p(globus_pack)
+
+    # Copy the required signing policy into place
+    signing_policy_tmpl = os.path.join(os.path.dirname(__file__), "signing-policy.template")
+    shutil.copyfile("cacert.pem", os.path.join(globus_pack, local_hash+".0"))
+    signing_policy = os.path.join(globus_pack, local_hash+".signing_policy")
+    shutil.copyfile(signing_policy_tmpl, signing_policy)
+
+    # Populate the signing policy template
+    cert_subject_object = cert_obj.get_subject()
+    cert_subject = "/O={O}/OU={OU}/CN={CN}".format(
+        O=cert_subject_object.O,
+        OU=cert_subject_object.OU,
+        CN=cert_subject_object.CN
+    )
+    esg_functions.replace_string_in_file(
+        signing_policy,
+        '/O=ESGF/OU=ESGF.ORG/CN=placeholder',
+        cert_subject
+    )
+
+    # This was here, but I am unsure of its purpose
+    shutil.copyfile(signing_policy, os.path.join(os.sep, "etc", "tempcerts", "signing-policy"))
+
+    # tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
+    globus_pack_tar = globus_pack+".tar.gz"
+    with tarfile.open(globus_pack_tar, "w:gz") as tar:
+        tar.add(globus_pack)
+
+    return globus_pack_tar
 
 def _dump_der_key(key_file):
     with open(key_file, "r") as key_filep:

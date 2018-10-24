@@ -32,7 +32,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 # ---------------------------------------------
 
 
-def create_key_pair(key_type, bits):
+def create_key_pair(key_type, bits=4096):
     '''source: https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py'''
     """
     Create a public/private key pair.

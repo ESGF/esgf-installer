@@ -110,7 +110,7 @@ def globus_trusted_certs():
     # Retrieve trusted certificates
     trustcerts_file_name = "esg_trusted_certificates.tar"
     remote_file = "{}/certs/{}".format(
-        esg_property_manager.get_property("esgf.root.url"),
+        esg_property_manager.get_property("esg.root.url"),
         trustcerts_file_name
     )
     globus_cert_dir = os.path.join(os.sep, "etc", "grid-security", "certificates")
@@ -148,7 +148,7 @@ def tomcat(key_file, cert_file, ca_chain_file, ca_cert_file=None):
     truststore_dir = os.path.dirname(config["truststore_file"])
     mkdir_p(truststore_dir)
     remote_truststore = "{}/certs/{}".format(
-        esg_property_manager.get_property("esgf.root.url"),
+        esg_property_manager.get_property("esg.root.url"),
         truststore_file_name
     )
     esg_functions.download_update(config["truststore_file"], remote_truststore)
@@ -179,7 +179,7 @@ def httpd(key_file, cert_file, ca_chain_file, ca_cert_file=None):
     # Retrieve bundle from remote
     ca_bundle_file_name = "esgf-ca-bundle.crt"
     remote_ca_bundle = "{}/certs/{}".format(
-        esg_property_manager.get_property("esgf.root.url"),
+        esg_property_manager.get_property("esg.root.url"),
         ca_bundle_file_name
     )
     ca_bundle_file = os.path.join(cert_dir, ca_bundle_file_name)

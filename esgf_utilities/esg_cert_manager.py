@@ -210,7 +210,7 @@ def install_local_certs(node_type_list, firstrun=None):
 def generate_ssl_key_and_csr(private_key="/usr/local/tomcat/hostkey.pem", public_cert_req=None):
     '''Create a SSL keypair and CSR'''
     print "Generating private host key... "
-    key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 1024)
+    key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 4096)
     with open(private_key, "wt") as key_file_handle:
         key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
 
@@ -249,7 +249,7 @@ def generate_ssl_key_and_csr(private_key="/usr/local/tomcat/hostkey.pem", public
 def generate_esgf_csrs(node_type_list):
     '''Generates a CSR to be signed by a ESGF CA'''
     if "IDP" in node_type_list:
-        key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 1024)
+        key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 4096)
         with open("/etc/esgfcerts/cakey.pem", "wt") as key_file_handle:
             key_file_handle.write(OpenSSL.crypto.dump_privatekey(
                 OpenSSL.crypto.FILETYPE_PEM, key_pair))
@@ -268,7 +268,7 @@ def generate_esgf_csrs(node_type_list):
 
     print "You are strongly advised to obtain and install commercial CA issued certificates for the web container."
 
-    key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 1024)
+    key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 4096)
     with open("/etc/esgfcerts/hostkey.pem", "wt") as key_file_handle:
         key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
 
@@ -305,7 +305,7 @@ def generate_esgf_csrs_ext(node_type):
         cert_files.append('cacert_req.csr')
         cert_files.append('cakey.pem')
 
-        key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 1024)
+        key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 4096)
         with open("/etc/extcsrs/cakey.pem", "wt") as key_file_handle:
             key_file_handle.write(OpenSSL.crypto.dump_privatekey(
                 OpenSSL.crypto.FILETYPE_PEM, key_pair))
@@ -324,7 +324,7 @@ def generate_esgf_csrs_ext(node_type):
 
     print "You are strongly advised to obtain and install commercial CA issued certificates for the web container."
 
-    key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 1024)
+    key_pair = create_key_pair(OpenSSL.crypto.TYPE_RSA, 4096)
     with open("/etc/extcsrs/hostkey.pem", "wt") as key_file_handle:
         key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
 

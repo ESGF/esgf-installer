@@ -1,0 +1,7 @@
+Please mail the ID CSR file, {id_csr_file} and the CA CSR file, {ca_csr_file}, for signing to
+  Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sebastien Denvil <sebastien.denvil@ipsl.jussieu.fr>
+
+When you receive the signed certificate pack, untar the files and execute
+  esg_node.py --install-local-certs {id_key_file} [signed ID cert] {ca_key_file} [signed CA cert] [Globus tar.gz pack]
+
+Please keep {id_key_file} and {ca_key_file} in a safe place to be used upon the reception of the above signed certificates and Globus pack.

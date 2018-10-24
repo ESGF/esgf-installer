@@ -16,6 +16,7 @@ from .pybash import mkdir_p, pushd
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 def globus_services(identity=None, ca=None):
     '''
@@ -29,21 +30,28 @@ def globus_services(identity=None, ca=None):
     if gen_temp:
         key, cert, ca_key, ca_cert = self_signed()
         # CA certifcate signing request
-        generate_csr(
-            "globus_ca_key.pem",
-            "globus_ca_csr.pem",
+        future_ca_key, ca_csr = generate_csr(
+            os.path.join(os.environ["HOME"], "globus_ca_key.pem"),
+            os.path.join(os.environ["HOME"], "globus_ca_csr.pem"),
             O="ESGF",
             OU="ESGF.ORG",
             CN=esg_functions.get_esgf_host()+"-CA"
         )
         # Identity certificate signing request
-        generate_csr(
-            "globus_id_key.pem",
-            "globus_id_csr.pem",
+        future_id_key, id_csr = generate_csr(
+            os.path.join(os.environ["HOME"], "globus_id_key.pem"),
+            os.path.join(os.environ["HOME"], "globus_id_csr.pem"),
             O="ESGF",
             OU="ESGF.ORG",
             CN=esg_functions.get_esgf_host()
         )
+        with open(os.path.dirname(__file__)+"csr-howto.txt", "r") as howto_file:
+            print howto_file.read().format(
+                id_csr_file=id_csr,
+                ca_csr_file=ca_csr,
+                id_key_file=future_id_key,
+                ca_key_file=future_ca_key
+            )
         globus_pack = generate_globus_pack(ca_cert)
     else:
         key, cert = identity
@@ -79,18 +87,18 @@ def globus_local_certs(key, cert, ca_key, ca_cert, globus_pack):
     # Copy identity key and cert into place for globus
     grid_sec_dir = os.path.join(os.sep, "etc", "grid-security")
     key_dest = os.path.join(grid_sec_dir, "hostkey.pem")
-    shutil.copy(key, key_dest)
+    _copy(key, key_dest)
     cert_dest = os.path.join(grid_sec_dir, "hostcert.pem")
-    shutil.copy(cert, cert_dest)
+    _copy(cert, cert_dest)
 
     # Copy CA key and cert into required places
     myproxy_ca_dir = os.path.join(os.sep, "var", "lib", "globus-connect-server", "myproxy-ca")
     myproxy_private = os.path.join(myproxy_ca_dir, "private")
     mkdir_p(myproxy_private)
     ca_key_dest = os.path.join(myproxy_private, "cakey.pem")
-    shutil.copy(ca_key, ca_key_dest)
+    _copy(ca_key, ca_key_dest)
     ca_cert_dest = os.path.join(myproxy_ca_dir, "cacert.pem")
-    shutil.copy(ca_cert, ca_cert_dest)
+    _copy(ca_cert, ca_cert_dest)
 
     # Extract "globus pack" and copy contents into the globus certificate directory
     globus_cert_dir = os.path.join(os.sep, "etc", "grid-security", "certificates")
@@ -103,7 +111,7 @@ def globus_local_certs(key, cert, ca_key, ca_cert, globus_pack):
         if os.path.isfile(entry):
             full_file_name = os.path.join(extracted_location, entry)
             dest = os.path.join(globus_cert_dir, entry)
-            shutil.copy(full_file_name, dest)
+            _copy(full_file_name, dest)
 
 
 def globus_trusted_certs():
@@ -125,7 +133,7 @@ def globus_trusted_certs():
     for file_name in cert_files:
         full_file_name = os.path.join(extracted_certs_dir, file_name)
         if os.path.isfile(full_file_name):
-            shutil.copy(full_file_name, globus_cert_dir)
+            _copy(full_file_name, globus_cert_dir)
 
 def tomcat(key_file, cert_file, ca_chain_file, ca_cert_file=None):
 
@@ -138,9 +146,10 @@ def tomcat(key_file, cert_file, ca_chain_file, ca_cert_file=None):
     alias = config["keystore_alias"]
     pke = jks.PrivateKeyEntry.new(alias, [dumped_cert, dumped_ca_chain], dumped_key, 'rsa_raw')
     keystore = jks.KeyStore.new('jks', [pke])
-    # File, password
     keystore_dir = os.path.dirname(config["keystore_file"])
     mkdir_p(keystore_dir)
+    logger.debug("Adding %s to JavaKeystore at %s", key_file, config["keystore_file"])
+    # File, password
     keystore.save(config["keystore_file"], esg_functions.get_java_keystore_password())
 
     # Retrieve truststore from remote
@@ -161,6 +170,7 @@ def tomcat(key_file, cert_file, ca_chain_file, ca_cert_file=None):
         new_entry = jks.TrustedCertEntry.new(alias, dumped_ca_cert)
         entries += [new_entry]
         new_truststore = jks.KeyStore.new('jks', entries)
+        logger.debug("Adding %s to JavaKeystore at %s", ca_cert_file, config["truststore_file"])
         new_truststore.save(config["truststore_file"], "changeit")
 
 
@@ -170,11 +180,11 @@ def httpd(key_file, cert_file, ca_chain_file, ca_cert_file=None):
     cert_dir = os.path.join(os.sep, "etc", "certs")
     mkdir_p(cert_dir)
     key_location = os.path.join(cert_dir, "hostkey.pem")
-    shutil.copy(key_file, key_location)
+    _copy(key_file, key_location)
     cert_location = os.path.join(cert_dir, "hostcert.pem")
-    shutil.copy(cert_file, cert_location)
+    _copy(cert_file, cert_location)
     ca_chain_location = os.path.join(cert_dir, "cachain.pem")
-    shutil.copy(ca_chain_file, ca_chain_location)
+    _copy(ca_chain_file, ca_chain_location)
 
     # Retrieve bundle from remote
     ca_bundle_file_name = "esgf-ca-bundle.crt"
@@ -192,6 +202,7 @@ def httpd(key_file, cert_file, ca_chain_file, ca_cert_file=None):
                 ca_bundle.write(new_trusted_ca.read())
 
 def self_signed():
+    logger.debug("Generating temporary CA key/cert pair")
     # Make a CA
     ca_key = crypto.PKey()
     ca_key.generate_key(crypto.TYPE_RSA, 4096)
@@ -216,22 +227,25 @@ def self_signed():
     ca_cert.sign(ca_key, 'sha256')
 
     # Write to file
+    logger.debug("Writing self-signed temporary CA key/cert pair")
     self_signed_dir = os.path.join(os.sep, "etc", "tempcerts")
     mkdir_p(self_signed_dir)
     ca_cert_file = os.path.join(self_signed_dir, "cacert.pem")
+    logger.debug("CA certificate file: %s", ca_cert_file)
     with open(ca_cert_file, "w") as ca_cert_filep:
         ca_cert_filep.write(
             crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert)
         )
 
     ca_key_file = os.path.join(self_signed_dir, "cakey.pem")
+    logger.debug("CA key file: %s", ca_key_file)
     with open(ca_key_file, "w") as ca_key_filep:
         ca_key_filep.write(
             crypto.dump_privatekey(crypto.FILETYPE_PEM, ca_key)
         )
 
     # Begin "client" cert
-
+    logger.debug("Generating temporary identity key/cert pair")
     client_key = crypto.PKey()
     client_key.generate_key(crypto.TYPE_RSA, 4096)
 
@@ -252,15 +266,18 @@ def self_signed():
     client_cert.gmtime_adj_notBefore(0)
     client_cert.gmtime_adj_notAfter(30*24*60*60)
 
+    logger.debug("Signing temporary identity key/cert pair with self-signed CA")
     client_cert.sign(ca_key, 'sha256')
 
     client_cert_file = os.path.join(self_signed_dir, "hostcert.pem")
+    logger.debug("Identity certificate file: %s", client_cert_file)
     with open(client_cert_file, "w") as client_cert_filep:
         client_cert_filep.write(
             crypto.dump_certificate(crypto.FILETYPE_PEM, client_cert)
         )
 
     client_key_file = os.path.join(self_signed_dir, "hostkey.pem")
+    logger.debug("Identity key file: %s", client_key_file)
     with open(client_key_file, "w") as client_key_filep:
         client_key_filep.write(
             crypto.dump_privatekey(crypto.FILETYPE_PEM, client_key)
@@ -280,10 +297,11 @@ def build_cachain():
         if not os.path.isfile(filename.strip()):
             raise OSError
 
-    #Copy the tmpchain and rename to cachain
+    logger.debug("Building CA chain file with %s", str(cert_files_list))
     tmp_cachain = os.path.join(os.sep, "etc", "certs", "tmpchain")
     with open(tmp_cachain, "w") as tmpchain_file:
         for cert in cert_files_list:
+            logger.debug("Appending %s to %s", cert, tmp_cachain)
             with open(cert.strip(), "r") as cert_file_handle:
                 cert_file_contents = cert_file_handle.read()
             tmpchain_file.write(cert_file_contents+"\n")
@@ -316,6 +334,7 @@ def generate_csr(keyout, csrout, **name):
 
     req.set_pubkey(pkey)
     req.sign(pkey, "sha256")
+
     with open(keyout, "w") as keyout_file:
         keyout_file.write(
             crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey)
@@ -324,6 +343,7 @@ def generate_csr(keyout, csrout, **name):
         keyout_file.write(
             crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
         )
+    return keyout, csrout
 
 def generate_globus_pack(cert_file):
 
@@ -342,9 +362,9 @@ def generate_globus_pack(cert_file):
 
     # Copy the required signing policy into place
     signing_policy_tmpl = os.path.join(os.path.dirname(__file__), "signing-policy.template")
-    shutil.copyfile(cert_file, os.path.join(globus_pack, local_hash+".0"))
+    _copy(cert_file, os.path.join(globus_pack, local_hash+".0"))
     signing_policy = os.path.join(globus_pack, local_hash+".signing_policy")
-    shutil.copyfile(signing_policy_tmpl, signing_policy)
+    _copy(signing_policy_tmpl, signing_policy)
 
     # Populate the signing policy template
     cert_subject_object = cert_obj.get_subject()
@@ -360,7 +380,7 @@ def generate_globus_pack(cert_file):
     )
 
     # This was here, but I am unsure of its purpose
-    shutil.copy(signing_policy, os.path.join(temp_cert_dir, "signing-policy"))
+    _copy(signing_policy, os.path.join(temp_cert_dir, "signing-policy"))
 
     # tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
     with pushd(temp_cert_dir):
@@ -381,3 +401,10 @@ def _dump_der_cert(cert_file):
         cert_contents = cert_filep.read()
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_contents)
     return crypto.dump_certificate(crypto.FILETYPE_ASN1, cert)
+
+def _copy(src, dest):
+    try:
+        shutil.copy(src, dest)
+        logger.debug("Copied %s to %s", src, dest)
+    except shutil.Error as err:
+        logger.warning("Copy from %s to %s did not occur. Reason: %s", src, dest, str(err))

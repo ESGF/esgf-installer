@@ -11,7 +11,7 @@ import yaml
 
 import esg_functions
 import esg_property_manager
-from .pybash import mkdir_p, touch
+from .pybash import mkdir_p, pushd
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -335,8 +335,9 @@ def generate_globus_pack(cert_file):
     local_hash = esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())
 
     # Make the directory to store the needed files for a "globus pack"
-    globus_pack = "globus_simple_ca_{}_setup-0".format(local_hash)
-    globus_pack = os.path.join(os.sep, "etc", "tempcerts", globus_pack)
+    temp_cert_dir = os.path.join(os.sep, "etc", "tempcerts")
+    globus_pack_name = "globus_simple_ca_{}_setup-0".format(local_hash)
+    globus_pack = os.path.join(temp_cert_dir, globus_pack_name)
     mkdir_p(globus_pack)
 
     # Copy the required signing policy into place
@@ -359,14 +360,15 @@ def generate_globus_pack(cert_file):
     )
 
     # This was here, but I am unsure of its purpose
-    shutil.copyfile(signing_policy, os.path.join(os.sep, "etc", "tempcerts", "signing-policy"))
+    shutil.copy(signing_policy, os.path.join(temp_cert_dir, "signing-policy"))
 
     # tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
-    globus_pack_tar = globus_pack+".tar.gz"
-    with tarfile.open(globus_pack_tar, "w:gz") as tar:
-        tar.add(globus_pack)
+    with pushd(temp_cert_dir):
+        globus_pack_tar = globus_pack_name+".tar.gz"
+        with tarfile.open(globus_pack_tar, "w:gz") as tar:
+            tar.add(globus_pack_name)
 
-    return globus_pack_tar
+    return os.path.join(os.sep, "etc", "tempcerts", globus_pack_tar)
 
 def _dump_der_key(key_file):
     with open(key_file, "r") as key_filep:

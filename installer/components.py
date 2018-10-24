@@ -39,7 +39,9 @@ _BASE = {
         "method": Command,
         "requires": ["postgres"],
         "command": "service",
-        "args": ["postgresql", "initdb"]
+        "args": ["postgresql", "initdb"],
+        "check_fn": lambda datadir: path.isdir(datadir) and bool(os.listdir(datadir)),
+        "check_args": [path.join(os.sep, "var", "lib", "pgsql", "data")]
     },
     "postgresql.conf": {
         "method": FileManager,
@@ -277,7 +279,7 @@ _INDEX = {
     },
     "transfer_api_client_python": {
         "method": Git,
-        "requires": ["cog"],
+        "requires": ["cog-requirements"],
         "source": "https://github.com/globusonline/transfer-api-client-python.git",
         "dest": path.join(os.sep, "usr", "local", "cog", "transfer-api-client-python")
     },

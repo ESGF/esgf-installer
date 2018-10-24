@@ -50,8 +50,24 @@ class Command(Conda):
     def _versions(self):
         versions = {}
         for component in self.components:
-            if component["name"] in self.executed:
-                versions[component["name"]] = "1"
+            try:
+                check_args = component["check_args"]
+            except KeyError:
+                check_args = None
+            try:
+                check_fn = component["check_fn"]
+            except KeyError:
+                if component["name"] in self.executed:
+                    versions[component["name"]] = "1"
+                else:
+                    versions[component["name"]] = None
             else:
-                versions[component["name"]] = None
+                if check_args:
+                    bool_res = bool(check_fn(*check_args))
+                else:
+                    bool_res = check_fn()
+                if bool_res:
+                    versions[component["name"]] = "1"
+                else:
+                    versions[component["name"]] = None
         return versions

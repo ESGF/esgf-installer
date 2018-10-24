@@ -341,7 +341,7 @@ def generate_globus_pack(cert_file):
 
     # Copy the required signing policy into place
     signing_policy_tmpl = os.path.join(os.path.dirname(__file__), "signing-policy.template")
-    shutil.copyfile("cacert.pem", os.path.join(globus_pack, local_hash+".0"))
+    shutil.copyfile(cert_file, os.path.join(globus_pack, local_hash+".0"))
     signing_policy = os.path.join(globus_pack, local_hash+".signing_policy")
     shutil.copyfile(signing_policy_tmpl, signing_policy)
 

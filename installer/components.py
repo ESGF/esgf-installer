@@ -17,6 +17,18 @@ _BASE = {
         "method": PackageManager,
         "controller": Service
     },
+    "mod-wsgi": {
+        "method": Pip,
+        "requires": ["httpd"],
+        "version": "4.5.3",
+        "pip_name": "${name}==${version}"
+    },
+    "mod-wsgi-install": {
+        "method": Command,
+        "requires": ["mod-wsgi"],
+        "command": "mod_wsgi-express",
+        "args": ["install-module"]
+    },
     "esgf-httpd.conf": {
         "method": FileManager,
         "requires": ["httpd"],
@@ -25,7 +37,7 @@ _BASE = {
     },
     "esgf-ca-bundle.crt": {
         "method": FileManager,
-        "source": path.join(_FILE_DIR, "httpd", "${name}"),
+        "source": "${ESGF_PARAMS:mirror}/certs/${name}",
         "dest": path.join(os.sep, "etc", "certs", "${name}")
     },
     "postgres": {
@@ -60,9 +72,26 @@ _BASE = {
         "owner_group": "postgres"
     },
     "java": {
-        "method": PackageManager,
-        "version": "1.8.0",
-        "yum": "java-${version}-openjdk"
+        "method": FileManager,
+        "version": "1.8.0_192",
+        "source": "${ESGF_PARAMS:mirror}/java/${version}/jdk${version}-64.tar.gz",
+        "dest": os.path.join(os.sep, "usr", "local", "java"),
+        "tar_root_dir": "jdk${version}"
+    },
+    "java-set-default1": {
+        "method": Command,
+        "requires": ["java"],
+        "command": "alternatives",
+        "args": ["--install", "${java:dest}", "${java:dest}/bin/java", "3"]
+    },
+    "java-set-default2": {
+        "method": Command,
+        "requires": ["java-set-default1"],
+        "command": "alternatives",
+        "args": ["--set", "java", "${java:dest}/bin/java", "3"]
+    },
+    "ant": {
+        "method": PackageManager
     },
     "postgresql-devel": {
         "method": PackageManager
@@ -173,7 +202,7 @@ _BASE = {
     "tomcat-user": {
         "method": UserMethod,
         "requires": ["tomcat-group"],
-        "options": ["-s", "/sbin/nologin", "-g", "tomcat", "-d", "/usr/local/tomcat"],
+        "options": ["-s", "/sbin/nologin", "-g", "${tomcat-group:groupname}", "-d", "/usr/local/tomcat"],
         "username": "tomcat"
     },
     "tomcat": {
@@ -181,10 +210,30 @@ _BASE = {
         "requires": ["tomcat-user", "tomcat-group"],
         "version": "8.5.20",
         "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v${version}/bin/apache-tomcat-${version}.tar.gz",
-        "dest": "/tmp/tomcat",
+        "dest": path.join(os.sep, "usr", "local", "tomcat"),
         "tar_root_dir": "apache-tomcat-${version}",
-        "owner_user": "tomcat",
-        "owner_group": "tomcat"
+        "owner_user": "${tomcat-user:username}",
+        "owner_group": "${tomcat-group:groupname}"
+    },
+    "tomcat-context.xml": {
+        "method": FileManager,
+        "requires": ["tomcat"],
+        "source": path.join(_FILE_DIR, "tomcat", "context.xml"),
+        "dest": path.join("${tomcat:dest}", "conf", "context.xml")
+    },
+    "tomcat-users.xml": {
+        "method": FileManager,
+        "requires": ["tomcat"],
+        "source": path.join(_FILE_DIR, "tomcat", "tomcat-users.xml"),
+        "dest": path.join("${ESGF_PARAMS:config}", "tomcat", "tomcat-users.xml"),
+        "owner_user": "${tomcat-user:username}",
+        "owner_group": "${tomcat-group:groupname}"
+    },
+    "tomcat-setenv.sh": {
+        "method": FileManager,
+        "requires": ["tomcat"],
+        "source": path.join(_FILE_DIR, "tomcat", "setenv.sh"),
+        "dest": path.join("${tomcat:dest}", "bin", "setenv.sh")
     }
     # "esgf-config-git": {
     #     "method": Git,
@@ -195,9 +244,10 @@ _BASE = {
 _DATA = {
     "thredds": {
         "method": FileManager,
+        "requires": ["tomcat"],
         "version": "5.0.2",
         "source": "${ESGF_PARAMS:mirror}/2.6/8/thredds/5.0/${version}/thredds.war",
-        "dest": "/tmp/thredds"
+        "dest": path.join("${tomcat:dest}", "webapps", "thredds")
     },
     "esgf-dashboard-git": {
         "method": Git,
@@ -228,8 +278,7 @@ _DATA = {
         "version": "0.0.2",
         "source": "${ESGF_PARAMS:mirror}/2.6/8/esgf-dashboard/esgf_dashboard-${version}-py2.7.egg",
         "dest": "/tmp/esgf_dashboard/esgf_dashboard.egg",
-        "extract": False,
-        "conda_env": "test-env"
+        "extract": False
     },
     "esgf-node-manager": {
         "method": EasyInstall,
@@ -295,12 +344,6 @@ _INDEX = {
         "command": "make",
         "args": ["install"],
         "working_dir": "${transfer_api_client_python:dest}"
-    },
-    "mod-wsgi": {
-        "method": Pip,
-        "requires": ["httpd"],
-        "version": "4.5.3",
-        "pip_name": "${name}==${version}"
     },
     "django-openid-auth": {
         "method": Pip,

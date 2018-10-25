@@ -131,7 +131,7 @@ def copy_config_files():
         shutil.copyfile(os.path.join(current_directory, "tomcat_conf/context.xml"), "/usr/local/tomcat/conf/context.xml")
         pybash.mkdir_p("/esg/config/tomcat")
 
-        shutil.copyfile(os.path.join(current_directory, "certs/tomcat-users.xml"), "/esg/config/tomcat/tomcat-users.xml")
+        shutil.copyfile(os.path.join(current_directory, "tomcat_conf/tomcat-users.xml"), "/esg/config/tomcat/tomcat-users.xml")
         tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
         tomcat_group_id = grp.getgrnam("tomcat").gr_gid
         os.chown("/esg/config/tomcat/tomcat-users.xml", tomcat_user_id, tomcat_group_id)
@@ -416,9 +416,13 @@ def configure_tomcat():
             #Setup temp CA
             CA.setup_temp_ca()
 
-            #Fetch/Copy truststore to $tomcat_conf_dir
+            #Fetch truststore to $tomcat_conf_dir
             if not os.path.exists(config["truststore_file"]):
-                shutil.copyfile(os.path.join(os.path.dirname(__file__), "tomcat_certs/esg-truststore.ts"), config["truststore_file"])
+                remote = "{}/certs/{}".format(
+                    esg_property_manager.get_property("esg.root.url"),
+                    os.path.basename(config["truststore_file"])
+                )
+                esg_functions.download_update(config["truststore_file"], remote)
 
             esg_truststore_manager.add_my_cert_to_truststore()
 

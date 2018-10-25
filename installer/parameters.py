@@ -16,5 +16,5 @@ _TRUST = {
 }
 PARAMS = {
     "ESGF_PARAMS" : _PARAMS,
-    "TRUST_PARAMS":
+    "TRUST_PARAMS": _TRUST
 }

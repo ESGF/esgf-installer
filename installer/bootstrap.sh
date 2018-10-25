@@ -62,7 +62,7 @@ install_dependencies_pip(){
 
   # install other python pre-requisites
       pip install --upgrade pip
-      pip install plumbum psycopg2 requests
+      pip install plumbum psycopg2 requests configparser
 
   source deactivate
 

@@ -132,18 +132,18 @@ _BASE = {
     # "libuuid-devel": {
     #     "method": PackageManager
     # },
-    # "libxml2": {
-    #     "method": PackageManager
-    # },
-    # "libxml2-devel": {
-    #     "method": PackageManager
-    # },
-    # "libxslt": {
-    #     "method": PackageManager
-    # },
-    # "libxslt-devel": {
-    #     "method": PackageManager
-    # },
+    "libxml2": {
+        "method": PackageManager
+    },
+    "libxml2-devel": {
+        "method": PackageManager
+    },
+    "libxslt": {
+        "method": PackageManager
+    },
+    "libxslt-devel": {
+        "method": PackageManager
+    },
     # "lsof": {
     #     "method": PackageManager
     # },
@@ -265,7 +265,7 @@ _DATA = {
     },
     "esgcet": {
         "method": Pip,
-        "requires": ["postgres", "postgresql-devel"],
+        "requires": ["postgres", "postgresql-devel", "libxslt-devel", "libxml2-devel"],
         "version": "3.5.0",
         "tag": "v${version}",
         "repo": "https://github.com/ESGF/esg-publisher.git",

@@ -2,6 +2,7 @@ import os.path as path
 
 from plumbum import local
 from plumbum import TEE
+from plumbum.commands import ProcessExecutionError
 
 from .conda import Conda
 from ..utils import pushd
@@ -38,11 +39,42 @@ class Command(Conda):
             args += component["args"]
         except KeyError:
             pass
-        if args:
-            result = cmd.__getitem__(args) & TEE
-        else:
-            result = cmd.run_tee()
+        okay, warn, crit = self._returncodes(component)
+        try:
+            if args:
+                result = cmd.__getitem__(args) & TEE
+            else:
+                result = cmd.run_tee()
+        except ProcessExecutionError as err:
+            rc = str(err.retcode)
+            print rc
+            if rc in okay:
+                self.log.info("Okay code %s encountered for %s", rc, component["name"])
+            elif warn is not None and rc in warn:
+                self.log.warning("Warning code %s encountered for %s", rc, component["name"])
+            else:
+                raise
+
+        if crit is not None and rc in crit:
+            self.log.error("Critical code %s encountered for %s", rc, component["name"])
+            raise ProcessExecutionError
+
         self.executed.add(component["name"])
+
+    def _returncodes(self, component):
+        try:
+            okay = component["okay_rc"]
+        except KeyError:
+            okay = [0]
+        try:
+            warn = component["warn_rc"]
+        except KeyError:
+            warn = None
+        try:
+            crit = component["crit_rc"]
+        except KeyError:
+            crit = None
+        return okay, warn, crit
 
     def _uninstall(self):
         pass

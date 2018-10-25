@@ -384,6 +384,12 @@ _TEST = {
         "method": Command,
         "command": "echo",
         "args": ["Fill this value ${ESGF_PARAMS:mirror}", "Filling values in lists ${ESGF_PARAMS:mirror}"]
+    },
+    "sample_failed_command": {
+        "method": Command,
+        "command": "rm",
+        "args": ["/this/path/DNE"],
+        "warn_rc": [1]
     }
 }
 ALL = {

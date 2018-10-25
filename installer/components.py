@@ -233,7 +233,8 @@ _BASE = {
         "method": FileManager,
         "requires": ["tomcat"],
         "source": path.join(_FILE_DIR, "tomcat", "setenv.sh"),
-        "dest": path.join("${tomcat:dest}", "bin", "setenv.sh")
+        "dest": path.join("${tomcat:dest}", "bin", "setenv.sh"),
+        "template": True
     }
     # "esgf-config-git": {
     #     "method": Git,

@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--restart", nargs="*", required=False)
     parser.add_argument("-f", "--freeze", action="store_true")
     parser.add_argument("-t", "--type", nargs="+", required=False)
+    parser.add_argument("-p", "--params", dest="input_params", default="params.ini")
 
     director = Director(parser.parse_args())
     director.pre_check()

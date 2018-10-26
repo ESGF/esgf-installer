@@ -13,12 +13,11 @@ class Installer(object):
     Takes a dictionary of components and find their assignments and a list of components names
     that specify what components to install.
     '''
-    def __init__(self, requirements, name_spec, is_control=False, is_install=False):
+    def __init__(self, requirements, name_spec, input_params, is_control=False, is_install=False):
         self.log = logging.getLogger(__name__)
         self.methods = []
         self.controlled_components = []
-
-        requirements = self._interpolate(requirements)
+        requirements = self._interpolate(requirements, input_params)
         # print json.dumps(requirements, indent=2, sort_keys=True)
         names = []
         for name in requirements:
@@ -205,30 +204,15 @@ class Installer(object):
                 self._dep_resolve(components, dep, resolved, seen)
         resolved.append(name)
 
-    def _interpolate(self, requirements):
+    def _interpolate(self, requirements, input_params):
+
+        input_parser = configparser.ConfigParser()
+        input_parser.read(input_params)
 
         string_only = {}
-        for name in requirements:
-            config = requirements[name]
-            string_only[name] = {"name": name}
-            for param in config:
-                if isinstance(config[param], basestring):
-                    string_only[name][param] = config[param]
-                if isinstance(config[param], list):
-                    for i in range(len(config[param])):
-                        key = LIST_KEY_SCHEME.format(name=name, key=param, index=i)
-                        string_only[name][key] = config[param][i]
-
-        for name in PARAMS:
-            config = PARAMS[name]
-            string_only[name] = {"name": name}
-            for param in config:
-                if isinstance(config[param], basestring):
-                    string_only[name][param] = config[param]
-                if isinstance(config[param], list):
-                    for i in range(len(config[param])):
-                        key = LIST_KEY_SCHEME.format(name=name, key=param, index=i)
-                        string_only[name][key] = config[param][i]
+        string_only = self._add_params(string_only, input_parser)
+        string_only = self._add_params(string_only, requirements)
+        string_only = self._add_params(string_only, PARAMS)
 
         parser = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
         parser.read_dict(string_only)
@@ -250,3 +234,16 @@ class Installer(object):
                     pass
 
         return requirements
+
+    def _add_params(self, all_params, params):
+        for name in params:
+            config = params[name]
+            all_params[name] = {"name": name}
+            for param in config:
+                if isinstance(config[param], basestring):
+                    all_params[name][param] = config[param]
+                if isinstance(config[param], list):
+                    for i in range(len(config[param])):
+                        key = LIST_KEY_SCHEME.format(name=name, key=param, index=i)
+                        all_params[name][key] = config[param][i]
+        return all_params

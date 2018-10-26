@@ -49,6 +49,7 @@ class Director(object):
             installer = Installer(
                 requirements,
                 component_spec,
+                self.args.input_params,
                 is_control=is_control_cmd,
                 is_install=self.args.install is not None
             )

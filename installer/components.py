@@ -390,6 +390,11 @@ _TEST = {
         "command": "rm",
         "args": ["/this/path/DNE"],
         "warn_rc": [1]
+    },
+    "echo_input_param": {
+        "method": Command,
+        "command": "echo",
+        "args": ["From input file ${INPUT_PARAMS:admin.password}"]
     }
 }
 ALL = {

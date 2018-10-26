@@ -103,7 +103,14 @@ def copy_apache_conf_files():
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/ssl.conf"), "/etc/httpd/conf.d/ssl.conf")
     shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))
 
-    #add LD_LIBRARY_PATH to /etc/sysconfig/httpd
+    # append tempcert to cert_bundle
+    try:
+        with open("/etc/certs/esgf-ca-bundle.crt", "a") as cert_bundle_file:
+            cert_bundle_file.write(open("/etc/tempcerts/cacert.pem").read())
+    except OSError:
+        logger.exception()
+
+    # add LD_LIBRARY_PATH to /etc/sysconfig/httpd
     with open("/etc/sysconfig/httpd", "a") as httpd_file:
         httpd_file.write("OPTIONS='-f /etc/httpd/conf/esgf-httpd.conf'\n")
         httpd_file.write("export LD_LIBRARY_PATH=/usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server\n")

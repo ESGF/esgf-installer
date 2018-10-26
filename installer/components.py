@@ -400,7 +400,13 @@ _TEST = {
     "echo_input_param": {
         "method": Command,
         "command": "echo",
-        "args": ["From input file ${INPUT_PARAMS:admin.password}"]
+        "args": [
+            "From input file",
+            "'${INPUT_PARAMS:admin.password}'",
+            "'${INPUT_PARAMS:sample.param.override}'",
+            # "'${INPUT_PARAMS:this.param.DNE}'",
+            "'${INPUT_PARAMS:sample.param}'"
+        ]
     }
 }
 ALL = {

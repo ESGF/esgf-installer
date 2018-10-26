@@ -30,22 +30,21 @@ install_miniconda(){
   echo "Installing Miniconda"
   echo "-----------------------------------"
   echo
-  CDAT_HOME=/usr/local/conda
+  CONDA_HOME=/usr/local/conda
 
   pushd /tmp &&
-    rm -rf $CDAT_HOME && \
+    rm -rf $CONDA_HOME && \
         wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh && \
-        sudo bash Miniconda2-latest-Linux-x86_64.sh -b -p $CDAT_HOME
+        sudo bash Miniconda2-latest-Linux-x86_64.sh -b -p $CONDA_HOME
 
         # create CDAT virtual environment with Anaconda
         echo
         echo "-----------------------------------"
-        echo "Creating conda environment: esgf-pub"
+        echo "Creating conda environment: esgf-installer"
         echo "-----------------------------------"
         echo
-        PATH=${CDAT_HOME}/bin:$PATH
-        #conda create -y -n esgf-pub "python<3" cdutil -c conda-forge -c cdat
-        conda create -y -n esgf-pub "python<3"
+        PATH=${CONDA_HOME}/bin:$PATH
+        conda create -y -n esgf-installer "python<3"
 
   popd
 
@@ -58,7 +57,7 @@ install_dependencies_pip(){
   echo "-----------------------------------"
   echo
   # activate virtual env and fetch some pre-requisites
-  source ${CDAT_HOME}/bin/activate esgf-pub && \
+  source ${CONDA_HOME}/bin/activate esgf-installer && \
 
   # install other python pre-requisites
       pip install --upgrade pip
@@ -83,18 +82,7 @@ install_dependencies_yum(){
 
 }
 
-copy_autoinstall_file(){
-  echo
-  echo "-----------------------------------"
-  echo "Copying esgf.properties.template to /esg/config/esgf.properties"
-  echo "-----------------------------------"
-  echo
-  mkdir -p /esg/config
-  cp -v esgf.properties.template /esg/config/esgf.properties
-
-}
-
-if [ ! -d "/usr/local/conda" ]; then
-    install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file;
-    echo "Bootstrap complete!"
-fi
+install_dependencies_yum; 
+install_miniconda; 
+install_dependencies_pip;
+echo "Bootstrap complete!"

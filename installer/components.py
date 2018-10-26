@@ -71,6 +71,12 @@ _BASE = {
         "owner_user": "postgres",
         "owner_group": "postgres"
     },
+    "postgres-start": {
+        "method": Command,
+        "requires": ["pg_hba.conf", "postgresql.conf"],
+        "command": "service",
+        "args": ["postgresql", "start"]
+    },
     "java": {
         "method": FileManager,
         "version": "1.8.0_192",
@@ -308,21 +314,21 @@ _INDEX = {
     },
     "cog-setup-install": {
         "method": Command,
-        "requires": ["cog"],
+        "requires": ["cog-requirements", "postgres-start"],
         "command": "python",
         "args": ["setup.py", "install"],
         "working_dir": "${cog:dest}"
     },
     "cog-setup-setup": {
         "method": Command,
-        "requires": ["cog"],
+        "requires": ["cog-setup-install"],
         "command": "python",
         "args": ["setup.py", "setup_cog", "--esgf=true"],
         "working_dir": "${cog:dest}"
     },
     "cog-setup-manage": {
         "method": Command,
-        "requires": ["cog"],
+        "requires": ["cog-setup-setup"],
         "command": "python",
         "args": ["manage.py", "collectstatic", "--no-input"],
         "working_dir": "${cog:dest}"
@@ -337,14 +343,14 @@ _INDEX = {
         "method": Command,
         "requires": ["transfer_api_client_python"],
         "command": "make",
-        "working_dir": "${transfer_api_client_python:dest}"
+        "working_dir": path.join("${transfer_api_client_python:dest}", "mkproxy")
     },
     "install_transfer_api_client": {
         "method": Command,
         "requires": ["make_transfer_api_client"],
         "command": "make",
         "args": ["install"],
-        "working_dir": "${transfer_api_client_python:dest}"
+        "working_dir": "${make_transfer_api_client:working_dir}"
     },
     "django-openid-auth": {
         "method": Pip,

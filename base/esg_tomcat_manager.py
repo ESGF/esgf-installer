@@ -169,7 +169,7 @@ def create_tomcat_user():
     if not "tomcat" in esg_functions.get_group_list():
         create_tomcat_group()
 
-    useradd_options = ["-s", "/sbin/nologin", "-g", "tomcat", "-d", "/usr/local/tomcat", "tomcat"]
+    useradd_options = ["-s", "/sbin/nologin", "-M", "-g", "tomcat", "-d", "/usr/local/tomcat", "tomcat"]
     esg_functions.add_unix_user(useradd_options)
 
     tomcat_directory = "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(

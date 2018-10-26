@@ -28,7 +28,7 @@ YES_LIST = ["y", "yes", "Y", "Yes", "YES"]
 #   Keystore functions
 #------------------------------------
 
-def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, intermediate_certs):
+def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cachain_file):
     '''The following helper function creates a new keystore for your tomcat installation'''
 
     provider = "org.bouncycastle.jce.provider.BouncyCastleProvider"
@@ -54,10 +54,10 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
 
     pybash.mkdir_p(idptools_install_dir)
 
-    cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
-    ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
+    # cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
+    # ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
 
-    cert_bundle, ca_chain_bundle = bundle_certificates(public_cert, intermediate_certs, idptools_install_dir)
+    # cert_bundle, ca_chain_bundle = bundle_certificates(public_cert, intermediate_certs, idptools_install_dir)
 
     print "checking that key pair is congruent... "
     if check_associate_cert_with_private_key(public_cert, private_key):
@@ -65,31 +65,67 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     else:
         raise RuntimeError("The keypair was not congruent")
 
-
     print "creating keystore... "
     #create a keystore with a self-signed cert
-    distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
+    # distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
 
     #if previous keystore is found; backup
     backup_previous_keystore(keystore_name)
 
+    # Converting to DER aka ASN1 strings from files
+    with open(public_cert, "r") as certfile:
+        dumped_cert = OpenSSL.crypto.dump_certificate(
+            OpenSSL.crypto.FILETYPE_ASN1,
+            OpenSSL.crypto.load_certificate(
+                OpenSSL.crypto.FILETYPE_PEM,
+                certfile.read()
+            )
+        )
+    with open(cachain_file, "r") as certfile:
+        dumped_cachain = OpenSSL.crypto.dump_certificate(
+            OpenSSL.crypto.FILETYPE_ASN1,
+            OpenSSL.crypto.load_certificate(
+                OpenSSL.crypto.FILETYPE_PEM,
+                certfile.read()
+            )
+        )
+    with open(private_key, "r") as keyfile:
+        dumped_key = OpenSSL.crypto.dump_privatekey(
+            OpenSSL.crypto.FILETYPE_ASN1,
+            OpenSSL.crypto.load_privatekey(
+                OpenSSL.crypto.FILETYPE_PEM,
+                keyfile.read()
+            )
+        )
+    print "Constructing new keystore content... "
+    pke = jks.PrivateKeyEntry.new(
+        config["keystore_alias"],
+        [dumped_cert, dumped_cachain],
+        dumped_key,
+        'rsa_raw'
+    )
+    keystore = jks.KeyStore.new('jks', [pke])
+    keystore_dir = os.path.dirname(keystore_name)
+    pybash.mkdir_p(keystore_dir)
+    logger.debug("Adding %s to JavaKeystore at %s", private_key, keystore_name)
+    # File, password
+    keystore.save(config["keystore_file"], esg_functions.get_java_keystore_password())
     #-------------
     #Make empty keystore...
     #-------------
-    create_empty_java_keystore(keystore_name, keystore_alias, keystore_password, distinguished_name)
+    # create_empty_java_keystore(keystore_name, keystore_alias, keystore_password, distinguished_name)
 
     #-------------
     #Convert your private key into from PEM to DER format that java likes
     #-------------
-    derkey = convert_pem_to_dem(private_key, idptools_install_dir)
+    # derkey = convert_pem_to_dem(private_key, idptools_install_dir)
 
     #-------------
     #Now we gather up all the other keys in the key chain...
     #-------------
-    check_cachain_validity(ca_chain_bundle)
+    # check_cachain_validity(ca_chain_bundle)
 
-    print "Constructing new keystore content... "
-    import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider)
+    # import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider)
 
     #Check keystore output
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
@@ -100,10 +136,8 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
         logger.error("Failed to check keystore")
         raise
     else:
-        print "Mmmm, freshly baked keystore!"
-        print "If Everything looks good... then replace your current tomcat keystore with {keystore_name}, if necessary.".format(keystore_name=keystore_name)
-        print "Don't forget to change your tomcat's server.xml entry accordingly :-)"
-        print "Remember: Keep your private key {private_key} and signed cert {public_cert} in a safe place!!!".format(private_key=private_key, public_cert=public_cert)
+        print "Keystore made at {}".format(keystore_name)
+        print "Remember: Keep your private key {private_key} and signed cert {public_cert} in a safe place".format(private_key=private_key, public_cert=public_cert)
 
 def check_associate_cert_with_private_key(cert, private_key):
     """
@@ -230,7 +264,7 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
         raise
 
 
-    generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cert_files)
+    generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, "/etc/certs/cachain.pem")
 
     copy_cert_to_tomcat_conf(public_cert)
 

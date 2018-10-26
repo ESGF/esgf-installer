@@ -1733,10 +1733,10 @@ update_apache_conf() {
 
 setup_sensible_confs() {
 	#place for post-install configuration overrides, binary replacements etc
-    if -d [ /usr/local/solr/example ]; then
+    if [ -d /usr/local/solr/example ]; then
         rm -rf /usr/local/solr/example
         rm -rf /usr/local/solr/contrib
-        find /usr/local/solr/ -name '*.jar'|sort >pre_replacement_solr_jarlist.txt
+        find /usr/local/solr/ -name '*.jar'|sort > /usr/local/solr/pre_replacement_solr_jarlist.txt
         checked_get /usr/local/solr/solr_jar_nuke.txt ${esg_dist_url}/filters/solr_replacement_jars/solr_jar_nuke.txt
         checked_get /usr/local/solr/solr_jar_replace.txt ${esg_dist_url}/filters/solr_replacement_jars/solr_jar_replace.txt
         while read ln; do
@@ -1745,7 +1745,7 @@ setup_sensible_confs() {
         while read ln; do
             find /usr/local/solr/ -name "$ln" -exec rm -f {} \;
         done < /usr/local/solr/solr_jar_nuke.txt
-        find /usr/local/solr/ -name '*.jar'|sort >post_replacement_solr_jarlist.txt
+        find /usr/local/solr/ -name '*.jar'|sort > /usr/local/solr/post_replacement_solr_jarlist.txt
         rm -f /usr/local/solr/solr_jar_*.txt
     fi
 

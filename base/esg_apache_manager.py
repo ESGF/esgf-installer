@@ -94,6 +94,11 @@ def make_python_eggs_dir():
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
     pybash.mkdir_p("/etc/certs")
+    remote_bundle = "{}/certs/{}".format(
+        esg_property_manager.get_property("esg.root.url"),
+        "esgf-ca-bundle.crt"
+    )
+    esg_functions.download_update("/etc/certs/esgf-ca-bundle.crt", remote_bundle)
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_html/index.html"), "/var/www/html/index.html")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/ssl.conf"), "/etc/httpd/conf.d/ssl.conf")
     shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))

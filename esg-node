@@ -1733,12 +1733,22 @@ update_apache_conf() {
 
 setup_sensible_confs() {
 	#place for post-install configuration overrides, binary replacements etc
+    if -d [ /usr/local/solr/example ]; then
+        rm -rf /usr/local/solr/example
+        rm -rf /usr/local/solr/contrib
+        find /usr/local/solr/ -name '*.jar'|sort >pre_replacement_solr_jarlist.txt
+        checked_get /usr/local/solr/solr_jar_nuke.txt ${esg_dist_url}/filters/solr_replacement_jars/solr_jar_nuke.txt
+        checked_get /usr/local/solr/solr_jar_replace.txt ${esg_dist_url}/filters/solr_replacement_jars/solr_jar_replace.txt
+        while read ln; do
+            checked_get /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/$ln ${esg_dist_url}/filters/solr_replacement_jars/$ln
+        done < /usr/local/solr/solr_jar_replace.txt
+        while read ln; do
+            find /usr/local/solr/ -name "$ln" -exec rm -f {} \;
+        done < /usr/local/solr/solr_jar_nuke.txt
+        find /usr/local/solr/ -name '*.jar'|sort >post_replacement_solr_jarlist.txt
+        rm -f /usr/local/solr/solr_jar_*.txt
+    fi
 
-	#quick-fix for removing insecure commons-fileupload jar file
-	if [ -s /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar ]; then
-		rm -f /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar;
-		cp ${tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/;
-	fi
 	#configuration overrides
 	tmpservername='placeholder.fqdn';
 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;

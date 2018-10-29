@@ -34,9 +34,6 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     # provider = "org.bouncycastle.jce.provider.BouncyCastleProvider"
     idptools_install_dir = os.path.join(config["esg_tools_dir"], "idptools")
 
-    # if len(intermediate_certs) < 1:
-    #     raise RuntimeError("No intermediate_certs files given")
-
     if not os.path.isfile(private_key):
         print "Private key file {private_key} does not exist".format(private_key=private_key)
 
@@ -54,11 +51,6 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
 
     pybash.mkdir_p(idptools_install_dir)
 
-    # cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
-    # ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
-
-    # cert_bundle, ca_chain_bundle = bundle_certificates(public_cert, intermediate_certs, idptools_install_dir)
-
     print "checking that key pair is congruent... "
     if check_associate_cert_with_private_key(public_cert, private_key):
         print "The keypair was congruent"
@@ -66,13 +58,11 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
         raise RuntimeError("The keypair was not congruent")
 
     print "creating keystore... "
-    #create a keystore with a self-signed cert
-    # distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
 
-    #if previous keystore is found; backup
+    # if previous keystore is found; backup
     backup_previous_keystore(keystore_name)
 
-    # Converting to DER aka ASN1 strings from files
+    # Converting PEM files to DER aka ASN1 strings
     with open(public_cert, "r") as certfile:
         dumped_cert = OpenSSL.crypto.dump_certificate(
             OpenSSL.crypto.FILETYPE_ASN1,
@@ -115,17 +105,11 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     #-------------
     # create_empty_java_keystore(keystore_name, keystore_alias, keystore_password, distinguished_name)
 
-    #-------------
-    #Convert your private key into from PEM to DER format that java likes
-    #-------------
-    # derkey = convert_pem_to_dem(private_key, idptools_install_dir)
 
     #-------------
     #Now we gather up all the other keys in the key chain...
     #-------------
-    # check_cachain_validity(ca_chain_bundle)
-
-    # import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider)
+    check_cachain_validity(cachain_file)
 
     #Check keystore output
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
@@ -191,25 +175,6 @@ def backup_previous_keystore(keystore_name):
     '''If a previous keystore exists, back it up'''
     if os.path.isfile(keystore_name):
         shutil.move(keystore_name, os.path.join(keystore_name+".bak"))
-
-def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider):
-    '''Imports a signed Certificate into the keystore'''
-
-    os.environ["JAVA_HOME"] = "/usr/local/java"
-    idptools_install_dir = os.path.join(config["esg_tools_dir"], "idptools")
-    extkeytool_executable = os.path.join(idptools_install_dir, "bin", "extkeytool")
-    if not os.path.isfile(extkeytool_executable):
-        install_extkeytool()
-
-    extkeytool_options = ["-importkey", "-keystore", keystore_name, "-alias", keystore_alias, "-storepass", keystore_password, "-keypass", keystore_password, "-keyfile", derkey, "-certfile", cert_bundle, "-provider", provider]
-    try:
-        esg_functions.call_binary(extkeytool_executable, extkeytool_options)
-    except ProcessExecutionError:
-        logger.error("Error importing %s into keystore %s", cert_bundle, keystore_name)
-        raise
-    else:
-        logger.info("Imported %s into %s", cert_bundle, keystore_name)
-
 
 def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
     '''
@@ -313,23 +278,6 @@ def copy_cert_to_tomcat_conf(public_cert):
         else:
             raise
 
-def convert_pem_to_dem(private_key, key_output_dir):
-    '''Convert your private key into from PEM to DER format that java likes'''
-    print "\n*******************************"
-    print "converting private key from PEM to DER... "
-    print "******************************* \n"
-    derkey = os.path.join(key_output_dir, "key.der")
-    convert_options = ["pkcs8", "-topk8", "-nocrypt", "-inform", "PEM", "-in", private_key, "-outform", "DER", "-out", derkey]
-    try:
-        esg_functions.call_binary("openssl", convert_options)
-    except ProcessExecutionError:
-        logger.error("Could not convert the private key from pem to der format")
-        raise
-    else:
-        logger.info("Converted %s from pem to der format", private_key)
-    return derkey
-
-
 def check_cachain_validity(ca_chain_bundle):
     '''Verify that the CA chain is valid'''
     print "checking that chain is valid... "
@@ -344,69 +292,6 @@ def check_cachain_validity(ca_chain_bundle):
             logger.info("%s is valid", ca_chain_bundle)
     else:
         print "Hmmm... no chain provided [{ca_chain_bundle}], skipping this check..."
-
-def bundle_certificates(public_cert, ca_chain, idptools_install_dir):
-    '''Create certificate bundle from public cert and cachain'''
-    print "\n*******************************"
-    print "Bundling Certificates"
-    print "******************************* \n"
-
-    cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
-    ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
-
-    print "public_cert:", public_cert
-    print "ca_chain:", ca_chain
-
-    #Write public_cert to bundle first
-    print "Signed Cert -----> ", public_cert
-    if "http" not in public_cert:
-        #Write contents of cert to cert_bundle_file
-        with open(public_cert, "r") as cert_data:
-            cert_contents = cert_data.read()
-        with open(cert_bundle, "a") as cert_bundle_file:
-            cert_bundle_file.write(cert_contents)
-    else:
-        #Make request for public_cert, then write public_cert contents to cert_bundle_file
-        cert_contents = requests.get(public_cert).content
-        with open(cert_bundle, "a") as cert_bundle_file:
-            cert_bundle_file.write(cert_contents)
-
-    num_of_certs = len(ca_chain)
-    if num_of_certs > 0:
-        for index, cert in enumerate(ca_chain):
-            if index == num_of_certs-1:
-                print "Root Cert -------> ", cert
-                if "http" not in cert:
-                    #Write contents of cert to cert_bundle_file and ca_chain_bundle
-                    with open(cert, "r") as cert_data:
-                        cert_contents = cert_data.read()
-                    with open(cert_bundle, "a") as cert_bundle_file:
-                        cert_bundle_file.write(cert_contents)
-                    with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
-                        ca_chain_bundle_file.write(cert_contents)
-                else:
-                    cert_contents = requests.get(cert).content
-                    with open(cert_bundle, "a") as cert_bundle_file:
-                        cert_bundle_file.write(cert_contents)
-                    with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
-                        ca_chain_bundle_file.write(cert_contents)
-            else:
-                print "Intermediate cert #{index} ----> {cert}".format(index=index, cert=cert)
-                if "http" not in cert:
-                    with open(cert, "r") as cert_data:
-                        cert_contents = cert_data.read()
-                    with open(cert_bundle, "a") as cert_bundle_file:
-                        cert_bundle_file.write(cert_contents)
-                    with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
-                        ca_chain_bundle_file.write(cert_contents)
-                else:
-                    cert_contents = requests.get(cert).content
-                    with open(cert_bundle, "a") as cert_bundle_file:
-                        cert_bundle_file.write(cert_contents)
-                    with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
-                        ca_chain_bundle_file.write(cert_contents)
-
-    return cert_bundle, ca_chain_bundle
 
 
 def create_certificate_chain_list():

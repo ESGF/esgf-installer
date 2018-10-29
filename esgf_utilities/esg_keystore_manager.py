@@ -31,11 +31,11 @@ YES_LIST = ["y", "yes", "Y", "Yes", "YES"]
 def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cachain_file):
     '''The following helper function creates a new keystore for your tomcat installation'''
 
-    provider = "org.bouncycastle.jce.provider.BouncyCastleProvider"
+    # provider = "org.bouncycastle.jce.provider.BouncyCastleProvider"
     idptools_install_dir = os.path.join(config["esg_tools_dir"], "idptools")
 
-    if len(intermediate_certs) < 1:
-        raise RuntimeError("No intermediate_certs files given")
+    # if len(intermediate_certs) < 1:
+    #     raise RuntimeError("No intermediate_certs files given")
 
     if not os.path.isfile(private_key):
         print "Private key file {private_key} does not exist".format(private_key=private_key)

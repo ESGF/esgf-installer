@@ -1,1 +1,0 @@
-insert into public.esgf_migrate_version (repository_id, repository_path, version) values ('ESG-CET node schema migration', '/usr/local/uvcdat/2.2.0/lib/python2.7/site-packages/esgcet-3.0.1-py2.7.egg/esgcet/schema_migration', 6)

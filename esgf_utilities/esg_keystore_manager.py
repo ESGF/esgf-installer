@@ -31,7 +31,6 @@ YES_LIST = ["y", "yes", "Y", "Yes", "YES"]
 def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cachain_file):
     '''The following helper function creates a new keystore for your tomcat installation'''
 
-    # provider = "org.bouncycastle.jce.provider.BouncyCastleProvider"
     idptools_install_dir = os.path.join(config["esg_tools_dir"], "idptools")
 
     if not os.path.isfile(private_key):
@@ -100,11 +99,6 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     logger.debug("Adding %s to JavaKeystore at %s", private_key, keystore_name)
     # File, password
     keystore.save(config["keystore_file"], esg_functions.get_java_keystore_password())
-    #-------------
-    #Make empty keystore...
-    #-------------
-    # create_empty_java_keystore(keystore_name, keystore_alias, keystore_password, distinguished_name)
-
 
     #-------------
     #Now we gather up all the other keys in the key chain...

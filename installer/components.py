@@ -221,6 +221,19 @@ _BASE = {
         "owner_user": "${tomcat-user:username}",
         "owner_group": "${tomcat-group:groupname}"
     },
+    "default-webapp-cleanup": {
+        "method": Command,
+        "requires": ["tomcat"],
+        "command": "rm",
+        "args": [
+            "-rf",
+            path.join("${tomcat:dest}", "webapps", "ROOT"),
+            path.join("${tomcat:dest}", "webapps", "docs"),
+            path.join("${tomcat:dest}", "webapps", "examples"),
+            path.join("${tomcat:dest}", "webapps", "host-manager"),
+            path.join("${tomcat:dest}", "webapps", "manager")
+        ]
+    },
     "tomcat-context.xml": {
         "method": FileManager,
         "requires": ["tomcat"],

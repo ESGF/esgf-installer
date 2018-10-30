@@ -212,7 +212,10 @@ class Installer(object):
         string_only = self._add_params(string_only, requirements)
         string_only = self._add_params(string_only, PARAMS)
 
-        parser = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
+        parser = configparser.ConfigParser(
+            interpolation=configparser.ExtendedInterpolation(),
+            default_section=None
+        )
         parser.read_dict(string_only)
         with open(INFO_FILE, "w") as info_file:
             parser.write(info_file)

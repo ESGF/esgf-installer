@@ -572,16 +572,13 @@ def process_arguments():
         from index_node import esg_search
         esg_search.check_shards()
     elif args.addreplicashard:
-        from index_node import esg_search
-        #expecting <hostname>:<solr port> | master | slave
         hostname = args.addreplicashard[0]
         port = args.addreplicashard[1]
-        esg_search.add_shard(hostname, port)
+        solr.add_shards(hostname, port)
     elif args.removereplicashard:
-        from index_node import esg_search
         hostname = args.removereplicashard[0]
         port = args.removereplicashard[1]
-        esg_search.remove_shard(hostname, port)
+        solr.remove_shard(hostname, port)
     elif args.timeshard:
         from index_node import esg_search
         esg_search.time_shards()

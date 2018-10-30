@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from plumbum import local
@@ -10,6 +11,7 @@ class Conda(Generic):
     ''' Install components using the pip command line tool '''
     def __init__(self, components):
         Generic.__init__(self, components)
+        self.log = logging.getLogger(__name__)
         self.conda = local.get(os.environ["CONDA_EXE"])
         self.install_args = ["install", "-y"]
         self.create_args = ["create", "-y"]
@@ -101,7 +103,6 @@ class Conda(Generic):
                 envs[env].append(component)
             except KeyError:
                 envs[env] = [component]
-        print envs
         for env in envs:
             if self._get_env(env) is None:
                 for component in envs[env]:

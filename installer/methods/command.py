@@ -1,3 +1,4 @@
+import logging
 import os.path as path
 
 from plumbum import local
@@ -11,6 +12,7 @@ class Command(Conda):
     ''' Install components using and arbibtrary command '''
     def __init__(self, components):
         Conda.__init__(self, components)
+        self.log = logging.getLogger(__name__)
         self.executed = set()
         self.run_in_env = local.get(path.join(path.dirname(__file__), "run_in_env.sh"))
 
@@ -50,8 +52,10 @@ class Command(Conda):
             print rc
             if rc in okay:
                 self.log.info("Okay code %s encountered for %s", rc, component["name"])
+                self.log.info(str(err))
             elif warn is not None and rc in warn:
                 self.log.warning("Warning code %s encountered for %s", rc, component["name"])
+                self.log.warning(str(err))
             else:
                 raise
 

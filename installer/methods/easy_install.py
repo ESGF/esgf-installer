@@ -1,3 +1,4 @@
+import logging
 
 from plumbum import TEE
 
@@ -8,6 +9,7 @@ class EasyInstall(Pip, FileManager):
     def __init__(self, components):
         Pip.__init__(self, components)
         FileManager.__init__(self, components)
+        self.log = logging.getLogger(__name__)
 
     def _install(self, names):
         FileManager._install(self, names)

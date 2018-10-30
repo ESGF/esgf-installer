@@ -13,8 +13,10 @@ class UserMethod(Generic):
     ''' User creation '''
     def __init__(self, components):
         Generic.__init__(self, components)
+        self.log = logging.getLogger(__name__)
+        
         self.create_cmds = {
-            "useradd":{
+            "useradd": {
                 "create_args": []
             }
         }
@@ -66,8 +68,10 @@ class GroupMethod(Generic):
     ''' Group creation '''
     def __init__(self, components):
         Generic.__init__(self, components)
+        self.log = logging.getLogger(__name__)
+
         self.create_cmds = {
-            "groupadd":{
+            "groupadd": {
                 "create_args": []
             }
         }

@@ -11,6 +11,7 @@ from plumbum.commands import ProcessExecutionError
 from .generic import Generic
 from .conda import Conda
 
+
 class PackageManager(Generic):
     ''' System package managers, does not include pip (could it though?) '''
     def __init__(self, components):
@@ -104,10 +105,13 @@ class PackageManager(Generic):
             args = self.installers[self.installer_name]["uninstall"] + pkg_list
             result = self.installer.__getitem__(args) & TEE
 
+
 class Pip(Conda):
     ''' Install components using the pip command line tool '''
     def __init__(self, components):
         Conda.__init__(self, components)
+        self.log = logging.getLogger(__name__)
+
         self.pip = local.get("pip")
         self.install_cmd = ["install"]
         self.uninstall_cmd = ["uninstall", "-y"]

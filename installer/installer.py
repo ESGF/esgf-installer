@@ -40,7 +40,7 @@ class Installer(object):
             self._init_ordered(requirements, ordered)
 
         self.divider = "_"*30
-        self.header = self.divider + "\n{}"
+        self.header = self.divider + "\n\n{}\n"
 
 
     def status_check(self):
@@ -62,13 +62,11 @@ class Installer(object):
 
     def install(self):
         '''
-        Install each component, allow for each component to take action before and
-        after the primary install step via pre_install and post_install methods
+        Install each component
         '''
-        print self.header.format("Installing")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
-
+        print self.header.format("Installing")
         for method in self.methods:
             method.install(not_installed)
 

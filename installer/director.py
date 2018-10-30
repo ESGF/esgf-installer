@@ -31,10 +31,17 @@ class Director(object):
         if init_installer:
             # Find required methods and components
             requirements = {}
+            include = set(["base"])
+            exclude = set(["test"])
+
             if self.args.type:
-                node_types = self.args.type
+                if set(self.args.type) != exclude:
+                    node_types = set(self.args.type) | include
+                else:
+                    node_types = set(self.args.type)
             else:
-                node_types = ALL.keys()
+                node_types = set(ALL.keys()) - exclude
+
             for node_type in node_types:
                 requirements.update(ALL[node_type])
 

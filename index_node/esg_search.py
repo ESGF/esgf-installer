@@ -236,6 +236,19 @@ def download_esg_search_war(esg_search_war_url):
                 f.write(chunk)
                 f.flush()
 
+
+def add_shard(name, port):
+
+    add_shard_path = os.path.join(os.path.dirname(__file__), "solr_scripts", "add_shard.sh")
+    args = [add_shard_path, name, port]
+    esg_functions.call_binary("bash", args)
+
+def remove_shard(name, port):
+
+    remove_shard_path = os.path.join(os.path.dirname(__file__), "solr_scripts", "remove_shard.sh")
+    args = [remove_shard_path, name, port]
+    esg_functions.call_binary("bash", args)
+
 def main():
     print "*******************************"
     print "Setting up The ESGF Search Sub-Project..."

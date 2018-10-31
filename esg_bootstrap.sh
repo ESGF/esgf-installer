@@ -112,13 +112,14 @@ initialize_config_file(){
 
 }
 
-if [ -e "/usr/local/bin/esg-node" ]; then
-  source ${CDAT_HOME}/bin/activate esgf-pub
-    python migration_backup_script.py
-  source deactivate
-fi
 
 if [ ! -d "/usr/local/conda" ]; then
     install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file; initialize_config_file
     echo "Bootstrap complete!"
+fi
+
+if [ -e "/usr/local/bin/esg-node" ]; then
+  source ${CDAT_HOME}/bin/activate esgf-pub
+    python migration_backup_script.py
+  source deactivate
 fi

@@ -151,7 +151,7 @@ def backup_db(db_name, schema=None, backup_dir="/etc/esgf_db_backup"):
 
     pg_dump = local["pg_dump"]
     local.env["PGPASSWORD"] = esg_functions.get_publisher_password()
-    args = [db_name, "-U", config["postgress_user"]]
+    args = [db_name, "-U", config["postgress_user"] , "--verbose"]
     if schema:
         args.append("-n")
         args.append("schema")

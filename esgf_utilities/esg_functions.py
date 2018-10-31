@@ -320,11 +320,13 @@ def fetch_remote_file(local_file, remote_file):
         sys.exit()
 
 
-def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.date.today())):
+def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
     '''Create a backup of a file using the given backup extension'''
     backup_file_name = file_name + date + "."+ backup_extension
+    if not backup_dir:
+        backup_dir = os.path.join(os.path.dirname(file_name))
     try:
-        shutil.copyfile(file_name, backup_file_name)
+        shutil.copyfile(file_name, os.path.join(backup_dir, backup_file_name))
         os.chmod(backup_file_name, 600)
     except OSError:
         logger.exception("Could not create backup file: %s\n", backup_file_name)

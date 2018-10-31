@@ -26,7 +26,7 @@ def backup_esg_installation():
     print "******************************* \n"
     migration_backup_dir = "/etc/esg_installer_backup_{}".format(str(datetime.date.today()))
     pybash.mkdir_p(migration_backup_dir)
-    directories_to_backup = ["/usr/local/tomcat", "/usr/local/solr", "/etc/grid-security", "/esg/config", "/usr/local/cog_config", "/etc/esgfcerts", "/etc/certs"]
+    directories_to_backup = ["/usr/local/tomcat", "/usr/local/solr", "/etc/grid-security", "/esg/config", "/usr/local/cog/cog_config", "/etc/esgfcerts", "/etc/certs"]
     for directory in directories_to_backup:
         esg_functions.backup(directory, migration_backup_dir)
 

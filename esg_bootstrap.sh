@@ -119,7 +119,7 @@ if [ ! -d "/usr/local/conda" ]; then
 fi
 
 if [ -e "/usr/local/bin/esg-node" ]; then
-  source ${CDAT_HOME}/bin/activate esgf-pub
+  source /usr/local/conda/bin/activate esgf-pub
     python migration_backup_script.py
   source deactivate
 fi

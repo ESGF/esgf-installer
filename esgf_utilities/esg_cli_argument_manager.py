@@ -318,8 +318,8 @@ def define_acceptable_arguments():
     parser.add_argument("--force-install", dest="forceinstall", help="", action="store_true")
     parser.add_argument("--index-config", dest="indexconfig", help="", action="store_true")
     parser.add_argument("--check-shards", dest="checkshards", help="", action="store_true")
-    parser.add_argument("--add-replica-shard", dest="addreplicashard", help="", action="store_true")
-    parser.add_argument("--remove-replica-shard", dest="removereplicashard", help="", action="store_true")
+    parser.add_argument("--add-replica-shard", dest="addreplicashard", nargs=2, help="Specify a hostname and port of the replica shard to add")
+    parser.add_argument("--remove-replica-shard", dest="removereplicashard", nargs=2, help="Specify a hostname and port of the replica shard to remove")
     parser.add_argument("--time-shards", dest="timeshards", help="", action="store_true")
     parser.add_argument("--update-publisher-resources", dest="updatepublisherresources", help="", action="store_true")
 
@@ -572,12 +572,13 @@ def process_arguments():
         from index_node import esg_search
         esg_search.check_shards()
     elif args.addreplicashard:
-        from index_node import esg_search
-        #expecting <hostname>:<solr port> | master | slave
-        esg_search.add_shard()
+        hostname = args.addreplicashard[0]
+        port = args.addreplicashard[1]
+        solr.add_shards(hostname, port)
     elif args.removereplicashard:
-        from index_node import esg_search
-        esg_search.remove_shard()
+        hostname = args.removereplicashard[0]
+        port = args.removereplicashard[1]
+        solr.remove_shard(hostname, port)
     elif args.timeshard:
         from index_node import esg_search
         esg_search.time_shards()

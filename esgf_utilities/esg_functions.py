@@ -161,6 +161,18 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
             oldest_backup = min(files, key=os.path.getctime)
             os.remove(oldest_backup)
 
+def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
+    '''Create a backup of a file using the given backup extension'''
+    backup_file_name = file_name + date + "."+ backup_extension
+    if backup_dir is None:
+        backup_dir = os.path.join(os.path.dirname(file_name))
+    try:
+        logger.info("Backup - Creating a backup of %s -> %s", file_name, backup_dir)
+        shutil.copyfile(file_name, os.path.join(backup_dir, backup_file_name))
+        os.chmod(backup_file_name, 600)
+    except OSError:
+        logger.exception("Could not create backup file: %s\n", backup_file_name)
+
 
 def get_parent_directory(directory_path):
     '''Returns the parent directory of directory_path'''
@@ -318,18 +330,6 @@ def fetch_remote_file(local_file, remote_file):
     except requests.exceptions.RequestException:
         logger.exception("Could not download %s", remote_file)
         sys.exit()
-
-
-def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
-    '''Create a backup of a file using the given backup extension'''
-    backup_file_name = file_name + date + "."+ backup_extension
-    if not backup_dir:
-        backup_dir = os.path.join(os.path.dirname(file_name))
-    try:
-        shutil.copyfile(file_name, os.path.join(backup_dir, backup_file_name))
-        os.chmod(backup_file_name, 600)
-    except OSError:
-        logger.exception("Could not create backup file: %s\n", backup_file_name)
 
 
 def verify_checksum(local_file, remote_file):

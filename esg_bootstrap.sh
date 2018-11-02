@@ -44,7 +44,7 @@ install_miniconda(){
         echo "-----------------------------------"
         echo
         PATH=${CDAT_HOME}/bin:$PATH
-        conda create -y -n esgf-pub "python<3" cdutil cmor -c pcmdi/label/nightly -c conda-forge
+        conda create -y -n esgf-pub "python<3" cdutil cmor "hdf5==1.10.3" -c pcmdi/label/nightly -c conda-forge
   popd
 
 }

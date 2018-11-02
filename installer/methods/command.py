@@ -48,7 +48,7 @@ class Command(Conda):
             else:
                 result = cmd.run_tee()
         except ProcessExecutionError as err:
-            rc = str(err.retcode)
+            rc = err.retcode
             print rc
             if rc in okay:
                 self.log.info("Okay code %s encountered for %s", rc, component["name"])

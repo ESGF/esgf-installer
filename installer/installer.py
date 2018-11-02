@@ -245,6 +245,8 @@ class Installer(object):
                     all_params[name][param] = config[param]
                 if isinstance(config[param], list):
                     for i in range(len(config[param])):
+                        if not isinstance(config[param][i], basestring):
+                            continue
                         key = LIST_KEY_SCHEME.format(name=name, key=param, index=i)
                         all_params[name][key] = config[param][i]
         return all_params

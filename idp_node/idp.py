@@ -2,6 +2,7 @@ import os
 import zipfile
 import logging
 import ConfigParser
+import distutils.spawn
 import stat
 import yaml
 from git import Repo
@@ -101,31 +102,30 @@ def setup_idp():
     write_idp_install_log(idp_service_app_home)
     esg_functions.write_security_lib_install_log()
 
-    # esg_tomcat_manager.start_tomcat()
-
 def clone_slcs():
     if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
         print "SLCS repo already exists.  Skipping cloning from Github."
         return
-    Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
+    Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", "/usr/local/src/esgf-slcs-server-playbook")
 
 #TODO: convert slcs to use Ansible python API
 def setup_slcs():
+    if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
+        try:
+            install_slcs = esg_property_manager.get_property("update.slcs")
+        except ConfigParser.NoOptionError:
+            install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "n"
+
+        if install_slcs.lower() in ["n", "no"]:
+            print "Skipping installation of SLCS server"
+            return
+
     '''Setup the slcs_server'''
     print "*******************************"
     print "Setting up SLCS Oauth Server"
     print "*******************************"
 
-    try:
-        install_slcs = esg_property_manager.get_property("update.slcs")
-    except ConfigParser.NoOptionError:
-        install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "n"
-
-    if install_slcs.lower() in ["n", "no"]:
-        print "Skipping installation of SLCS server"
-        return
-
-    esg_functions.call_binary("yum", ["-y", "install", "ansible"])
+    esg_functions.call_binary("yum", ["-y", "-q", "install", "epel-release", "ansible"])
 
     #create slcs Database
     esg_postgres.create_database("slcsdb")
@@ -140,7 +140,7 @@ def setup_slcs():
         with pybash.pushd("esgf-slcs-server-playbook"):
             #TODO: extract to function
             publisher_repo_local = Repo(os.getcwd())
-            publisher_repo_local.git.checkout("devel")
+            publisher_repo_local.git.checkout("3.0")
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
 
@@ -157,16 +157,16 @@ def setup_slcs():
             db_password = esg_functions.get_postgres_password()
             production_venv_only["esgf_slcsdb"]["password"] = db_password
             production_venv_only["esgf_userdb"]["password"] = db_password
+            production_venv_only["virtualenv_command"] = distutils.spawn.find_executable("virtualenv")
 
             with open('playbook/overrides/production_venv_only.yml', 'w') as yaml_file:
                 yaml.dump(production_venv_only, yaml_file)
 
             esg_property_manager.set_property("short.lived.certificate.server", esg_functions.get_esgf_host())
 
-            pybash.mkdir_p("/usr/local/esgf-slcs-server")
-            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
+            pybash.mkdir_p("/usr/local/esgf-slcs-server/src")
+            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
 
-            #TODO: check if there's an ansible Python module
             esg_functions.call_binary("ansible-playbook", ["-i", "playbook/inventories/localhost", "-e", "@playbook/overrides/production_venv_only.yml", "playbook/playbook.yml"])
 
 def main():

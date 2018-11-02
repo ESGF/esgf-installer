@@ -44,12 +44,7 @@ install_miniconda(){
         echo "-----------------------------------"
         echo
         PATH=${CDAT_HOME}/bin:$PATH
-        conda create -y -n esgf-pub "python<3" cdutil cmor \
-        lxml requests psycopg2 decorator Tempita \
-        GitPython coloredlogs pip progressbar2 pyOpenSSL pylint \
-        setuptools semver Pyyaml configobj psutil \
-        -c conda-forge -c cdat
-
+        conda create -y -n esgf-pub "python<3" cdutil cmor -c pcmdi/label/nightly -c conda-forge
   popd
 
 }
@@ -63,6 +58,10 @@ install_dependencies_pip(){
   # activate virtual env and fetch some pre-requisites
   source ${CDAT_HOME}/bin/activate esgf-pub && \
 
+      pip install --upgrade pip
+      pip install coloredlogs GitPython progressbar2 pyOpenSSL \
+                  lxml "requests==2.19.1" psycopg2 decorator Tempita \
+                  setuptools semver Pyyaml configparser psutil
       pip install -r requirements.txt
 
   source deactivate

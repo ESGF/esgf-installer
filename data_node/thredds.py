@@ -79,52 +79,28 @@ def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=c
 
     tree.write(open(tomcat_users_file, "w"), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
-def add_another_user():
-    '''Helper function for deciding to add more Tomcat users or not'''
-    valid_selection = False
-    done_adding_users = None
-    while not valid_selection:
-        try:
-            another_user = esg_property_manager.get_property("add.another.user")
-        except ConfigParser.NoOptionError:
-            another_user = raw_input("Would you like to add another user? [y/N]:") or "n"
-
-        if another_user.lower().strip() in ["n", "no"]:
-            valid_selection = True
-            done_adding_users = True
-        elif another_user.lower().strip() in ["y", "yes"]:
-            valid_selection = True
-            done_adding_users = False
-        else:
-            print "Invalid selection"
-            continue
-    return done_adding_users
-
 def add_tomcat_user():
     '''Add a user to the default Tomcat user database (tomcat-users.xml) for container-managed authentication'''
     print "Create user credentials\n"
-    done_adding_users = False
-    while not done_adding_users:
-        try:
-            tomcat_username = esg_property_manager.get_property("tomcat.user")
-        except ConfigParser.NoOptionError:
-            default_user = "dnode_user"
-            tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user=default_user)) or default_user
+    try:
+        tomcat_username = esg_property_manager.get_property("tomcat.user")
+    except ConfigParser.NoOptionError:
+        default_user = "dnode_user"
+        tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user=default_user)) or default_user
 
-        valid_password = False
-        while not valid_password:
-            tomcat_user_password = esg_functions.get_security_admin_password()
-            if not tomcat_user_password:
-                tomcat_user_password = getpass.getpass("Please enter password for user, \"{tomcat_username}\" [********]:   ".format(tomcat_username=tomcat_username))
+    valid_password = False
+    while not valid_password:
+        tomcat_user_password = esg_functions.get_security_admin_password()
+        if not tomcat_user_password:
+            tomcat_user_password = getpass.getpass("Please enter password for user, \"{tomcat_username}\" [********]:   ".format(tomcat_username=tomcat_username))
 
-            if esg_functions.is_valid_password(tomcat_user_password):
-                valid_password = True
+        if esg_functions.is_valid_password(tomcat_user_password):
+            valid_password = True
 
-        password_hash = create_password_hash(tomcat_user_password)
+    password_hash = create_password_hash(tomcat_user_password)
 
-        update_tomcat_users_file(tomcat_username, password_hash)
+    update_tomcat_users_file(tomcat_username, password_hash)
 
-        done_adding_users = add_another_user()
 
 
 #TODO: terrible, undescriptive name; come up with something better

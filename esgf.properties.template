@@ -31,7 +31,6 @@ commercial.cert.path=
 #A comma separated list of the paths that make up the cachain
 cachain.path=
 tomcat.user=
-add.another.user=
 
 #Data Node components
 update.orp=
@@ -39,7 +38,7 @@ update.node.manager=
 update.thredds=
 update.dashboard=
 update.publisher=
-gridftp-config=bdm end-user
+gridftp.config=bdm end-user
 
 #Index node components
 update.esg.search=

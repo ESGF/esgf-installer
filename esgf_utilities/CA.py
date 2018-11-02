@@ -118,9 +118,11 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
 
     pybash.mkdir_p(temp_ca_dir)
 
-    shutil.copyfile(os.path.join(current_directory, "myproxy-server.config"), "{}/myproxy-server.config".format(temp_ca_dir))
-
     with pybash.pushd(temp_ca_dir):
+        shutil.copyfile(
+            os.path.join(current_directory, os.pardir, "config", "myproxy-server.config"),
+            "myproxy-server.config"
+        )
         delete_existing_temp_CA()
         new_ca()
 

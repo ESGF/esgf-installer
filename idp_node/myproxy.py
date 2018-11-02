@@ -3,18 +3,12 @@ import logging
 import shutil
 import ConfigParser
 import OpenSSL
-import stat
-import glob
 import psutil
 import yaml
 from requests.exceptions import HTTPError
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_version_manager
-from esgf_utilities import esg_cert_manager
-from base import esg_tomcat_manager
-from base import esg_postgres
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 
@@ -155,54 +149,23 @@ def config_myproxy_server(globus_location, install_mode="install"):
 
     print "MyProxy - Configuration... [{}]".format(install_mode)
 
-
+    copy_myproxy_certificate_apps()
+    edit_pam_pgsql_conf()
     #--------------------
-    # Compile Java Code Used by "callout" scripts in ${globus_location}/bin
+    # Fetch -> pam resource file used for myproxy
     #--------------------
-    if not os.path.exists(os.path.join(globus_location, "bin", "ESGOpenIDRetriever.class")) or os.path.exists(os.path.join(globus_location, "bin", "ESGGroupRetriever")):
-        with pybash.pushd("{}/bin".format(globus_location)):
-            myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
-            try:
-                esg_functions.download_update("ESGOpenIDRetriever.java", "{}/ESGOpenIDRetriever.java".format(myproxy_dist_url_base))
-            except HTTPError:
-                raise
-            try:
-                esg_functions.download_update("ESGGroupRetriever.java", "{}/ESGGroupRetriever.java".format(myproxy_dist_url_base))
-            except HTTPError:
-                raise
+    fetch_etc_pam_d_myproxy()
+    #--------------------
+    # Create /esg/config/myproxy/myproxy-server.config
+    #--------------------
+    copy_myproxy_server_config()
+    #--------------------
+    # Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config
+    #--------------------
+    edit_etc_myproxyd()
+    write_db_name_env()
 
-            postgress_jar = "postgresql-8.4-703.jdbc3.jar"
-            try:
-                esg_functions.download_update(postgress_jar, "{}/{}".format(myproxy_dist_url_base, postgress_jar))
-            except HTTPError:
-                raise
-
-
-            #Find all files with a .jar extension and concat file names separated by a colon.
-            java_class_path = glob.glob("*.jar")
-            java_class_path_string = ":".join(java_class_path)
-
-            #TODO: Get rid of Java files and replace with pyscopg functions
-            esg_functions.call_binary("javac", ["-classpath", java_class_path_string, "ESGOpenIDRetriever.java"])
-            esg_functions.call_binary("javac", ["-classpath", java_class_path_string, "ESGGroupRetriever.java"])
-
-        copy_myproxy_certificate_apps()
-        edit_pam_pgsql_conf()
-        #--------------------
-        # Fetch -> pam resource file used for myproxy
-        #--------------------
-        fetch_etc_pam_d_myproxy()
-        #--------------------
-        # Create /esg/config/myproxy/myproxy-server.config
-        #--------------------
-        copy_myproxy_server_config()
-        #--------------------
-        # Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config
-        #--------------------
-        edit_etc_myproxyd()
-        write_db_name_env()
-
-        restart_myproxy_server()
+    restart_myproxy_server()
 
 
 def start_myproxy_server():

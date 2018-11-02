@@ -81,15 +81,7 @@ def install_mod_wsgi():
     print "******************************* \n"
 
     esg_functions.pip_install("mod_wsgi==4.5.3")
-    with pybash.pushd("/etc/httpd/modules"):
-        # If installer running in a conda env
-        # TODO Make this more resilient to potential changes
-        if "conda" in find_executable("python"):
-            pybash.symlink_force(
-                "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
-        else:
-            pybash.symlink_force(
-                "/usr/local/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
+    esg_functions.call_binary("mod_wsgi-express", ["install-module"])
 
 def make_python_eggs_dir():
     '''Create Python egg directories'''
@@ -102,23 +94,26 @@ def make_python_eggs_dir():
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
     pybash.mkdir_p("/etc/certs")
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_certs/esgf-ca-bundle.crt"),
-                    "/etc/certs/esgf-ca-bundle.crt")
+    remote_bundle = "{}/certs/{}".format(
+        esg_property_manager.get_property("esg.root.url"),
+        "esgf-ca-bundle.crt"
+    )
+    esg_functions.download_update("/etc/certs/esgf-ca-bundle.crt", remote_bundle)
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_html/index.html"), "/var/www/html/index.html")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/ssl.conf"), "/etc/httpd/conf.d/ssl.conf")
     shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))
 
-    #add LD_LIBRARY_PATH to /etc/sysconfig/httpd
-    with open("/etc/sysconfig/httpd", "a") as httpd_file:
-        httpd_file.write("OPTIONS='-f /etc/httpd/conf/esgf-httpd.conf'\n")
-        httpd_file.write("export LD_LIBRARY_PATH=/usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server\n")
-
-    #append tempcert to cert_bundle
+    # append tempcert to cert_bundle
     try:
         with open("/etc/certs/esgf-ca-bundle.crt", "a") as cert_bundle_file:
             cert_bundle_file.write(open("/etc/tempcerts/cacert.pem").read())
     except OSError:
         logger.exception()
+
+    # add LD_LIBRARY_PATH to /etc/sysconfig/httpd
+    with open("/etc/sysconfig/httpd", "a") as httpd_file:
+        httpd_file.write("OPTIONS='-f /etc/httpd/conf/esgf-httpd.conf'\n")
+        httpd_file.write("export LD_LIBRARY_PATH=/usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server\n")
 
 def main():
     print "\n*******************************"

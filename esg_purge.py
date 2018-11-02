@@ -124,7 +124,7 @@ def purge_base():
     print "******************************* \n"
 
     directories_to_delete = ["/esg", "/etc/certs", "/etc/esgfcerts",
-    "/etc/tempcerts", "/opt/esgf", "/tmp/inputpipe", "/tmp/outputpipe", "/usr/local/cog", "/var/www/.python-eggs"]
+    "/etc/tempcerts", "/opt/esgf", "/tmp/inputpipe", "/tmp/outputpipe", "/usr/local/cog", "/var/www/.python-eggs", "/usr/local/src/esgf/workbench/esg"]
 
     files_to_delete = ["/etc/httpd/conf/esgf-httpd.conf", "/usr/local/bin/add_checksums_to_map.sh"]
     try:
@@ -136,7 +136,7 @@ def purge_base():
         try:
             print "Deleting {directory}: ".format(directory=directory)
             shutil.rmtree(directory)
-        except OSError, error:
+        except OSError:
             pass
 
     for file_name in files_to_delete:
@@ -394,9 +394,31 @@ def purge_publisher():
         except OSError:
             pass
 
-#TODO: define purge_dashboard()
 def purge_dashboard():
-    pass
+    try:
+        shutil.rmtree("/esg/config/dashboard")
+    except OSError:
+        pass
+
+    try:
+        shutil.rmtree("/usr/local/tomcat/webapps/esgf-stats-api")
+    except OSError:
+        pass
+
+    try:
+        shutil.rmtree("/usr/local/dashboard")
+    except OSError:
+        pass
+
+    try:
+        shutil.rmtree("/usr/local/esgf-dashboard")
+    except OSError:
+        pass
+
+    try:
+        shutil.rmtree("/usr/local/esgf-dashboard-ip")
+    except OSError:
+        pass
 
 def confirm_purge():
     purged_directories = ["/var/lib/pgsql", "/usr/local/java", "/usr/bin/java", "/usr/local/tomcat", "/esg", "/etc/certs", "/etc/esgfcerts",
@@ -427,6 +449,7 @@ def main():
     purge_thredds()
     purge_ant()
     purge_publisher()
+    purge_dashboard()
     purge_solr()
     purge_java()
     purge_base()
@@ -435,7 +458,6 @@ def main():
     purge_cog()
     purge_globus()
     purge_slcs()
-    # purge_conda()
     confirm_purge()
 
 if __name__ == '__main__':

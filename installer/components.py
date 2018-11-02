@@ -420,6 +420,12 @@ _TEST = {
             # "'${INPUT_PARAMS:this.param.DNE}'",
             "'${INPUT_PARAMS:sample.param}'"
         ]
+    },
+    "sample_py_fn": {
+        "method": Command,
+        "requires": ["sample_template2"],
+        "command": os.remove,
+        "args": ["${sample_template2:dest}"]
     }
 }
 ALL = {

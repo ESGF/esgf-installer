@@ -27,6 +27,24 @@ class Command(Conda):
                 self._execute(component)
 
     def _execute(self, component):
+
+        # A string indicates it is the name of system command
+        if isinstance(component["command"], basestring):
+            self._sys_cmd(component)
+        else:  # Otherwise it is assumed to be a python function
+            self._py_fn(component)
+
+        self.executed.add(component["name"])
+
+    def _py_fn(self, component):
+
+        try:
+            args = component["args"]
+        except KeyError:
+            args = []
+        component["command"](*args)
+
+    def _sys_cmd(self, component):
         args = []
         try:
             env = component["conda_env"]
@@ -62,8 +80,6 @@ class Command(Conda):
         if crit is not None and rc in crit:
             self.log.error("Critical code %s encountered for %s", rc, component["name"])
             raise ProcessExecutionError
-
-        self.executed.add(component["name"])
 
     def _returncodes(self, component):
         try:

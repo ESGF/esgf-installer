@@ -59,9 +59,7 @@ def check_apache_version():
 
 def install_apache_httpd():
     '''Install apache from yum'''
-    esg_functions.call_binary("yum", ["-y", "update"])
     esg_functions.call_binary("yum", ["-y", "install", "httpd", "httpd-devel", "mod_ssl"])
-    esg_functions.call_binary("yum", ["clean", "all"])
 
     # Custom ESGF Apache files that setup proxying
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")

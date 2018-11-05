@@ -50,7 +50,7 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
 
     cert_files = glob.glob('{certs_dir}/*.0'.format(certs_dir=certs_dir))
     for cert in cert_files:
-        _insert_cert_into_truststore(cert, truststore_file, tmp_dir)
+        _insert_cert_into_truststore(cert, truststore_file)
     shutil.rmtree(tmp_dir)
 
     sync_with_java_truststore(truststore_file)
@@ -134,7 +134,7 @@ def sync_with_java_truststore(truststore_file):
     os.chown(jssecacerts_path, esg_functions.get_user_id("root"), esg_functions.get_group_id("root"))
 
 
-def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
+def _insert_cert_into_truststore(cert_file, truststore_file):
     '''
     Takes full path to a pem certificate file and incorporates it into the
     given truststore
@@ -163,12 +163,12 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         cert_pem
     )
 
-    alias = cert_hash
     truststore = jks.KeyStore.load(
         truststore_file,
         config["truststore_password"]
     )
 
+    alias = cert_hash
     truststore.entries[alias] = jks.TrustedCertEntry.new(
         alias,
         dumped_cert_der
@@ -325,7 +325,7 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_trus
         simpleCA_cert_hash = get_certificate_subject_hash(simple_CA_cert)
 
         simpleCA_cert_hash_file = os.path.join(globus_certs_dir, simpleCA_cert_hash+".0")
-        _insert_cert_into_truststore(simpleCA_cert_hash_file, truststore_file, "/tmp/esg_scratch")
+        _insert_cert_into_truststore(simpleCA_cert_hash_file, truststore_file)
 
         add_my_cert_to_truststore()
 

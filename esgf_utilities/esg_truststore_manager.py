@@ -159,7 +159,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file):
         open(cert_file).read()
     )
     dumped_cert_der = OpenSSL.crypto.dump_certificate(
-        crypto.FILETYPE_ASN1,
+        OpenSSL.crypto.FILETYPE_ASN1,
         cert_pem
     )
 

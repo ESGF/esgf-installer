@@ -135,9 +135,15 @@ def sync_with_java_truststore(truststore_file):
 
 
 def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
-    '''Takes full path to a pem certificate file and incorporates it into the given truststore'''
+    '''
+    Takes full path to a pem certificate file and incorporates it into the
+    given truststore
+    '''
 
-    print "Adding {cert_file} -> truststore ({truststore_file})".format(cert_file=cert_file, truststore_file=truststore_file)
+    print "Adding {cert_file} -> {truststore_file}".format(
+        cert_file=cert_file,
+        truststore_file=truststore_file
+    )
     if not os.path.isfile(cert_file):
         raise IOError("{} not found".format(cert_file))
 
@@ -146,38 +152,32 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
     logger.debug("cert_name: %s", cert_name)
     cert_hash = cert_name.split(".")[0]
     logger.debug("cert_hash: %s", cert_hash)
-    der_file = os.path.join(tmp_dir, cert_hash+".der")
-    #--------------
-    # Convert from PEM format to DER format - for ingest into keystore
-    cert_pem = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert_file).read())
-    with open(der_file, "w") as der_file_handle:
-        der_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1, cert_pem))
 
-    #--------------
-    if os.path.isfile(truststore_file):
-        logger.debug("cert_hash: %s", cert_hash)
-        logger.debug("truststore_file: %s", truststore_file)
-        logger.debug("truststore_password: %s", config["truststore_password"])
+    # Convert from PEM format to DER aka ASN1 format - for ingest into keystore
+    cert_pem = OpenSSL.crypto.load_certificate(
+        OpenSSL.crypto.FILETYPE_PEM,
+        open(cert_file).read()
+    )
+    dumped_cert_der = OpenSSL.crypto.dump_certificate(
+        crypto.FILETYPE_ASN1,
+        cert_pem
+    )
 
-        #If cert is already in truststore, delete existing cert and replace it with updated cert
-        check_for_cert_options = ["-delete", "-alias", cert_hash, "-keystore", truststore_file, "-storepass", config["truststore_password"]]
-        try:
-            esg_functions.call_binary("/usr/local/java/bin/keytool", check_for_cert_options)
-        except ProcessExecutionError, error:
-            if "does not exist" in error.stdout:
-                logger.debug("No existing cert with alias %s found", cert_hash)
-        else:
-            logger.info("Deleted %s from truststore %s", cert_hash, truststore_file)
+    alias = cert_hash
+    truststore = jks.KeyStore.load(
+        truststore_file,
+        config["truststore_password"]
+    )
 
-        import_cert_options = ["-import", "-alias", cert_hash, "-file", der_file, "-keystore", truststore_file, "-storepass", config["truststore_password"], "-noprompt"]
-        try:
-            esg_functions.call_binary("/usr/local/java/bin/keytool", import_cert_options)
-        except ProcessExecutionError:
-            logger.error("Could not import %s into truststore %s", cert_hash, truststore_file)
-        else:
-            logger.info("Imported %s into truststore %s", cert_hash, truststore_file)
+    truststore.entries[alias] = jks.TrustedCertEntry.new(
+        alias,
+        dumped_cert_der
+    )
 
-        os.remove(der_file)
+    truststore.save(
+        truststore_file,
+        config["truststore_password"]
+    )
 
 def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificates"):
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"

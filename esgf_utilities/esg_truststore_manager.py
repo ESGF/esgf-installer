@@ -46,13 +46,9 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
     if not os.path.isfile(truststore_file):
         create_new_truststore(truststore_file)
 
-    tmp_dir = "/tmp/esg_scratch"
-    pybash.mkdir_p(tmp_dir)
-
     cert_files = glob.glob('{certs_dir}/*.0'.format(certs_dir=certs_dir))
     for cert in cert_files:
         _insert_cert_into_truststore(cert, truststore_file)
-    shutil.rmtree(tmp_dir)
 
     sync_with_java_truststore(truststore_file)
     os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
@@ -213,15 +209,6 @@ def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificate
 
             with pybash.pushd("globus_simple_ca_{}_setup-0".format(simpleCA_cert_hash)):
                 shutil.copyfile("{}.signing_policy".format(simpleCA_cert_hash), "{}/{}.signing_policy".format(globus_certs_dir, simpleCA_cert_hash))
-
-            #Copy cert to ROOT webapp
-            if os.path.isdir("/usr/local/tomcat/webapps/ROOT"):
-                with open('/usr/local/tomcat/webapps/ROOT/cacert.pem', 'w') as ca:
-                    ca.write(
-                        OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_obj).decode('utf-8')
-                        )
-                print " My CA Cert now posted @ http://{}/cacert.pem ".format(socket.getfqdn())
-                os.chmod("/usr/local/tomcat/webapps/ROOT/cacert.pem", 0644)
 
         os.chmod(globus_certs_dir, 0755)
         esg_functions.change_permissions_recursive(globus_certs_dir, 0644)

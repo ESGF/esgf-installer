@@ -7,6 +7,7 @@ import socket
 import ConfigParser
 import yaml
 import OpenSSL
+import jks
 import pybash
 import esg_functions
 from esgf_utilities import esg_property_manager

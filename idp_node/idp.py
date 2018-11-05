@@ -33,7 +33,6 @@ def write_idp_install_log(idp_service_app_home):
     '''Write IDP properties to install manifest and property file'''
     esgf_idp_version = "1.1.4"
     idp_service_host = esg_functions.get_esgf_host()
-    idp_service_port = "443"
     idp_service_endpoint = "https://{}/esgf-idp/idp/openidServer.htm".format(idp_service_host)
     idp_security_attribute_service_endpoint = "https://{}/esgf-idp/saml/soap/secure/attributeService.htm".format(idp_service_host)
     idp_security_registration_service_endpoint = "https://{}/esgf-idp/secure/registrationService.htm".format(idp_service_host)

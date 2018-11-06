@@ -50,5 +50,5 @@ class Generic(object):
         ''' Generic version, should be reimplemented by children '''
         versions = {}
         for component in self.components:
-            versions[component.name] = component.version()
+            versions[component["name"]] = None
         return versions

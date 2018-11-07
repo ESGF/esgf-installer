@@ -175,7 +175,7 @@ def create_backup_file(file_path, backup_extension=".bak", backup_dir=None, date
         # backup_path = os.path.join(backup_dir, backup_file_name)
         backup_path = backup_dir + "/" + backup_file_name
         logger.debug("backup_path: %s", backup_path)
-        logger.info("Backup - Creating a backup of %s -> %s", file_name, backup_path)
+        logger.info("Backup - Creating a backup of %s -> %s", file_path, backup_path)
         shutil.copyfile(file_path, backup_path)
         os.chmod(backup_file_name, 600)
     except OSError:

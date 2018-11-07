@@ -163,6 +163,7 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
 
 def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
     '''Create a backup of a file using the given backup extension'''
+    file_name = pybash.trim_string_from_head(file_name)
     backup_file_name = file_name + "-" + date + backup_extension
     logger.debug("backup_dir: %s", backup_dir)
     if not backup_dir:

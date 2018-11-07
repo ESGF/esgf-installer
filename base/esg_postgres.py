@@ -370,10 +370,10 @@ def postgres_list_schemas_tables(conn=None, user_name="postgres", db_name="postg
         logger.exception("Could not list schema tables")
 
 
-def postgres_list_dbs(conn=None, user_name="postgres", db_name="postgres"):
+def postgres_list_dbs(conn=None, user_name="postgres", db_name="postgres", password=None):
     '''This prints a list of all databases known to postgres.'''
     if not conn:
-        conn = connect_to_db(user_name, db_name)
+        conn = connect_to_db(user_name, db_name, password=password)
     cur = conn.cursor()
     try:
         cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")

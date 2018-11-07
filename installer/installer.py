@@ -13,26 +13,24 @@ class Installer(object):
     Takes a dictionary of components and find their assignments and a list of components names
     that specify what components to install.
     '''
-    def __init__(self, requirements, name_spec, input_params, is_control=False, is_install=False):
+    def __init__(self, requirements, name_spec, input_params, is_install=False):
         self.log = logging.getLogger(__name__)
         self.methods = []
-        self.controlled_components = []
         requirements = self._interpolate(requirements, input_params)
         # print json.dumps(requirements, indent=2, sort_keys=True)
-        names = []
-        for name in requirements:
-            if name_spec and name not in name_spec:
-                continue
-            # The configuartion details for this component
-            config = requirements[name]
-            # If doing a control cmd (start, stop, restart) only init controlled components
-            if is_control and "controller" not in config:
-                continue
-            names.append(name)
+
+        names = [
+            name for name in requirements
+            if name_spec is None or name in name_spec
+        ]
+
         if is_install:
             ordered, unordered = self._resolve_order(requirements, names)
         else:
             ordered, unordered = ([], names)
+
+        self.log.debug("Ordered:   %s", str(ordered))
+        self.log.debug("Unordered: %s", str(unordered))
 
         if unordered:
             self._init_unordered(requirements, unordered)
@@ -80,48 +78,12 @@ class Installer(object):
             versions.update(method.versions())
         print json.dumps(versions, indent=2, sort_keys=True)
 
-    def start(self):
-        ''' Start each controlled component '''
-        print self.header.format("Starting")
-        statuses = self.status_check()
-        not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
-        for component in self.controlled_components:
-            if component.name in not_installed:
-                print "{} not installed, cannot start.".format(component.name)
-                continue
-            component.start()
-
-    def stop(self):
-        ''' Stop each controlled component '''
-        print self.header.format("Stopping")
-        statuses = self.status_check()
-        not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
-        for component in self.controlled_components:
-            if component.name in not_installed:
-                print "{} not installed, cannot stop.".format(component.name)
-                continue
-            component.stop()
-
-    def restart(self):
-        ''' Restart each controlled component '''
-        print self.header.format("Restarting")
-        statuses = self.status_check()
-        not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
-        for component in self.controlled_components:
-            if component.name in not_installed:
-                print "{} not installed, cannot restart.".format(component.name)
-                continue
-            component.restart()
-
     def _init_ordered(self, requirements, ordered):
         prev_method_type = None
         common_method_type = []
         for name in ordered:
             config = requirements[name]
             config["name"] = name
-            if "controller" in config:
-                controller = config["controller"]
-                self.controlled_components.append(controller(name, config))
             method_type = config["method"]
             if prev_method_type and prev_method_type == method_type:
                 common_method_type.append(config)
@@ -141,11 +103,8 @@ class Installer(object):
             method_type = config["method"]
             if method_type not in assignments:
                 assignments[method_type] = []
-            # Assign and initialize this component
+            # Assign this component
             assignments[method_type].append(config)
-            if "controller" in config:
-                controller = config["controller"]
-                self.controlled_components.append(controller(name, config))
         # Initialize methods with components
         for method in assignments:
             components = assignments[method]

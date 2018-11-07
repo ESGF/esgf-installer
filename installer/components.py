@@ -1,7 +1,6 @@
 import os
 import os.path as path
 
-from .controllers.service import Service
 from .methods.command import Command
 from .methods.conda import Conda
 from .methods.distribution import FileManager
@@ -14,8 +13,13 @@ _FILE_DIR = path.join(path.dirname(__file__), "files")
 
 _BASE = {
     "httpd": {
-        "method": PackageManager,
-        "controller": Service
+        "method": PackageManager
+    },
+    "httpd-start": {
+        "method": Command,
+        "requires": ["mod-wsgi-install", "esgf-httpd.conf", "esgf-ca-bundle.crt"],
+        "command": "service",
+        "args": ["httpd", "start"]
     },
     "mod-wsgi": {
         "method": Pip,
@@ -42,8 +46,6 @@ _BASE = {
     },
     "postgres": {
         "method": PackageManager,
-        "controller": Service,
-        "service_name": "postgresql",
         "version": "8.4.20",
         "yum": "postgresql-server-${version}"
     },
@@ -433,4 +435,31 @@ ALL = {
     "data": _DATA,
     "index": _INDEX,
     "test": _TEST
+}
+
+CONTROL = {
+    "base": {
+        "start": ["postgres-start", "httpd-start"],
+        "stop": [],
+        "restart": [],
+        "status": []
+    },
+    "data": {
+        "start": [],
+        "stop": [],
+        "restart": [],
+        "status": []
+    },
+    "index": {
+        "start": [],
+        "stop": [],
+        "restart": [],
+        "status": []
+    },
+    "test": {
+        "start": [],
+        "stop": [],
+        "restart": [],
+        "status": []
+    }
 }

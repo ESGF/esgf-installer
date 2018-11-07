@@ -1,7 +1,7 @@
 import logging
 
 from .installer import Installer
-from .components import ALL
+from .components import ALL, CONTROL
 
 class Director(object):
     ''' A class for managing the flow of the program '''
@@ -27,6 +27,7 @@ class Director(object):
             self.args.start is not None or
             self.args.stop is not None or
             self.args.restart is not None
+            # self.args.status
         )
         if init_installer:
             # Find required methods and components
@@ -45,31 +46,38 @@ class Director(object):
             for node_type in node_types:
                 requirements.update(ALL[node_type])
 
-            component_spec = (
-                self.args.install or
-                self.args.uninstall or
-                self.args.start or
-                self.args.stop or
-                self.args.restart or
-                None
-            )
+            component_spec = []
+            if self.args.start is not None:
+                for node_type in node_types:
+                    component_spec += CONTROL[node_type]["start"]
+            elif self.args.stop is not None:
+                for node_type in node_types:
+                    component_spec += CONTROL[node_type]["stop"]
+            elif self.args.restart is not None:
+                for node_type in node_types:
+                    component_spec += CONTROL[node_type]["restart"]
+            # elif self.args.status is not None:
+            #     for node_type in node_types:
+            #         component_spec += CONTROL[node_type]["status"]
+            else:
+                component_spec = (
+                    self.args.install or
+                    self.args.uninstall or
+                    None
+                )
+
+            if component_spec is not None:
+                component_spec = set(component_spec)
+
             installer = Installer(
                 requirements,
                 component_spec,
                 self.args.input_params,
-                is_control=is_control_cmd,
-                is_install=self.args.install is not None
+                is_install=self.args.install is not None or is_control_cmd
             )
-            if self.args.install is not None:
+            if self.args.install is not None or is_control_cmd:
                 installer.install()
-                # installer.start()
             elif self.args.uninstall is not None:
                 installer.uninstall()
-            elif self.args.start is not None:
-                installer.start()
-            elif self.args.stop is not None:
-                installer.stop()
-            elif self.args.restart is not None:
-                installer.restart()
             elif self.args.freeze:
                 installer.versions()

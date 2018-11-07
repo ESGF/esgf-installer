@@ -161,9 +161,9 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
             oldest_backup = min(files, key=os.path.getctime)
             os.remove(oldest_backup)
 
-def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
+def create_backup_file(file_path, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
     '''Create a backup of a file using the given backup extension'''
-    file_name = pybash.trim_string_from_head(file_name)
+    file_name = pybash.trim_string_from_head(file_path)
     backup_file_name = file_name + "-" + date + backup_extension
     logger.debug("backup_dir: %s", backup_dir)
     if not backup_dir:
@@ -173,10 +173,10 @@ def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date
     logger.debug("backup_dir after if statement: %s", backup_dir)
     try:
         # backup_path = os.path.join(backup_dir, backup_file_name)
-        backup_path = backup_dir + backup_file_name
+        backup_path = backup_dir + "/" + backup_file_name
         logger.debug("backup_path: %s", backup_path)
         logger.info("Backup - Creating a backup of %s -> %s", file_name, backup_path)
-        shutil.copyfile(file_name, backup_path)
+        shutil.copyfile(file_path, backup_path)
         os.chmod(backup_file_name, 600)
     except OSError:
         logger.exception("Could not create backup file: %s\n", backup_file_name)

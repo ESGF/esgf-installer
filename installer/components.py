@@ -88,18 +88,18 @@ _BASE = {
         "dest": os.path.join(os.sep, "usr", "local", "java"),
         "tar_root_dir": "jdk${version}"
     },
-    "java-set-default1": {
-        "method": Command,
-        "requires": ["java"],
-        "command": "alternatives",
-        "args": ["--install", "${java:dest}", "${java:dest}/bin/java", "3"]
-    },
-    "java-set-default2": {
-        "method": Command,
-        "requires": ["java-set-default1"],
-        "command": "alternatives",
-        "args": ["--set", "java", "${java:dest}/bin/java", "3"]
-    },
+    # "java-set-default1": {
+    #     "method": Command,
+    #     "requires": ["java"],
+    #     "command": "alternatives",
+    #     "args": ["--install", "${java:dest}", "${java:dest}/bin/java", "3"]
+    # },
+    # "java-set-default2": {
+    #     "method": Command,
+    #     "requires": ["java-set-default1"],
+    #     "command": "alternatives",
+    #     "args": ["--set", "java", "${java:dest}/bin/java", "3"]
+    # },
     "ant": {
         "method": PackageManager
     },

@@ -163,12 +163,13 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
 
 def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
     '''Create a backup of a file using the given backup extension'''
-    backup_file_name = file_name + date + "."+ backup_extension
+    backup_file_name = file_name + "-" + date + backup_extension
     if backup_dir is None:
         backup_dir = os.path.join(os.path.dirname(file_name))
     try:
-        logger.info("Backup - Creating a backup of %s -> %s", file_name, backup_dir)
-        shutil.copyfile(file_name, os.path.join(backup_dir, backup_file_name))
+        backup_path = os.path.join(backup_dir, backup_file_name)
+        logger.info("Backup - Creating a backup of %s -> %s", file_name, backup_path)
+        shutil.copyfile(file_name, backup_path)
         os.chmod(backup_file_name, 600)
     except OSError:
         logger.exception("Could not create backup file: %s\n", backup_file_name)

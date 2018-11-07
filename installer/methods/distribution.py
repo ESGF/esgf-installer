@@ -18,7 +18,10 @@ class FileManager(Generic):
         self.log = logging.getLogger(__name__)
         self.tmp = os.path.join(os.sep, "tmp")
         self.chunk_size = 1*1024
-        parser = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
+        parser = configparser.ConfigParser(
+            interpolation=configparser.ExtendedInterpolation(),
+            default_section=None
+        )
         parser.read(INFO_FILE)
         parser.add_section(UNIQUE_KEY)
         for component in self.components:

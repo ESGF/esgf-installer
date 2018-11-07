@@ -31,7 +31,9 @@ _BASE = {
         "method": Command,
         "requires": ["mod-wsgi"],
         "command": "mod_wsgi-express",
-        "args": ["install-module"]
+        "args": ["install-module"],
+        "check_fn": lambda module: (path.isfile(module)),
+        "check_args": [path.join(os.sep, "etc", "httpd", "modules", "mod_wsgi-py27.so")]
     },
     "esgf-httpd.conf": {
         "method": FileManager,

@@ -39,7 +39,7 @@ class Git(FileManager):
             FileManager._chown(self, component, component["dest"])
 
     def _uninstall(self):
-        FileManager._versions(self)
+        FileManager._uninstall(self)
 
     def _versions(self):
         return FileManager._versions(self)

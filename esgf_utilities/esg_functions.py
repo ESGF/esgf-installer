@@ -172,6 +172,7 @@ def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date
     logger.debug("backup_dir after if statement: %s", backup_dir)
     try:
         backup_path = os.path.join(backup_dir, backup_file_name)
+        logger.debug("backup_path: %s", backup_path)
         logger.info("Backup - Creating a backup of %s -> %s", file_name, backup_path)
         shutil.copyfile(file_name, backup_path)
         os.chmod(backup_file_name, 600)

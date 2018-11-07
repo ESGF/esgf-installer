@@ -25,10 +25,15 @@ current_directory = os.path.join(os.path.dirname(__file__))
 
 def check_for_existing_node_manager():
     print "Checking for node manager {}".format(config["esgf_node_manager_version"])
-    update_node_manager = esg_property_manager.get_property("update.node.manager")
-    if esg_version_manager.check_webapp_version("esgf-node-manager", config["esgf_node_manager_version"]) and update_node_manager.lower() not in ["yes", "y"]:
-        print "\n Found existing version of the node-manager [OK]"
-        return True
+    if esg_version_manager.check_webapp_version("esgf-node-manager", config["esgf_node_manager_version"]):
+        print "Found existing version of the node-manager"
+        try:
+            update_node_manager = esg_property_manager.get_property("update.node.manager")
+        except ConfigParser.NoOptionError:
+            update_node_manager = raw_input("Would you like to update the Node Manager installation? [y/N]") or "no"
+
+        if update_node_manager.lower() not in ["yes", "y"]:
+            return True
 
     node_manager_service_app_home = esg_property_manager.get_property(
         "node_manager_service_app_home")

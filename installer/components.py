@@ -317,7 +317,7 @@ _INDEX = {
         "method": Git,
         "requires": ["httpd"],
         "source": "https://github.com/William-Hill/COG.git",
-        "dest": path.join(os.sep, "usr", "local", "cog", "cog-install"),
+        "dest": path.join(os.sep, "usr", "local", "cog", "cog_install"),
         "tag": "ESGF_3.0",
         "owner_user": "apache",
         "owner_group": "apache"

@@ -177,9 +177,10 @@ def create_backup_file(file_path, backup_extension=".bak", backup_dir=None, date
         logger.debug("backup_path: %s", backup_path)
         logger.info("Backup - Creating a backup of %s -> %s", file_path, backup_path)
         shutil.copyfile(file_path, backup_path)
-        os.chmod(backup_file_name, 600)
     except OSError:
         logger.exception("Could not create backup file: %s\n", backup_file_name)
+    else:
+        os.chmod(backup_path, 600)
 
 
 def get_parent_directory(directory_path):

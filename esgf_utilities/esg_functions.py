@@ -811,7 +811,11 @@ def write_security_lib_install_log():
 def write_to_install_manifest(component, install_path, version, manifest_file="/esg/esgf-install-manifest"):
     '''Write component info to install manifest'''
     parser = ConfigParser.ConfigParser()
-    parser.read(manifest_file)
+    try:
+        parser.read(manifest_file)
+    except ConfigParser.MissingSectionHeaderError:
+        parser.add_section("install_manifest")
+        parser.read(manifest_file)
 
     try:
         parser.add_section("install_manifest")

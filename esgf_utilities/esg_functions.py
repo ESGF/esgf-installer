@@ -164,7 +164,8 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
 def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
     '''Create a backup of a file using the given backup extension'''
     backup_file_name = file_name + "-" + date + backup_extension
-    if backup_dir is None:
+    logger.debug("backup_dir: %s", backup_dir)
+    if not backup_dir:
         backup_dir = os.path.join(os.path.dirname(file_name))
     try:
         backup_path = os.path.join(backup_dir, backup_file_name)

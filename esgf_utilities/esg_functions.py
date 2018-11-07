@@ -166,7 +166,10 @@ def create_backup_file(file_name, backup_extension=".bak", backup_dir=None, date
     backup_file_name = file_name + "-" + date + backup_extension
     logger.debug("backup_dir: %s", backup_dir)
     if not backup_dir:
+        logger.debug("updating backup_dir")
         backup_dir = os.path.join(os.path.dirname(file_name))
+
+    logger.debug("backup_dir after if statement: %s", backup_dir)
     try:
         backup_path = os.path.join(backup_dir, backup_file_name)
         logger.info("Backup - Creating a backup of %s -> %s", file_name, backup_path)

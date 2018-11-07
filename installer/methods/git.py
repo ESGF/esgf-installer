@@ -37,3 +37,9 @@ class Git(FileManager):
             result = self.git.__getitem__(args) & TEE
 
             FileManager._chown(self, component, component["dest"])
+
+    def _uninstall(self):
+        FileManager._versions(self)
+
+    def _versions(self):
+        return FileManager._versions(self)

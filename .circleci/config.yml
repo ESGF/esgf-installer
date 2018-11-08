@@ -5,10 +5,6 @@ aliases:
      name: install_miniconda
      command: |
         pwd
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh
-        bash ./miniconda3.sh -b -p miniconda3
-        pwd
-        ls
         
    - &run_tests
      name: run_tests

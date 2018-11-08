@@ -15,7 +15,7 @@ class test_flake8(unittest.TestCase):
                 "index_node", "shell_scripts"]
 
         flake8_passed = True
-        for p in base_path, dirs:
+        for p in dirs:
             path = os.path.join(base_path, p)
 
             print()

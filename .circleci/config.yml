@@ -11,10 +11,10 @@ aliases:
    - &run_tests
      name: run_tests
      command: |
-        source /usr/local/conda/bin/activate esgf-pub
-        conda install flake8
-        python tests/test_flake8.py
-        source /usr/local/conda/bin/deactivate
+        #source /usr/local/conda/bin/activate esgf-pub
+        /usr/local/bin/conda install flake8
+        /usr/local/bin/python tests/test_flake8.py
+        #source /usr/local/conda/bin/deactivate
 
 jobs:
    centos_build:
@@ -25,7 +25,7 @@ jobs:
       working_directory: workspace
       steps:
          - checkout
-         - run: *create_esgf_pub_env
+         #- run: *create_esgf_pub_env
          - run: *run_tests
 
 workflows:

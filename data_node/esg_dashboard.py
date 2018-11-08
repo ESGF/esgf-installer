@@ -50,13 +50,14 @@ def migration_egg(url, cmd, args):
 
 def setup_dashboard():
 
+    print "\n*******************************"
+    print "Setting up ESGF Stats API (dashboard)"
+    print "******************************* \n"
+
     if os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"):
         stats_api_install = raw_input("Existing Stats API installation found.  Do you want to continue with the Stats API installation [y/N]: " ) or "no"
         if stats_api_install.lower() in ["no", "n"]:
             return
-    print "\n*******************************"
-    print "Setting up ESGF Stats API (dashboard)"
-    print "******************************* \n"
 
     tomcat_webapps = os.path.join(os.sep, "usr", "local", "tomcat", "webapps")
 

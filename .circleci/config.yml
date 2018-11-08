@@ -11,16 +11,9 @@ aliases:
    - &run_tests
      name: run_tests
      command: |
-        id
-        pwd
-        ls
         source /usr/local/conda/bin/activate esgf-pub
-        type python
-        pwd
-        ls
-        ls tests
-        # python tests/test_esg_apache.py
-        #python ./tests/test_CA.py
+        conda install flake8
+        python tests/test_flake8.py
         source /usr/local/conda/bin/deactivate
 
 jobs:

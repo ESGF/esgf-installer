@@ -13,6 +13,7 @@ aliases:
    - &run_tests
      name: run_tests
      command: |
+        pwd
         #source /usr/local/conda/bin/activate esgf-pub
         #/usr/local/conda/bin/conda install flake8
         #/usr/local/conda/bin/python tests/test_flake8.py

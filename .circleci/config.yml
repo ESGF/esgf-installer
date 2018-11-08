@@ -13,12 +13,9 @@ aliases:
    - &run_tests
      name: run_tests
      command: |
-        pwd
-        #source /usr/local/conda/bin/activate esgf-pub
-        #/usr/local/conda/bin/conda install flake8
-        #/usr/local/conda/bin/python tests/test_flake8.py
-        #source /usr/local/conda/bin/deactivate
-
+        export PATH=$WORKDIR/miniconda3/bin:$PATH
+        python tests/test_flake8.py
+        
 jobs:
    centos_build:
       docker:
@@ -29,7 +26,7 @@ jobs:
       steps:
          - checkout
          - run: *install_miniconda
-         #- run: *run_tests
+         - run: *run_tests
 
 workflows:
    version: 2

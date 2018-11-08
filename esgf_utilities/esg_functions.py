@@ -832,10 +832,8 @@ def get_version_from_install_manifest(component, manifest_file="/esg/esgf-instal
     try:
         parser.read(manifest_file)
     except ConfigParser.MissingSectionHeaderError, error:
-        logger.error(error)
-        split_error = error.split(":")
-        print "split_error:", split_error
-        raise
+        parser.add_section("install_manifest")
+        parser.read(manifest_file)
 
     try:
         return parser.get(section_name, component)

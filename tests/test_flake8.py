@@ -11,7 +11,7 @@ class test_flake8(unittest.TestCase):
         base_path = os.path.dirname(__file__)
         base_path = os.path.join(base_path, "..")
         base_path = os.path.abspath(base_path)
-
+        path = os.path.join(base_path, "idp_node")
 
         print()
         print()
@@ -25,7 +25,7 @@ class test_flake8(unittest.TestCase):
         print()
         print()
         cmd = "flake8 --show-source --statistics " +\
-              "--max-line-length=120 %s" % (base_path)
+              "--max-line-length=120 %s" % (path)
         P = subprocess.Popen(shlex.split(cmd),
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,

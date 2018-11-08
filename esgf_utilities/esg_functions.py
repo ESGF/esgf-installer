@@ -829,7 +829,13 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
 def get_version_from_install_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
     '''Get component version info from install manifest'''
     parser = ConfigParser.SafeConfigParser()
-    parser.read(manifest_file)
+    try:
+        parser.read(manifest_file)
+    except ConfigParser.MissingSectionHeaderError, error:
+        logger.error(error)
+        split_error = error.split(":")
+        print "split_error:", split_error
+        raise
 
     try:
         return parser.get(section_name, component)

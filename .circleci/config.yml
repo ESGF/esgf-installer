@@ -15,6 +15,7 @@ aliases:
      command: |
         export PATH=$WORKDIR/miniconda3/bin:$PATH
         python tests/test_flake8.py
+     no_output_timeout: 30m
         
 jobs:
    centos_build:

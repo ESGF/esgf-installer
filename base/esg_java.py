@@ -137,7 +137,7 @@ def setup_ant():
             setup_ant_answer = esg_property_manager.get_property("update.ant")
         except ConfigParser.NoOptionError:
             setup_ant_answer = raw_input(
-                "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
+                "Do you want to continue with the Ant installation [y/N]: ") or "no"
 
         if setup_ant_answer.lower() in ["n", "no"]:
             return

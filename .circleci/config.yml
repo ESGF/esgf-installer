@@ -25,7 +25,6 @@ jobs:
       steps:
          - checkout
          - install_miniconda
-         #- run: *run_tests
 
 workflows:
    version: 2

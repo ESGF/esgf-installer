@@ -1,6 +1,8 @@
 import sys, getopt, os
 import datetime
 import StringIO
+import ConfigParser
+from backports import configparser
 from esgf_utilities import esg_functions, pybash
 from base import esg_postgres
 
@@ -17,6 +19,13 @@ def add_config_file_section_header(config_file_name, section_header):
     config.write('[{}]\n'.format(section_header))
     config.write(open(config_file_name).read())
     config.seek(0, os.SEEK_SET)
+
+    parser = configparser.ConfigParser()
+    parser.read(config)
+
+    with open(config_file_name, "w") as file_object:
+        parser.write(file_object, space_around_delimiters=False)
+
 
 def backup_esg_installation():
     '''From https://github.com/ESGF/esgf-installer/wiki/ESGF-Pre-Installation-Backup

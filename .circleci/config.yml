@@ -28,7 +28,7 @@ jobs:
       working_directory: workspace
       steps:
          - checkout
-         - run: install_miniconda
+         - run: *install_miniconda
          #- run: *run_tests
 
 workflows:

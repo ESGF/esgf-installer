@@ -7,8 +7,8 @@ aliases:
         wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh
         bash ./miniconda3.sh -b -p $WORKDIR/miniconda3
         export PATH=$WORKDIR/miniconda3/bin:$PATH
-	conda install pip
-	pip install flake8
+        conda install pip
+        pip install flake8
         
    - &run_tests
      name: run_tests

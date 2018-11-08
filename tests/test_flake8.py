@@ -14,10 +14,10 @@ class test_flake8(unittest.TestCase):
         base_path = os.path.abspath(base_path)
         dirs = ["base", "data_node", "filters", "idp_node",
                 "index_node", "shell_scripts"]
-        files_on_base_dir = glob.glob("{p}/*py".format(p=base_path))
+        files_on_base_dir = list(glob.glob("*.py"))
 
         flake8_passed = True
-        for p in dirs, files_on_base_dir:
+        for p in dirs + files_on_base_dir:
             path = os.path.join(base_path, p)
 
             print()

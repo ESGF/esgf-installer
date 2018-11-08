@@ -1,19 +1,21 @@
 version: 2
 
 aliases:
-   - &create_esgf_pub_env
-     name: create_esgf_pub_env
+   - &install_miniconda
+     name: install_miniconda
      command: |
-        git status
-        chmod 777 esg_bootstrap.sh
-        ./esg_bootstrap.sh
-
+        pwd
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh
+        bash ./miniconda3.sh -b -p miniconda3
+        pwd
+        ls
+        
    - &run_tests
      name: run_tests
      command: |
         #source /usr/local/conda/bin/activate esgf-pub
-        /usr/local/conda/bin/conda install flake8
-        /usr/local/conda/bin/python tests/test_flake8.py
+        #/usr/local/conda/bin/conda install flake8
+        #/usr/local/conda/bin/python tests/test_flake8.py
         #source /usr/local/conda/bin/deactivate
 
 jobs:
@@ -25,8 +27,8 @@ jobs:
       working_directory: workspace
       steps:
          - checkout
-         #- run: *create_esgf_pub_env
-         - run: *run_tests
+         - install_miniconda
+         #- run: *run_tests
 
 workflows:
    version: 2

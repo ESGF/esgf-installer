@@ -1,10 +1,22 @@
 import sys, getopt, os
 import datetime
+import StringIO
 from esgf_utilities import esg_functions, pybash
 from base import esg_postgres
 
 def check_previous_install():
     return os.path.exists("/usr/local/bin/esg-node")
+
+
+#TODO: Create a function to port values from old config files to new esgf.properties file
+
+def add_config_file_section_header(config_file_name, section_header):
+    '''INI-style config files in 2.x typically do not have section headers that are required to be parsed by ConfigParser. This function will add the required section headers'''
+
+    config = StringIO.StringIO()
+    config.write('[{}]\n'.format(section_header))
+    config.write(open(config_file_name).read())
+    config.seek(0, os.SEEK_SET)
 
 def backup_esg_installation():
     '''From https://github.com/ESGF/esgf-installer/wiki/ESGF-Pre-Installation-Backup
@@ -33,6 +45,9 @@ def backup_esg_installation():
     files_to_backup = ["/esg/content/thredds/catalog.xml", "/esg/config/esgf.properties", "/esg/esgf-install-manifest", "/etc/esg.env", "/esg/config/config_type"]
     for file_name in files_to_backup:
         esg_functions.create_backup_file(file_name, backup_dir=migration_backup_dir)
+
+    add_config_file_section_header(os.path.join(migration_backup_dir, "esgf.properties-{}.bak".format(str(datetime.date.today()))), "installer.properties")
+    add_config_file_section_header(os.path.join(migration_backup_dir, "esgf-install-manifest-{}.bak".format(str(datetime.date.today()))), "install_manifest")
 
 
 def main(argv):

@@ -4,11 +4,11 @@ aliases:
    - &install_miniconda
      name: install_miniconda
      command: |
-        pwd
         wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh
-        bash ./miniconda3.sh -b -p miniconda3
-        pwd
-        ls
+        bash ./miniconda3.sh -b -p $WORKDIR/miniconda3
+        export PATH=$WORKDIR/miniconda3/bin:$PATH
+	conda install pip
+	pip install flake8
         
    - &run_tests
      name: run_tests
@@ -22,10 +22,10 @@ aliases:
 jobs:
    centos_build:
       docker:
-         # - image: hill119/esgf_centos6
-         #- image: muryanto1/mycentos:latest
          - image: muryanto1/centos_for_esgf_installer_root:latest
       working_directory: workspace
+      environment:
+         WORKDIR: /workspace/workdir
       steps:
          - checkout
          - run: *install_miniconda

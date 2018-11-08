@@ -30,7 +30,7 @@ def backup_esg_installation():
     for directory in directories_to_backup:
         esg_functions.backup(directory, migration_backup_dir)
 
-    files_to_backup = ["/esg/content/thredds/catalog.xml", "/esg/config/esgf.properties"]
+    files_to_backup = ["/esg/content/thredds/catalog.xml", "/esg/config/esgf.properties", "/esg/esgf-install-manifest", "/etc/esg.env", "/esg/config/config_type"]
     for file_name in files_to_backup:
         esg_functions.create_backup_file(file_name, backup_dir=migration_backup_dir)
 

@@ -294,7 +294,7 @@ _DATA = {
         "source": "https://github.com/ESGF/esgf-dashboard.git",
         "dest": path.join(os.sep, "tmp", "esgf-dashboard")
     },
-    "geoip-devel": {
+    "GeoIP-devel": {
         "method": PackageManager
     },
     "automake-dashboard-ip": {

@@ -39,11 +39,11 @@ class Generic(object):
             else:
                 req_version = None
                 try:
-                    req_version = component["version"]
+                    req_version = component["tag"]
                 except KeyError:
                     pass
                 try:
-                    req_version = component["tag"]
+                    req_version = component["version"]
                 except KeyError:
                     pass
                 if req_version is None:

@@ -20,8 +20,8 @@ def add_config_file_section_header(config_file_name, section_header):
     config.write(open(config_file_name).read())
     config.seek(0, os.SEEK_SET)
 
-    parser = configparser.ConfigParser()
-    parser.read(config)
+    # parser = configparser.ConfigParser()
+    # parser.read(config)
 
     with open(config_file_name, "w") as file_object:
         shutil.copyfileobj(config, file_object)

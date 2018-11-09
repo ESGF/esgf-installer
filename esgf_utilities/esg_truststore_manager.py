@@ -10,6 +10,7 @@ import OpenSSL
 import jks
 import pybash
 import esg_functions
+from urlparse import urlparse
 from esgf_utilities import esg_property_manager
 from plumbum.commands import ProcessExecutionError
 
@@ -345,3 +346,52 @@ def find_certificate_issuer_cert():
                         return simple_CA_cert
         except IOError:
             raise
+
+
+def install_peer_node_cert(remote_host):
+    '''This function is for pulling in keys from hosts we wish to
+    communicate with over an encrypted ssl connection.  This function
+    must be run after tomcat is set up since it references server.xml.
+
+    (called by setup_idp_peer)
+    arg1 - hostname of the machine with the cert you want to get
+    (arg2 - password to truststore where cert will be inserted)
+    (arg3 - password to keystore - only applicable in "local" registration scenario)
+    Formerly called register()
+    '''
+
+    print "Installing Public Certificate of Target Peer Node...[{}]".format(remote_host)
+
+    with pybash.pushd(config["tomcat_conf_dir"]):
+        esgf_host = esg_functions.get_esgf_host()
+        ssl_endpoint = urlparse(remote_host).hostname
+        ssl_port = "443"
+
+        if ssl_endpoint == esgf_host:
+            #For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition
+            add_my_cert_to_truststore()
+        else:
+            pybash.mkdir_p(config["workdir"])
+            with pybash.pushd(config["workdir"]):
+                esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+                if not esg_functions.download_update('./InstallCert.class', "{}/utils/InstallCert.class".format(esg_dist_url)):
+                    raise RuntimeError("Could not download utility class(1) for installing certificates")
+                if not esg_functions.download_update('./InstallCert$SavingTrustManager.class', "{}/utils/InstallCert$SavingTrustManager.class".format(esg_dist_url)):
+                    raise RuntimeError("Could not download utility class(2) for installing certificates")
+
+            class_path = ".:{}".format(config["workdir"])
+
+            #NOTE: The InstallCert code fetches Java's jssecacerts file (if
+            #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
+            #The output of the program is a new file named jssecacerts!      So here we get the output and rename it.
+            esg_functions.call_binary("/usr/local/java/bin/java", ["-classpath", class_path, "InstallCert", "{}:{}".format(ssl_endpoint, ssl_port), config["truststore_password"], config["truststore_file"]])
+
+            with pybash.pushd(config["tomcat_conf_dir"]):
+                os.chmod(config["truststore_file"], 0644)
+
+                tomcat_user = esg_functions.get_user_id("tomcat")
+                tomcat_group = esg_functions.get_group_id("tomcat")
+
+                os.chown(config["truststore_file"], tomcat_user, tomcat_group)
+
+                sync_with_java_truststore(config["truststore_file"])

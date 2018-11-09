@@ -296,7 +296,7 @@ def define_acceptable_arguments():
     parser.add_argument("--get-idp-peer", dest="getidppeer", help="Displays the IDP peer node name", action="store_true")
     parser.add_argument("--set-idp-peer", "--set-admin-peer", dest="setidppeer", help="Selects the IDP peer node", action="store_true")
     parser.add_argument("--get-index-peer", dest="getindexpeer", help="Displays the index peer node name", action="store_true")
-    parser.add_argument("--set-index-peer", dest="setindexpeer", help="Sets the (index peer) node to which we will publish", action="store_true")
+    parser.add_argument("--set-index-peer", dest="setindexpeer", help="Sets the (index peer) node to which we will publish", nargs="+")
     parser.add_argument("--set-publication-target", dest="setpublicationtarget", help="Sets the publication target", action="store_true")
     parser.add_argument("--get-default-peer", dest="getdefaultpeer", help="Displays the default peer", action="store_true")
     parser.add_argument("--set-default-peer", dest="setdefaultpeer", help="Sets the default peer", action="store_true")
@@ -482,7 +482,7 @@ def process_arguments():
     elif args.setidppeer:
         node_type_list = esg_functions.get_node_type()
         from data_node import thredds
-        thredds.select_idp_peer()
+        thredds.select_idp_peer(args.setidppeer)
     elif args.getindexpeer:
         try:
             print "Current Index Peer: {}".format(esg_property_manager.get_property("esgf_index_peer"))

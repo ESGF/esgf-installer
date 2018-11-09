@@ -25,7 +25,7 @@ def download_extract(url, dest_dir, owner_user, owner_group):
 
     remote_file = pybash.trim_string_from_head(url)
     filename = os.path.join(os.sep, "tmp", remote_file)
-    esg_functions.download_update(filename, remote_file)
+    esg_functions.download_update(filename, url)
 
     pybash.mkdir_p(dest_dir)
     with zipfile.ZipFile(filename) as archive:

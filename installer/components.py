@@ -100,9 +100,6 @@ _BASE = {
     #     "command": "alternatives",
     #     "args": ["--set", "java", "${java:dest}/bin/java", "3"]
     # },
-    "ant": {
-        "method": PackageManager
-    },
     "postgresql-devel": {
         "method": PackageManager
     },

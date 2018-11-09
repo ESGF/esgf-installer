@@ -22,15 +22,10 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 def download_extract(url, dest_dir, owner_user, owner_group):
-    r = requests.get(url)
+
     remote_file = pybash.trim_string_from_head(url)
     filename = os.path.join(os.sep, "tmp", remote_file)
-    with open(filename, "wb") as localfile:
-        total_length = int(r.headers.get('content-length'))
-        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
-            if chunk:
-                localfile.write(chunk)
-                localfile.flush()
+    esg_functions.download_update(filename, remote_file)
 
     pybash.mkdir_p(dest_dir)
     with zipfile.ZipFile(filename) as archive:
@@ -67,10 +62,12 @@ def setup_dashboard():
     stats_api_url = "{}/{}".format(dist_url, "esgf-stats-api/esgf-stats-api.war")
     dest_dir = os.path.join(tomcat_webapps, "esgf-stats-api")
     download_extract(stats_api_url, dest_dir, "tomcat", "tomcat")
+    logger.debug("Installed stats-api webapp: %s", str(os.path.isdir(dest_dir)))
 
     dashboard_url = "{}/{}".format(dist_root_url, "esgf-dashboard/esgf-dashboard.war")
     dest_dir = os.path.join(tomcat_webapps, "esgf-dashboard")
     download_extract(dashboard_url, dest_dir, "tomcat", "tomcat")
+    logger.debug("Installed dashboard webapp: %s", str(os.path.isdir(dest_dir)))
 
     # execute dashboard installation script (without the postgres schema)
     run_dashboard_script()
@@ -134,14 +131,8 @@ def clone_dashboard_repo():
     print "\n*******************************"
     print "Cloning esgf-dashboard repo from Github"
     print "******************************* \n"
-    from git import RemoteProgress
-    class Progress(RemoteProgress):
-        def update(self, op_code, cur_count, max_count=None, message=''):
-            if message:
-                print('Downloading: (==== {} ====)\r'.format(message))
-                print "current line:", self._cur_line
 
-    Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard", progress=Progress())
+    Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard")
 
 def run_dashboard_script():
     #default values

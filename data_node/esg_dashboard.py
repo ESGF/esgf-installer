@@ -62,12 +62,6 @@ def setup_dashboard():
     stats_api_url = "{}/{}".format(dist_url, "esgf-stats-api/esgf-stats-api.war")
     dest_dir = os.path.join(tomcat_webapps, "esgf-stats-api")
     download_extract(stats_api_url, dest_dir, "tomcat", "tomcat")
-    logger.debug("Installed stats-api webapp: %s", str(os.path.isdir(dest_dir)))
-
-    dashboard_url = "{}/{}".format(dist_root_url, "esgf-dashboard/esgf-dashboard.war")
-    dest_dir = os.path.join(tomcat_webapps, "esgf-dashboard")
-    download_extract(dashboard_url, dest_dir, "tomcat", "tomcat")
-    logger.debug("Installed dashboard webapp: %s", str(os.path.isdir(dest_dir)))
 
     # execute dashboard installation script (without the postgres schema)
     run_dashboard_script()

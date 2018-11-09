@@ -385,21 +385,9 @@ def clear_tomcat_cache():
         logger.exception(error)
 
 def remove_unused_esgf_webapps():
-    '''Hard coded to remove node manager, desktop and dashboard'''
+    '''Hard coded to remove node manager'''
     try:
         shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager")
-    except OSError, error:
-        if error.errno == errno.ENOENT:
-            pass
-
-    try:
-        shutil.rmtree("/usr/local/tomcat/webapps/esgf-desktop")
-    except OSError, error:
-        if error.errno == errno.ENOENT:
-            pass
-
-    try:
-        shutil.rmtree("/usr/local/tomcat/webapps/esgf-dashboard")
     except OSError, error:
         if error.errno == errno.ENOENT:
             pass

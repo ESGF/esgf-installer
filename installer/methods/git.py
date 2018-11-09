@@ -4,9 +4,10 @@ import shutil
 
 from plumbum import local
 from plumbum import TEE
+from plumbum.commands import ProcessExecutionError
 
 from .distribution import FileManager
-from ..utils import mkdir_p
+from ..utils import mkdir_p, pushd
 
 class Git(FileManager):
     ''' Install file, git, and compressed components from a local or remote location '''
@@ -15,6 +16,7 @@ class Git(FileManager):
         self.log = logging.getLogger(__name__)
         self.git = local["git"]
         self.clone_args = ["clone", "--depth", "1"]
+        self.version_args = ["log", "-1", '--format="%h %cd"']
 
     def _install(self, names):
         for component in self.components:
@@ -42,4 +44,18 @@ class Git(FileManager):
         FileManager._uninstall(self)
 
     def _versions(self):
-        return FileManager._versions(self)
+        versions = {}
+        for component in self.components:
+            if not os.path.isdir(component["dest"]):
+                versions[component["name"]] = None
+                continue
+
+            with pushd(component["dest"]):
+                try:
+                    result = self.git.run(self.version_args)
+                except ProcessExecutionError:
+                    versions[component["name"]] = "1"
+                else:
+                    versions[component["name"]] = result[1]
+
+        return versions

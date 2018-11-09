@@ -33,12 +33,24 @@ class Generic(object):
         for component in self.components:
             name = component["name"]
             version = versions[name]
+            
             if version is None:
                 statuses[name] = NOT_INSTALLED
             else:
+                req_version = None
                 try:
-                    statuses[name] = OK if component["version"] == version else BAD_VERSION
+                    req_version = component["version"]
                 except KeyError:
+                    pass
+                try:
+                    req_version = component["tag"]
+                except KeyError:
+                    pass
+                if req_version is None:
+                    statuses[name] = OK
+                elif req_version != version:
+                    statuses[name] = BAD_VERSION
+                else:
                     statuses[name] = OK
         return statuses
 

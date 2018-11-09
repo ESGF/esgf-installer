@@ -47,7 +47,7 @@ update.solr=
 
 #IDP node Components
 backup.idp=
-use.external.idp=
+esgf.idp.peer=
 register.myproxy=
 update.globus=
 globus.user=

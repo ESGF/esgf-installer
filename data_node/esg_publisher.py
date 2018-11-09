@@ -6,7 +6,7 @@ import datetime
 import logging
 import ConfigParser
 import yaml
-from esgf_utilities import esg_functions
+from esgf_utilities import esg_functions, esg_truststore_manager
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities.esg_env_manager import EnvWriter
@@ -140,7 +140,6 @@ def esgcet_startup_hook():
         raise OSError("{} does not exists".format(esg_ini_path))
     os.chown(esg_ini_path, -1, esg_functions.get_group_id("tomcat"))
     os.chmod(esg_ini_path, 0644)
-
 
 def main():
     '''Main function'''

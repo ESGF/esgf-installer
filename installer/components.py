@@ -291,7 +291,7 @@ _DATA = {
     },
     "automake-dashboard-ip": {
         "method": Command,
-        "requires": ["esgf-dashboard-git", "geoip-devel"],
+        "requires": ["esgf-dashboard-git", "GeoIP-devel"],
         "command": "automake",
         "working_dir": path.join("${esgf-dashboard-git:dest}", "src", "c", "esgf-dashboard-ip")
     },

@@ -312,20 +312,20 @@ _DATA = {
             "--with-geoip-prefix-path=" + path.join(os.sep, "usr"),
             "--with-allow-federation=no"
         ],
-        "working_dir": "${automake-dashboard-ip:dest}"
+        "working_dir": "${automake-dashboard-ip:working_dir}"
     },
     "make-dashboard-ip": {
         "method": Command,
         "requires": ["configure-dashboard-ip"],
         "command": "make",
-        "working_dir": "${automake-dashboard-ip:dest}"
+        "working_dir": "${automake-dashboard-ip:working_dir}"
     },
     "make-install-dashboard-ip": {
         "method": Command,
         "requires": ["make-dashboard-ip"],
         "command": "make",
         "args": ["install"],
-        "working_dir": "${automake-dashboard-ip:dest}"
+        "working_dir": "${automake-dashboard-ip:working_dir}"
     },
     "cdutil": {
         "method": Conda,

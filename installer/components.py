@@ -280,14 +280,6 @@ _DATA = {
         "owner_user": "${tomcat-user:username}",
         "owner_group": "${tomcat-group:groupname}"
     },
-    "esgf-dashboard-webapp": {
-        "method": FileManager,
-        "requires": ["tomcat"],
-        "source": "${ESGF_PARAMS:mirror}/esgf-dashboard/esgf-dashboard.war",
-        "dest": path.join("${tomcat:dest}", "webapps", "esgf-dashboard"),
-        "owner_user": "${tomcat-user:username}",
-        "owner_group": "${tomcat-group:groupname}"
-    },
     "esgf-dashboard-git": {
         "method": Git,
         "tag": "v1.5.19",

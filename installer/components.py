@@ -375,7 +375,7 @@ _INDEX = {
         "method": Command,
         "requires": ["cog"],
         "command": "pip",
-        "args": ["-r", "requirements.txt"],
+        "args": ["install", "-r", "requirements.txt"],
         "working_dir": "${cog:dest}"
     },
     "cog-setup-install": {

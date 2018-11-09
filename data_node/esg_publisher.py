@@ -141,44 +141,6 @@ def esgcet_startup_hook():
     os.chown(esg_ini_path, -1, esg_functions.get_group_id("tomcat"))
     os.chmod(esg_ini_path, 0644)
 
-
-def set_index_peer(host=None, index_type="p2p"):
-    '''Setting the (index peer) node to which we will publish
-       This is how we make sure that the publisher is pointing to the correct publishing service.
-       We edit the esg.ini file with the information in the esgf.properties file, specifically the hessian_service_url value in esg.ini
-    '''
-    if not host:
-        try:
-            index_peer = esg_property_manager.get_property("esgf_index_peer")
-        except ConfigParser.NoOptionError:
-            print "Could not find esgf_index_peer"
-            return
-    if host == "localhost" or host == "self":
-        index_peer = esg_functions.get_esgf_host()
-
-    print "Setting Index Peer... to => [{}] (endpoint type = {})".format(index_peer, index_type)
-
-    #Fetch and Insert the Certificate for Index Peer (to let in index peer's publishingService callback)
-    esg_truststore_manager.install_peer_node_cert(index_peer)
-
-    try:
-        publishing_service_endpoint = esg_property_manager.get_property("publishing_service_endpoint")
-    except ConfigParser.NoOptionError:
-        print "publishing_service_endpoint property hasn't been set in esgf.properties"
-
-    if index_type == "gateway":
-        publishing_service_endpoint = "https://{}/remote/secure/client-cert/hessian/publishingService".format(index_peer)
-    else:
-        publishing_service_endpoint = "https://{}/esg-search/remote/secure/client-cert/hessian/publishingService".format(index_peer)
-
-    publisher_config_path = os.path.join(config["publisher_home"], config["publisher_config"])
-    esg_property_manager.set_property("hessian_service_url", publishing_service_endpoint, property_file=publisher_config_path, section_name="DEFAULT")
-
-    esg_property_manager.set_property("esgf_index_peer", index_peer.rsplit("/", 1)[0])
-    esg_property_manager.set_property("publishing_service_endpoint", publishing_service_endpoint)
-
-
-
 def main():
     '''Main function'''
     if os.path.isfile(os.path.join(config["publisher_home"], config["publisher_config"])):

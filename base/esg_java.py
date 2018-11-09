@@ -111,37 +111,3 @@ def setup_java():
     # print check_java_version()
     write_java_install_log()
     write_java_env()
-
-
-def write_ant_env():
-    '''Writes Ant config to /etc/esg.env'''
-    EnvWriter.export("ANT_HOME", "/usr/bin/ant")
-
-def write_ant_install_log():
-    '''Writes Ant config to install manifest'''
-    ant_version = esg_functions.call_subprocess("ant -version")["stderr"]
-    esg_functions.write_to_install_manifest("ant", "/usr/bin/ant", ant_version)
-
-
-def setup_ant():
-    '''Install ant via yum'''
-
-    print "\n*******************************"
-    print "Setting up Ant"
-    print "******************************* \n"
-
-    if os.path.exists(os.path.join("/usr", "bin", "ant")):
-        esg_functions.call_binary("ant", ["-version"])
-
-        try:
-            setup_ant_answer = esg_property_manager.get_property("update.ant")
-        except ConfigParser.NoOptionError:
-            setup_ant_answer = raw_input(
-                "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
-
-        if setup_ant_answer.lower() in ["n", "no"]:
-            return
-
-    esg_functions.call_binary("yum", ["-y", "install", "ant"])
-    write_ant_install_log()
-    write_ant_env()

@@ -266,18 +266,69 @@ _BASE = {
     # }
 }
 _DATA = {
-    "thredds": {
+    "thredds-webapp": {
         "method": FileManager,
         "requires": ["tomcat"],
         "version": "5.0.2",
         "source": "${ESGF_PARAMS:mirror}/2.6/8/thredds/5.0/${version}/thredds.war",
-        "dest": path.join("${tomcat:dest}", "webapps", "thredds")
+        "dest": path.join("${tomcat:dest}", "webapps", "thredds"),
+        "owner_user": "${tomcat-user:username}",
+        "owner_group": "${tomcat-group:groupname}"
+    },
+    "esgf-stats-api-webapp": {
+        "method": FileManager,
+        "requires": ["tomcat"],
+        "source": "${ESGF_PARAMS:mirror}/2.6/8/esgf-stats-api/esgf-stats-api.war",
+        "dest": path.join("${tomcat:dest}", "webapps", "esgf-stats-api"),
+        "owner_user": "${tomcat-user:username}",
+        "owner_group": "${tomcat-group:groupname}"
+    },
+    "esgf-dashboard-webapp": {
+        "method": FileManager,
+        "requires": ["tomcat"],
+        "source": "${ESGF_PARAMS:mirror}/esgf-dashboard/esgf-dashboard.war",
+        "dest": path.join("${tomcat:dest}", "webapps", "esgf-dashboard"),
+        "owner_user": "${tomcat-user:username}",
+        "owner_group": "${tomcat-group:groupname}"
     },
     "esgf-dashboard-git": {
         "method": Git,
-        "tag": "v1.5.20",
+        "tag": "v1.5.19",
         "source": "https://github.com/ESGF/esgf-dashboard.git",
-        "dest": "/tmp/esgf-dashboard"
+        "dest": path.join(os.sep, "tmp", "esgf-dashboard")
+    },
+    "geoip-devel": {
+        "method": PackageManager
+    },
+    "automake-dashboard-ip": {
+        "method": Command,
+        "requires": ["esgf-dashboard-git", "geoip-devel"],
+        "command": "automake",
+        "working_dir": path.join("${esgf-dashboard-git:dest}", "src", "c", "esgf-dashboard-ip")
+    },
+    "configure-dashboard-ip": {
+        "method": Command,
+        "requires": ["automake-dashboard-ip"],
+        "command": "./configure",
+        "args": [
+            "--prefix=" + path.join(os.sep, "usr", "local", "esgf-dashboard-ip"),
+            "--with-geoip-prefix-path=" + path.join(os.sep, "usr"),
+            "--with-allow-federation=no"
+        ],
+        "working_dir": "${automake-dashboard-ip:dest}"
+    },
+    "make-dashboard-ip": {
+        "method": Command,
+        "requires": ["configure-dashboard-ip"],
+        "command": "make",
+        "working_dir": "${automake-dashboard-ip:dest}"
+    },
+    "make-install-dashboard-ip": {
+        "method": Command,
+        "requires": ["make-dashboard-ip"],
+        "command": "make",
+        "args": ["install"],
+        "working_dir": "${automake-dashboard-ip:dest}"
     },
     "cdutil": {
         "method": Conda,
@@ -310,7 +361,16 @@ _DATA = {
         "source": "${ESGF_PARAMS:mirror}/2.6/8/esgf-node-manager/esgf_node_manager-${version}-py2.7.egg",
         "dest": "/tmp/esgf_node_manager/esgf_node_manager.egg",
         "extract": False
-    }
+    },
+    # "dashboard-init": {
+    #     "method": Command,
+    #     "requires": ["esgf-node-manager", "postgres-start"],
+    #     "command": "esgf_node_manager_initialize",
+    #     "args": [
+    #         "--dburl",
+    #         ""
+    #     ]
+    # }
 }
 _INDEX = {
     "cog": {

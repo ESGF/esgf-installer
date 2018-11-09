@@ -16,7 +16,8 @@ class Git(FileManager):
         self.log = logging.getLogger(__name__)
         self.git = local["git"]
         self.clone_args = ["clone", "--depth", "1"]
-        self.version_args = ["log", "-1", "--format=%h %cd"]
+        self.version_args = ["describe", "--tags"]
+        # self.version_args = ["log", "-1", "--format=%h %cd"]
 
     def _install(self, names):
         for component in self.components:

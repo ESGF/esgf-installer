@@ -82,7 +82,6 @@ def init():
     #--------------------------------
     # Script vars (~external)
     #--------------------------------
-    openssl_install_dir = os.path.join(install_prefix, "openssl")
     postgress_install_dir = os.path.join("/","var", "lib", "pgsql")
     postgress_bin_dir = os.path.join("/","usr", "bin")
     postgress_lib_dir = os.path.join("/","usr", "lib64", "pgsql")
@@ -101,12 +100,9 @@ def init():
     postgress_port = "5432"
     # Double Check HERE
     cdat_home = os.path.join(install_prefix, "uvcdat", "2.2.0")
-    java_opts = ""
     java_install_dir = os.path.join(install_prefix, "java")
-    ant_install_dir = os.path.join(install_prefix, "ant")
     tomcat_install_dir = os.path.join(install_prefix, "tomcat")
     tomcat_conf_dir = os.path.join(esg_config_dir, "tomcat")
-    tomcat_opts = ""
     tomcat_user = "tomcat"
     tomcat_group = tomcat_user
     globus_location = os.path.join(install_prefix, "globus")
@@ -127,15 +123,19 @@ def init():
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
     ############################################
+    os.environ["CDAT_HOME"] = cdat_home
+    os.environ["JAVA_HOME"] = java_install_dir
+    os.environ["CATALINA_HOME"] = tomcat_install_dir
+    os.environ["CATALINA_BASE"] = os.environ["CATALINA_HOME"]
+    os.environ["GLOBUS_LOCATION"] = globus_location
 
-    myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + \
-        os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + \
+    myPATH = os.environ["JAVA_HOME"] + "/bin:" + \
+        os.environ["CDAT_HOME"] + "/bin:" + \
         os.environ["CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + \
         "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + install_prefix + \
         "/bin:/sbin:/usr/bin:/usr/sbin"
 
-    myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + \
-        os.environ["CDAT_HOME"] + "/Externals/lib:" + \
+    myLD_LIBRARY_PATH = os.environ["CDAT_HOME"] + "/Externals/lib:" + \
         os.environ["GLOBUS_LOCATION"] + "/lib:" + \
         install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
@@ -174,8 +174,6 @@ def init():
         esg_dist_url_root, java_version, java_version, word_size)
     java_rpm_url = "{0}/java/{1}/jdk-8u112-linux-x64.rpm".format(
         esg_dist_url_root, java_version)
-    ant_dist_url = "http://archive.apache.org/dist/ant/binaries/apache-ant-" + \
-        ant_version + "-bin.tar.gz"
     openssl_workdir = os.path.join(workdir, "openssl")
     esgf_dashboard_ip_workdir = os.path.join(workdir, "esgf-dashboard-ip")
     db_database = "esgcet"

@@ -31,16 +31,10 @@ def init():
     # Internal esgf node code versions
     #--------------------------------
 
-    apache_frontend_version = "1.0.9"
-    apache_frontend_tag = "v1.12"
-
-    cdat_version = "2.2.0"
-
     esgcet_version = "2.6a0"
     publisher_tag = "v2.6a0"
 
     esgprep_version="2.8.1"
-    cmor_version="3.3.2"
 
     #see esgf-node-manager project:
     esgf_node_manager_version = "1.0.1"
@@ -73,13 +67,8 @@ def init():
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    openssl_version = "0.9.8r"
-    openssl_min_version = "0.9.8e"
-    openssl_max_version = "0.9.9z"
     java_version = "1.8.0_162"
     java_min_version = "1.8.0_162"
-    ant_version = "1.9.1"
-    ant_min_version = "1.9.1"
     postgress_version = "8.4.20"
     postgress_min_version = "8.4.20"
     tomcat_version = "8.5.9"
@@ -138,22 +127,6 @@ def init():
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
     ############################################
-    os.environ["GIT_SSL_NO_VERIFY"] = "1"
-    os.environ["OPENSSL_HOME"] = openssl_install_dir
-    os.environ["PGHOME"] = postgress_install_dir
-    os.environ["PGBINDIR"] = postgress_bin_dir
-    os.environ["PGLIBDIR"] = postgress_lib_dir
-    os.environ["PGUSER"] = postgress_user
-    os.environ["PGHOST"] = postgress_host
-    os.environ["PGPORT"] = postgress_port
-    os.environ["CDAT_HOME"] = cdat_home
-    os.environ["JAVA_HOME"] = java_install_dir
-    os.environ["JAVA_OPTS"] = java_opts
-    os.environ["ANT_HOME"] = ant_install_dir
-    os.environ["CATALINA_HOME"] = tomcat_install_dir
-    os.environ["CATALINA_BASE"] = os.environ["CATALINA_HOME"]
-    os.environ["CATALINA_OPTS"] = tomcat_opts
-    os.environ["GLOBUS_LOCATION"] = globus_location
 
     myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + \
         os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + \
@@ -178,24 +151,6 @@ def init():
     installer_uid = pwd.getpwnam(installer_user).pw_uid
     installer_gid = pwd.getpwnam(installer_user).pw_gid
     installer_home = os.path.join("/usr", "local", "src", "esgf")
-    try:
-        os.environ["SUDO_UID"]
-    except KeyError:
-        # print "SUDO_UID not found"
-        pass
-    else:
-        os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
-        del os.environ["SUDO_UID"]
-
-    # [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID
-    try:
-        os.environ["SUDO_GID"]
-    except KeyError:
-        # print "SUDO_GID not found"
-        pass
-    else:
-        os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
-        del os.environ["SUDO_GID"]
 
     #--------------
     # Script vars (internal)
@@ -211,8 +166,6 @@ def init():
     num_backups_to_keep = "7"
     compress_extensions = ".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
     certificate_extensions = "pem|crt|cert|key"
-    openssl_dist_url = os.path.join("http://www.openssl.org/source/openssl-",
-                                    openssl_version, ".tar.gz")
     esgf_dist_mirror = os.path.join("http://aims1.llnl.gov", "esgf")
     esg_dist_url_root = os.path.join(esgf_dist_mirror, "dist")
     esgf_coffee_dist_mirror = "distrib-coffee.ipsl.jussieu.fr/pub/esgf"
@@ -235,7 +188,6 @@ def init():
     publisher_repo = "git://github.com/ESGF/esg-publisher.git"
     apache_frontend_repo = "https://github.com/ESGF/apache-frontend.git"
     publisher_repo_https = "https://github.com/ESGF/esg-publisher.git"
-    esgcet_egg_file = "esgcet-%s-py%s.egg" % (esgcet_version, python_version)
     esg_testdir = workdir + "/../esg_test"
     tomcat_major_version = tomcat_version.split(".")[0]
     tomcat_http_path = "http://archive.apache.org/dist/tomcat/tomcat"

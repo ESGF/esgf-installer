@@ -59,6 +59,7 @@ def install_apache_httpd():
     '''Install apache from yum'''
     pkg_list = ["mod_ssl"]
 
+<<<<<<< HEAD
     if check_for_apache_installation():
         print "Found existing Apache installation."
         check_apache_version()
@@ -76,6 +77,18 @@ def install_apache_httpd():
         pkg_list += ["httpd", "httpd-devel"]
 
     esg_functions.call_binary("yum", ["-y", "install"] + pkg_list)
+=======
+    # Custom ESGF Apache files that setup proxying
+    shutil.copyfile(os.path.join(os.path.dirname(__file__),
+                                 "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
+    os.chmod("/etc/init.d/esgf-httpd", 0755)
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd.conf"),
+                    "/etc/httpd/conf/esgf-httpd.conf")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-local.conf"),
+                    "/etc/httpd/conf/esgf-httpd-local.conf")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-locals.conf"),
+                    "/etc/httpd/conf/esgf-httpd-locals.conf")
+>>>>>>> c359625df69ad7e2a719bb7be3fd3d640cad0612
 
 
 def install_mod_wsgi():
@@ -104,6 +117,7 @@ def copy_apache_conf_files():
         "esgf-ca-bundle.crt"
     )
     esg_functions.download_update("/etc/certs/esgf-ca-bundle.crt", remote_bundle)
+<<<<<<< HEAD
     # Custom ESGF Apache files that setup proxying
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
     os.chmod("/etc/init.d/esgf-httpd", 0755)
@@ -112,6 +126,12 @@ def copy_apache_conf_files():
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-locals.conf"), "/etc/httpd/conf/esgf-httpd-locals.conf")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_html/index.html"), "/var/www/html/index.html")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/ssl.conf"), "/etc/httpd/conf.d/ssl.conf")
+=======
+    shutil.copyfile(os.path.join(os.path.dirname(__file__),
+                                 "apache_html/index.html"), "/var/www/html/index.html")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__),
+                                 "apache_conf/ssl.conf"), "/etc/httpd/conf.d/ssl.conf")
+>>>>>>> c359625df69ad7e2a719bb7be3fd3d640cad0612
     shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))
 
     # append tempcert to cert_bundle

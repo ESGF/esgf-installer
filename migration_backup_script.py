@@ -11,6 +11,23 @@ def check_previous_install():
 
 
 #TODO: Create a function to port values from old config files to new esgf.properties file
+def copy_config_settings(old_config_file, new_config_file):
+    '''Copy settings from existing config file to ESGF 3.0 config file'''
+    parser = configparser.ConfigParser()
+    parser.read(old_config_file)
+
+    old_values = dict(parser.items('Section'))
+    logger.debug("old config values: %s", old_values)
+
+    new_parser = configparser.ConfigParser()
+    new_parser.read(new_config_file)
+
+    for key, value in old_values.iteritems():
+        parser["installer.properties"][key] = str(value)
+
+    with open(property_file, "w") as file_object:
+        parser.write(file_object, space_around_delimiters=False)
+
 
 def add_config_file_section_header(config_file_name, section_header):
     '''INI-style config files in 2.x typically do not have section headers that are required to be parsed by ConfigParser. This function will add the required section headers'''
@@ -21,9 +38,6 @@ def add_config_file_section_header(config_file_name, section_header):
     config.write('[{}]\n'.format(section_header))
     config.write(open(config_file_name).read())
     config.seek(0, os.SEEK_SET)
-
-    # parser = configparser.ConfigParser()
-    # parser.read(config)
 
     with open(config_file_name, "w") as file_object:
         shutil.copyfileobj(config, file_object)

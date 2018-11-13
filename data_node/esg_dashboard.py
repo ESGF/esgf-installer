@@ -1,3 +1,4 @@
+'''Setups up the ESGF Dashboard and Stats API'''
 import os
 import pwd
 import grp
@@ -14,20 +15,20 @@ from esgf_utilities import pybash
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum import BG
 from plumbum import local
-from plumbum.commands import ProcessExecutionError
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+LOGGER = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
+    CONFIG = yaml.load(config_file)
 
 def download_extract(url, dest_dir, owner_user, owner_group):
-    r = requests.get(url)
+    '''Download and extract zipfile'''
+    response = requests.get(url)
     remote_file = pybash.trim_string_from_head(url)
     filename = os.path.join(os.sep, "tmp", remote_file)
     with open(filename, "wb") as localfile:
-        total_length = int(r.headers.get('content-length'))
-        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+        total_length = int(response.headers.get('content-length'))
+        for chunk in progress.bar(response.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
             if chunk:
                 localfile.write(chunk)
                 localfile.flush()
@@ -41,6 +42,7 @@ def download_extract(url, dest_dir, owner_user, owner_group):
     esg_functions.change_ownership_recursive(dest_dir, uid, gid)
 
 def migration_egg(url, cmd, args):
+    '''Installs the migration egg file'''
     with pybash.pushd(os.path.join(os.sep, "tmp")):
         egg_file = pybash.trim_string_from_head(url)
 
@@ -49,9 +51,9 @@ def migration_egg(url, cmd, args):
     esg_functions.call_binary(cmd, args)
 
 def setup_dashboard():
-
+    '''Setups the dashboard and stats_api webapps'''
     if os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"):
-        stats_api_install = raw_input("Existing Stats API installation found.  Do you want to continue with the Stats API installation [y/N]: " ) or "no"
+        stats_api_install = raw_input("Existing Stats API installation found.  Do you want to continue with the Stats API installation [y/N]: ") or "no"
         if stats_api_install.lower() in ["no", "n"]:
             return
     print "\n*******************************"
@@ -80,19 +82,19 @@ def setup_dashboard():
     useradd_options = ["-s", "/sbin/nologin", "-g", "dashboard", "-d", "/usr/local/dashboard", "dashboard"]
     esg_functions.add_unix_user(useradd_options)
 
-    DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
-    DASHBOARD_GROUP_ID = grp.getgrnam("dashboard").gr_gid
-    esg_functions.change_ownership_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)
+    dashboard_user_id = pwd.getpwnam("dashboard").pw_uid
+    dashboard_group_id = grp.getgrnam("dashboard").gr_gid
+    esg_functions.change_ownership_recursive("/usr/local/esgf-dashboard-ip", dashboard_user_id, dashboard_group_id)
     os.chmod("/var/run", stat.S_IWRITE)
     os.chmod("/var/run", stat.S_IWGRP)
     os.chmod("/var/run", stat.S_IWOTH)
 
     dburl = "{user}:{password}@{host}:{port}/{db}".format(
-        user=config["postgress_user"],
+        user=CONFIG["postgress_user"],
         password=esg_functions.get_postgres_password(),
-        host=config["postgress_host"],
-        port=config["postgress_port"],
-        db=config["node_db_name"]
+        host=CONFIG["postgress_host"],
+        port=CONFIG["postgress_port"],
+        db=CONFIG["node_db_name"]
     )
     args = ["--dburl", dburl, "-c"]
 
@@ -120,11 +122,12 @@ def setup_dashboard():
     )
 
 def start_dashboard_service():
-
+    '''Starts the dashboard service'''
     EnvWriter.prepend_to_path("LD_LIBRARY_PATH", "/usr/local/conda/envs/esgf-pub/lib")
     os.chmod("/usr/local/esgf-dashboard-ip/bin/ip.service", 0555)
     ip_service = local.get("/usr/local/esgf-dashboard-ip/bin/ip.service")
     result = ip_service.__getitem__(["start"]) & BG
+    LOGGER.debug("result: %s", result)
 
 def clone_dashboard_repo():
     ''' Clone esgf-dashboard repo from Github'''
@@ -136,14 +139,16 @@ def clone_dashboard_repo():
     print "******************************* \n"
     from git import RemoteProgress
     class Progress(RemoteProgress):
+        '''Prints progress of cloning from Github'''
         def update(self, op_code, cur_count, max_count=None, message=''):
             if message:
-                print('Downloading: (==== {} ====)\r'.format(message))
+                print 'Downloading: (==== {} ====)\r'.format(message)
                 print "current line:", self._cur_line
 
     Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard", progress=Progress())
 
 def run_dashboard_script():
+    '''Runs the dashboard build script'''
     #default values
     dashdir = "/usr/local/esgf-dashboard-ip"
     # Required property for ip.service start, copied from 2.x
@@ -174,6 +179,7 @@ def run_dashboard_script():
         esg_functions.call_binary("make", ["install"], silent=True)
 
 def main():
+    '''Main function'''
     setup_dashboard()
 
 

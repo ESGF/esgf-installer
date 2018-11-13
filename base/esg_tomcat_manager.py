@@ -20,15 +20,15 @@ from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager, esg_keystore_manager, esg_truststore_manager
-from esgf_utilities import esg_cert_manager, CA
+from esgf_utilities import CA
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 
-logger = logging.getLogger("esgf_logger" + "." + __name__)
-current_directory = os.path.join(os.path.dirname(__file__))
+LOGGER = logging.getLogger("esgf_logger" + "." + __name__)
+CURRENT_DIRECTORY = os.path.join(os.path.dirname(__file__))
 
-with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
+with open(os.path.join(CURRENT_DIRECTORY, os.pardir, 'esg_config.yaml'), 'r') as config_file:
+    CONFIG = yaml.load(config_file)
 
 TOMCAT_VERSION = "8.5.20"
 CATALINA_HOME = "/usr/local/tomcat"
@@ -94,7 +94,7 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
             os.remove(
                 "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
         except OSError, error:
-            logger.error(error)
+            LOGGER.error(error)
 
         #From https://www.owasp.org/index.php/Securing_tomcat
         tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
@@ -128,18 +128,18 @@ def copy_config_files():
     print "Copying custom Tomcat config files"
     print "******************************* \n"
     try:
-        shutil.copyfile(os.path.join(current_directory, "tomcat_conf/context.xml"), "/usr/local/tomcat/conf/context.xml")
+        shutil.copyfile(os.path.join(CURRENT_DIRECTORY, "tomcat_conf/context.xml"), "/usr/local/tomcat/conf/context.xml")
         pybash.mkdir_p("/esg/config/tomcat")
 
-        shutil.copyfile(os.path.join(current_directory, "tomcat_conf/tomcat-users.xml"), "/esg/config/tomcat/tomcat-users.xml")
+        shutil.copyfile(os.path.join(CURRENT_DIRECTORY, "tomcat_conf/tomcat-users.xml"), "/esg/config/tomcat/tomcat-users.xml")
         tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
         tomcat_group_id = grp.getgrnam("tomcat").gr_gid
         os.chown("/esg/config/tomcat/tomcat-users.xml", tomcat_user_id, tomcat_group_id)
 
-        shutil.copy(os.path.join(current_directory, "tomcat_conf/setenv.sh"), os.path.join(CATALINA_HOME, "bin"))
+        shutil.copy(os.path.join(CURRENT_DIRECTORY, "tomcat_conf/setenv.sh"), os.path.join(CATALINA_HOME, "bin"))
     except OSError, error:
         print "Could not copy tomcat certs.", error
-        logger.exception()
+        LOGGER.exception()
         sys.exit()
 
 
@@ -163,7 +163,7 @@ def create_tomcat_user():
     print "******************************* \n"
 
     if "tomcat" in esg_functions.get_user_list():
-        logger.info("Tomcat user already exists")
+        LOGGER.info("Tomcat user already exists")
         return
 
     if not "tomcat" in esg_functions.get_group_list():
@@ -186,7 +186,7 @@ def start_tomcat():
     print "******************************* \n"
 
     # This is used by esgf security/node_manager to find the properties file and password files
-    os.environ["ESGF_HOME"] = config["esg_root_dir"]
+    os.environ["ESGF_HOME"] = CONFIG["esg_root_dir"]
 
     if check_tomcat_status():
         print "Tomcat already running"
@@ -194,8 +194,8 @@ def start_tomcat():
     try:
         esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh start")
     except SubprocessError, error:
-        logger.error("Could not start Tomcat")
-        logger.error(error)
+        LOGGER.error("Could not start Tomcat")
+        LOGGER.error(error)
         raise
 
     check_tomcat_status()
@@ -212,8 +212,8 @@ def stop_tomcat():
         try:
             esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")
         except SubprocessError, error:
-            logger.exception(error)
-            logger.error("Stopping Tomcat with catalina.sh script failed. Attempting to kill process...")
+            LOGGER.exception(error)
+            LOGGER.error("Stopping Tomcat with catalina.sh script failed. Attempting to kill process...")
             try:
                 os.kill(int(tomcat_pid), signal.SIGKILL)
             except OSError:
@@ -257,9 +257,9 @@ def run_tomcat_config_test():
 
 def copy_credential_files(tomcat_install_config_dir):
     '''Copy Tomcat config files'''
-    logger.debug("Moving credential files into node's tomcat configuration dir: %s",
-                 config["tomcat_conf_dir"])
-    tomcat_credential_files = [config["truststore_file"], config["keystore_file"], config["tomcat_users_file"],
+    LOGGER.debug("Moving credential files into node's tomcat configuration dir: %s",
+                 CONFIG["tomcat_conf_dir"])
+    tomcat_credential_files = [CONFIG["truststore_file"], CONFIG["keystore_file"], CONFIG["tomcat_users_file"],
                                os.path.join(tomcat_install_config_dir, "hostkey.pem")]
 
     for file_path in tomcat_credential_files:
@@ -269,18 +269,18 @@ def copy_credential_files(tomcat_install_config_dir):
                 shutil.move(os.path.join(tomcat_install_config_dir,
                                          credential_file_name), file_path)
             except OSError:
-                logger.exception("Could not move file %s", credential_file_name)
+                LOGGER.exception("Could not move file %s", credential_file_name)
 
     esgf_host = esg_functions.get_esgf_host()
-    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.csr")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.csr")):
+    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.csr")) and not os.path.exists(os.path.join(CONFIG["tomcat_conf_dir"], esgf_host + "-esg-node.csr")):
         shutil.move(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.csr"),
-                    os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.csr"))
+                    os.path.join(CONFIG["tomcat_conf_dir"], esgf_host + "-esg-node.csr"))
 
-    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.pem")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.pem")):
+    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.pem")) and not os.path.exists(os.path.join(CONFIG["tomcat_conf_dir"], esgf_host + "-esg-node.pem")):
         shutil.move(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.pem"),
-                    os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.pem"))
+                    os.path.join(CONFIG["tomcat_conf_dir"], esgf_host + "-esg-node.pem"))
 
-def migrate_tomcat_credentials_to_esgf():
+def move_tomcat_credentials_to_esgf():
     '''
     Move selected config files into esgf tomcat's config dir (certificate et al)
     Ex: /esg/config/tomcat
@@ -292,28 +292,28 @@ def migrate_tomcat_credentials_to_esgf():
     -rw-r--r-- 1 tomcat tomcat    295 Apr 22 19:42 tomcat-users.xml
     Only called when migration conditions are present.
     '''
-    tomcat_install_config_dir = os.path.join(config["tomcat_install_dir"], "conf")
+    tomcat_install_config_dir = os.path.join(CONFIG["tomcat_install_dir"], "conf")
 
-    if tomcat_install_config_dir != config["tomcat_conf_dir"]:
-        if not os.path.exists(config["tomcat_conf_dir"]):
-            pybash.mkdir_p(config["tomcat_conf_dir"])
+    if tomcat_install_config_dir != CONFIG["tomcat_conf_dir"]:
+        if not os.path.exists(CONFIG["tomcat_conf_dir"]):
+            pybash.mkdir_p(CONFIG["tomcat_conf_dir"])
 
         esg_functions.backup(tomcat_install_config_dir)
 
         copy_credential_files(tomcat_install_config_dir)
 
-        os.chown(config["tomcat_conf_dir"], esg_functions.get_user_id(
+        os.chown(CONFIG["tomcat_conf_dir"], esg_functions.get_user_id(
             "tomcat"), esg_functions.get_group_id("tomcat"))
 
 def write_tomcat_env():
     '''Write tomcat environment info to /etc/esg.env'''
-    EnvWriter.export("CATALINA_HOME", config["tomcat_install_dir"])
+    EnvWriter.export("CATALINA_HOME", CONFIG["tomcat_install_dir"])
     esg_property_manager.set_property("PATH_with_tomcat", os.environ["PATH"]+":/usr/local/tomcat/bin")
 
 def write_tomcat_install_log():
     '''Write tomcat version to install manifest'''
-    esg_functions.write_to_install_manifest("tomcat", config["tomcat_install_dir"], TOMCAT_VERSION)
-    esg_property_manager.set_property("tomcat.install.dir", config["tomcat_install_dir"])
+    esg_functions.write_to_install_manifest("tomcat", CONFIG["tomcat_install_dir"], TOMCAT_VERSION)
+    esg_property_manager.set_property("tomcat.install.dir", CONFIG["tomcat_install_dir"])
     esg_property_manager.set_property("esgf.http.port", "80")
     esg_property_manager.set_property("esgf.https.port", "443")
 
@@ -380,7 +380,7 @@ def configure_tomcat():
         esg_functions.get_esgf_host()
     )
     with pybash.pushd("/usr/local/tomcat/conf"):
-        server_tmpl = os.path.join(current_directory, "tomcat_conf/server.xml.tmpl")
+        server_tmpl = os.path.join(CURRENT_DIRECTORY, "tomcat_conf/server.xml.tmpl")
         with open(server_tmpl, "r") as template:
             server_tmpl = template.read()
             server_xml = server_tmpl.format(
@@ -396,38 +396,38 @@ def configure_tomcat():
         os.chown("/usr/local/tomcat/conf/server.xml", tomcat_user, tomcat_group)
 
         #Find or create keystore file
-        if os.path.exists(config["keystore_file"]):
-            print "Found existing keystore file {}".format(config["keystore_file"])
+        if os.path.exists(CONFIG["keystore_file"]):
+            print "Found existing keystore file {}".format(CONFIG["keystore_file"])
         else:
             print "creating keystore... "
             #create a keystore with a self-signed cert
             distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
 
             #if previous keystore is found; backup
-            esg_keystore_manager.backup_previous_keystore(config["keystore_file"])
+            esg_keystore_manager.backup_previous_keystore(CONFIG["keystore_file"])
 
             #-------------
             #Make empty keystore...
             #-------------
             keystore_password = esg_functions.get_java_keystore_password()
-            esg_keystore_manager.create_empty_java_keystore(config["keystore_file"], config["keystore_alias"], keystore_password, distinguished_name)
+            esg_keystore_manager.create_empty_java_keystore(CONFIG["keystore_file"], CONFIG["keystore_alias"], keystore_password, distinguished_name)
 
 
             #Setup temp CA
             CA.setup_temp_ca()
 
             #Fetch truststore to $tomcat_conf_dir
-            if not os.path.exists(config["truststore_file"]):
+            if not os.path.exists(CONFIG["truststore_file"]):
                 remote = "{}/certs/{}".format(
                     esg_property_manager.get_property("esg.root.url"),
-                    os.path.basename(config["truststore_file"])
+                    os.path.basename(CONFIG["truststore_file"])
                 )
-                esg_functions.download_update(config["truststore_file"], remote)
+                esg_functions.download_update(CONFIG["truststore_file"], remote)
 
             esg_truststore_manager.add_my_cert_to_truststore()
 
-            esg_functions.change_ownership_recursive(config["tomcat_install_dir"], tomcat_user, tomcat_group)
-            esg_functions.change_ownership_recursive(config["tomcat_conf_dir"], tomcat_user, tomcat_group)
+            esg_functions.change_ownership_recursive(CONFIG["tomcat_install_dir"], tomcat_user, tomcat_group)
+            esg_functions.change_ownership_recursive(CONFIG["tomcat_conf_dir"], tomcat_user, tomcat_group)
 
 
 
@@ -443,7 +443,7 @@ def main():
         copy_config_files()
         configure_tomcat()
         remove_example_webapps()
-        migrate_tomcat_credentials_to_esgf()
+        move_tomcat_credentials_to_esgf()
         write_tomcat_install_log()
 
 

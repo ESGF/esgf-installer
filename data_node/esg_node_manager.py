@@ -1,3 +1,4 @@
+'''Installs the ESGF Node Manager webapp'''
 import os
 import shutil
 import logging
@@ -21,9 +22,10 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-current_directory = os.path.join(os.path.dirname(__file__))
+CURRENT_DIRECTORY = os.path.join(os.path.dirname(__file__))
 
 def check_for_existing_node_manager():
+    '''Check for existing node manager installation'''
     print "Checking for node manager {}".format(config["esgf_node_manager_version"])
     update_node_manager = esg_property_manager.get_property("update.node.manager")
     if esg_version_manager.check_webapp_version("esgf-node-manager", config["esgf_node_manager_version"]) and update_node_manager.lower() not in ["yes", "y"]:
@@ -38,10 +40,6 @@ def check_for_existing_node_manager():
             "Do you want to continue with node manager installation and setup? [Y/n]") or "y"
         if installation_answer.lower() not in ["y", "yes"]:
             print "Skipping node manager installation and setup - will assume it's setup properly"
-            # resetting node manager version to what it is already, not what we prescribed in the script
-            # this way downstream processes will use the *actual* version in play, namely the (access logging) filter(s)
-            esgf_node_manager_version = esg_version_manager.get_current_webapp_version(
-                "esgf-node-manager")
             return True
 
         backup_node_manager(node_manager_service_app_home, "esgcet")
@@ -63,9 +61,11 @@ def backup_node_manager(node_manager_service_app_home, node_db_name):
         esg_postgres.backup_db(node_db_name)
 
 def download_node_manager_tarball(node_dist_file, node_dist_url):
+    '''Download node manager tarball from mirror'''
     esg_functions.download_update(node_dist_file, node_dist_url)
 
 def delete_old_node_manager(node_dist_dir):
+    '''Delete previously installed node manager'''
     # make room for new install
     print "Removing Previous Installation of the ESGF Node Manager... ({node_dist_dir})".format(node_dist_dir=node_dist_dir)
     try:
@@ -79,6 +79,7 @@ def delete_old_node_manager(node_dist_dir):
     clean_node_manager_webapp_subsystem()
 
 def untar_node_manager(node_dist_file):
+    '''Extract node manager tarball'''
     print "unpacking {node_dist_file}...".format(node_dist_file=node_dist_file)
     try:
         tar = tarfile.open(node_dist_file)
@@ -89,7 +90,7 @@ def untar_node_manager(node_dist_file):
         raise RuntimeError("Could not extract the ESG Node Manager file: {}".format(node_dist_file))
 
 def setup_node_manager():
-
+    '''Installs the ESGF Node Manager'''
     print "*******************************"
     print "Setting up The ESGF Node Manager..."
     print "*******************************"
@@ -162,21 +163,26 @@ def setup_nm_repo():
 
 
 def fetch_shell_launcher():
-    shutil.copyfile(os.path.join(current_directory, "node_manager_conf/esgf-sh"), "{}/esgf-sh".format(config["scripts_dir"]))
+    '''Copies the shell launcher to the scripts directory'''
+    shutil.copyfile(os.path.join(CURRENT_DIRECTORY, "node_manager_conf/esgf-sh"), "{}/esgf-sh".format(config["scripts_dir"]))
     os.chmod("{}/esgf-sh".format(config["scripts_dir"]), 0755)
 
 def write_shell_contrib_command_file():
-    shutil.copyfile(os.path.join(current_directory, "node_manager_conf/esgf_contrib_commands"), "/esg/config/esgf_contrib_commands")
+    '''Copies the contrib_command file'''
+    shutil.copyfile(os.path.join(CURRENT_DIRECTORY, "node_manager_conf/esgf_contrib_commands"), "/esg/config/esgf_contrib_commands")
 
 def write_node_manager_db_install_log(node_manager_app_context_root):
+    '''Writes node manager database configuration to the install manifest'''
     esg_functions.write_to_install_manifest("python:esgf_node_manager", "{}/webapps/{}".format(config["tomcat_install_dir"], node_manager_app_context_root), config["esgf_node_manager_db_version"])
 
 def write_node_manager_install_log():
+    '''Writes node manager configuration to the install manifest'''
     node_manager_service_app_home = esg_property_manager.get_property("node_manager_service_app_home")
     esg_functions.write_to_install_manifest("webapp:esgf-node-manager", node_manager_service_app_home, config["esgf_node_manager_version"])
 
 
 def touch_generated_whitelist_files():
+    '''Create whitelist files'''
     logger.info("Generating whitelist files")
     whitelist_files = ["esgf_ats.xml", "esgf_azs.xml", "esgf_idp.xml", "esgf_shards.xml"]
     tomcat_user_id = pwd.getpwnam(config["tomcat_user"]).pw_uid
@@ -197,6 +203,7 @@ def touch_generated_whitelist_files():
 #      installation/configuration (setup_node_manager)
 #--------------------------------------------------
 def configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_node_manager_egg_file, node_dist_dir):
+    '''Configure the databsse for the Node Manager'''
     print "*******************************"
     print "Configuring Postgres... for ESGF Node Manager"
     print "*******************************"
@@ -231,7 +238,7 @@ def configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_nod
 
 
         pg_sys_acct_passwd = esg_functions.get_postgres_password()
-        initialize_options = esgf_security_initialize_options = ["--dburl", "{}:{}@{}:{}/{}".format(config["postgress_user"], pg_sys_acct_passwd, config["postgress_host"], config["postgress_port"], node_db_name), "-c"]
+        initialize_options = ["--dburl", "{}:{}@{}:{}/{}".format(config["postgress_user"], pg_sys_acct_passwd, config["postgress_host"], config["postgress_port"], node_db_name), "-c"]
         esg_functions.call_binary("esgf_node_manager_initialize", initialize_options)
 
         node_manager_app_context_root = "esgf-node-manager"
@@ -239,6 +246,7 @@ def configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_nod
 
 
 def write_node_manager_config():
+    '''Writes the node manager config out to the config file'''
     esg_property_manager.set_property("db.driver", config["postgress_driver"])
     esg_property_manager.set_property("db.protocol", config["postgress_protocol"])
     esg_property_manager.set_property("db.host", config["postgress_host"])
@@ -274,13 +282,12 @@ def clean_node_manager_webapp_subsystem():
 
 
 def main():
+    '''Main function'''
     esgf_host = esg_functions.get_esgf_host()
     node_manager_app_context_root = "esgf-node-manager"
-    esgf_node_manager_egg_file = "esgf_node_manager-{}-py{}.egg".format(
-        config["esgf_node_manager_db_version"], config["python_version"])
 
     try:
-        node_use_ssl = esg_property_manager.get_property("node_use_ssl")
+        node_use_ssl = bool(esg_property_manager.get_property("node_use_ssl"))
     except ConfigParser.NoOptionError:
         esg_property_manager.set_property("node_use_ssl", "True")
         node_use_ssl = True
@@ -294,7 +301,7 @@ def main():
         "node_manager_service_endpoint", node_manager_service_endpoint)
 
     try:
-        node_use_ips = esg_property_manager.get_property("node_use_ips")
+        node_use_ips = bool(esg_property_manager.get_property("node_use_ips"))
     except ConfigParser.NoOptionError:
         esg_property_manager.set_property("node_use_ips", "True")
         node_use_ips = True

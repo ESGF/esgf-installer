@@ -14,10 +14,10 @@ from esgf_utilities import esg_version_manager
 from base import esg_tomcat_manager
 
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+LOGGER = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
+    CONFIG = yaml.load(config_file)
 
 
 def update_existing_orp():
@@ -64,8 +64,8 @@ def get_orp_support_libs(dest_dir, esg_dist_url):
         #----------------------------
 
         #esgf project generated jarfiles...
-        esgf_security_jar = "esgf-security-{}.jar".format(config["esgf_security_version"])
-        esgf_security_test_jar = "esgf-security-test-{}.jar".format(config["esgf_security_version"])
+        esgf_security_jar = "esgf-security-{}.jar".format(CONFIG["esgf_security_version"])
+        esgf_security_test_jar = "esgf-security-test-{}.jar".format(CONFIG["esgf_security_version"])
         #-----
         print "Downloading dependent library jars from ESGF Distribution Server (Security) to {} ...".format(dest_dir)
         esg_functions.download_update(os.path.join(dest_dir, esgf_security_jar), "{}/esgf-security/{}".format(esg_dist_url, esgf_security_jar))
@@ -82,9 +82,9 @@ def orp_startup_hook():
 
     with open("/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties", 'r') as file_handle:
         filedata = file_handle.read()
-    filedata = filedata.replace("@@keystoreFile@@", config["keystore_file"])
+    filedata = filedata.replace("@@keystoreFile@@", CONFIG["keystore_file"])
     filedata = filedata.replace("@@keystorePassword@@", esg_functions.get_java_keystore_password())
-    filedata = filedata.replace("@@keystoreAlias@@", config["keystore_alias"])
+    filedata = filedata.replace("@@keystoreAlias@@", CONFIG["keystore_alias"])
 
     # Write the file out again
     with open("/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties", 'w') as file_handle:
@@ -93,9 +93,9 @@ def orp_startup_hook():
 
 def setup_orp():
     '''Install ORP'''
-    print "Checking for Openid Relying Party {}".format(config["esg_orp_version"])
+    print "Checking for Openid Relying Party {}".format(CONFIG["esg_orp_version"])
     try:
-        existing_orp_install = esg_version_manager.check_webapp_version("esg-orp", config["esg_orp_version"])
+        existing_orp_install = esg_version_manager.check_webapp_version("esg-orp", CONFIG["esg_orp_version"])
     except IOError:
         pass
     else:
@@ -166,7 +166,7 @@ def download_orp_war(orp_url):
 
 def update_common_loader(config_dir):
     '''add /esg/config/ to common.loader in catalina.properties if not already present'''
-    catalina_properties_file = "{tomcat_install_dir}/conf/catalina.properties".format(tomcat_install_dir=config["tomcat_install_dir"])
+    catalina_properties_file = "{tomcat_install_dir}/conf/catalina.properties".format(tomcat_install_dir=CONFIG["tomcat_install_dir"])
     with open(catalina_properties_file) as property_file:
         for line in property_file:
             if "common.loader" in line:
@@ -174,10 +174,10 @@ def update_common_loader(config_dir):
                 print "common_loader:", common_loader
                 break
     if common_loader and config_dir in common_loader:
-        logger.info("%s already listed in common.loader", config_dir)
+        LOGGER.info("%s already listed in common.loader", config_dir)
         return
     else:
-        logger.info("Adding %s to common.loader", config_dir)
+        LOGGER.info("Adding %s to common.loader", config_dir)
         updated_common_loader = common_loader + "," + config_dir
         esg_functions.replace_string_in_file(catalina_properties_file, common_loader, updated_common_loader)
 
@@ -186,7 +186,7 @@ def update_common_loader(config_dir):
 def setup_providers_dropdown(esg_dist_url):
     '''Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs'''
     known_providers_url = "{}/lists/esgf_known_providers.xml".format(esg_dist_url)
-    config_dir = os.path.join("{esg_root_dir}".format(esg_root_dir=config["esg_root_dir"]), "config")
+    config_dir = os.path.join("{esg_root_dir}".format(esg_root_dir=CONFIG["esg_root_dir"]), "config")
     known_providers_file = os.path.join("{config_dir}".format(config_dir=config_dir), "esgf_known_providers.xml")
 
     # add /esg/config/ to common.loader in catalina.properties if not already present
@@ -206,16 +206,16 @@ def write_orp_install_log(orp_service_app_home):
 
     orp_service_endpoint = "https://{}/esg-orp/html.htm".format(esg_functions.get_esgf_host())
 
-    orp_security_authorization_service_host = esg_functions.get_esgf_host()
+    orp_security_auth_host = esg_functions.get_esgf_host()
     orp_security_authorization_service_port = "443"
-    orp_security_authorization_service_app_home = orp_service_app_home
-    orp_security_authorization_service_endpoint = "https://{}/esg-orp/saml/soap/secure/authorizationService.htm".format(orp_security_authorization_service_host)
+    orp_security_auth_service_home = orp_service_app_home
+    orp_security_auth_endpoint = "https://{}/esg-orp/saml/soap/secure/authorizationService.htm".format(orp_security_auth_host)
 
-    esg_functions.write_to_install_manifest("webapp:esg-orp", "/usr/local/tomcat/webapps/esg-orp", config["esg_orp_version"])
+    esg_functions.write_to_install_manifest("webapp:esg-orp", "/usr/local/tomcat/webapps/esg-orp", CONFIG["esg_orp_version"])
     esg_property_manager.set_property("orp_service_endpoint", orp_service_endpoint)
     esg_property_manager.set_property("orp_service_app_home", orp_service_app_home)
-    esg_property_manager.set_property("orp_security_authorization_service_endpoint", orp_security_authorization_service_endpoint)
-    esg_property_manager.set_property("orp_security_authorization_service_app_home", orp_security_authorization_service_app_home)
+    esg_property_manager.set_property("orp_security_authorization_service_endpoint", orp_security_auth_endpoint)
+    esg_property_manager.set_property("orp_security_authorization_service_app_home", orp_security_auth_service_home)
 
 
 def main():

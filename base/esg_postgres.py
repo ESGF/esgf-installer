@@ -1,3 +1,4 @@
+'''Module for installing Postgres on ESGF node'''
 import os
 import pwd
 import shutil
@@ -18,29 +19,29 @@ from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 from plumbum import local
 
-logger = logging.getLogger("esgf_logger" + "." + __name__)
+LOGGER = logging.getLogger("esgf_logger" + "." + __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
+    CONFIG = yaml.load(config_file)
 
 def initialize_postgres():
     '''Sets up postgres data directory'''
     try:
         if os.listdir("/var/lib/pgsql/data"):
-            logger.info("Data directory already exists. Skipping initialize_postgres().")
+            LOGGER.info("Data directory already exists. Skipping initialize_postgres().")
             return
     except OSError, error:
-        logger.error(error)
+        LOGGER.error(error)
 
     esg_functions.call_binary("service", ["postgresql", "initdb"])
     esg_functions.call_binary("chkconfig", ["postgresql", "on"])
 
-    os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
+    os.chmod(os.path.join(CONFIG["postgress_install_dir"], "data"), 0700)
 
 
 def check_existing_pg_version(psql_path):
     '''Gets the version number if a previous Postgres installation is detected'''
-    print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version=config["postgress_min_version"])
+    print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version=CONFIG["postgress_min_version"])
 
     if not psql_path:
         print "Postgres not found on system"
@@ -48,14 +49,14 @@ def check_existing_pg_version(psql_path):
         try:
             postgres_version_found = esg_functions.call_binary("psql", ["--version"])
             postgres_version_number = re.search(r"\d.*", postgres_version_found).group()
-            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0:
-                logger.info("Found acceptible Postgres version")
+            if semver.compare(postgres_version_number, CONFIG["postgress_min_version"]) >= 0:
+                LOGGER.info("Found acceptible Postgres version")
                 return True
             else:
-                logger.info("The Postgres version on the system does not meet the minimum requirements")
+                LOGGER.info("The Postgres version on the system does not meet the minimum requirements")
                 return False
         except OSError:
-            logger.exception("Unable to check existing Postgres version \n")
+            LOGGER.exception("Unable to check existing Postgres version \n")
 
 
 def setup_postgres(default_continue_install="N"):
@@ -74,7 +75,7 @@ def setup_postgres(default_continue_install="N"):
                 "Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
 
         if setup_postgres_answer.lower().strip() in ["no", 'n']:
-            logger.info("Skipping Postgres installation. Using existing Postgres version")
+            LOGGER.info("Skipping Postgres installation. Using existing Postgres version")
             return True
         else:
             # TODO At this point we know there is a valid postgres installation
@@ -83,8 +84,8 @@ def setup_postgres(default_continue_install="N"):
             #   a bit more functionality to be added here.
             backup_db("postgres")
 
-    pg_name = "postgresql-server-{}".format(config["postgress_version"])
-    pg_devel = "postgresql-devel-{}".format(config["postgress_version"])
+    pg_name = "postgresql-server-{}".format(CONFIG["postgress_version"])
+    pg_devel = "postgresql-devel-{}".format(CONFIG["postgress_version"])
     esg_functions.call_binary("yum", ["-y", "install", pg_name, pg_devel])
 
     initialize_postgres()
@@ -109,14 +110,14 @@ def setup_postgres(default_continue_install="N"):
 
 def create_pg_super_user(psycopg2_cursor, db_user_password):
     '''Create postgres super user'''
-    print "Create {db_user} user: ".format(db_user=config["postgress_user"]), psycopg2_cursor.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    print "Create {db_user} user: ".format(db_user=CONFIG["postgress_user"]), psycopg2_cursor.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=CONFIG["postgress_user"], db_user_password=db_user_password))
     try:
         psycopg2_cursor.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(
-            db_user=config["postgress_user"], db_user_password=db_user_password))
+            db_user=CONFIG["postgress_user"], db_user_password=db_user_password))
     except psycopg2.ProgrammingError, error:
         # Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
         if error.pgcode == "42710":
-            print "{db_user} role already exists. Skipping creation".format(db_user=config["postgress_user"])
+            print "{db_user} role already exists. Skipping creation".format(db_user=CONFIG["postgress_user"])
 
 
 def create_pg_publisher_user(cursor, db_user_password):
@@ -142,7 +143,7 @@ def backup_db(db_name, schema=None, backup_dir="/etc/esgf_db_backup"):
         backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ") or "y"
 
     if backup_db_input.lower() in ["n", "no"]:
-        logger.info("Skipping backup database.")
+        LOGGER.info("Skipping backup database.")
         return
 
     pybash.mkdir_p(backup_dir)
@@ -151,7 +152,7 @@ def backup_db(db_name, schema=None, backup_dir="/etc/esgf_db_backup"):
 
     pg_dump = local["pg_dump"]
     local.env["PGPASSWORD"] = esg_functions.get_publisher_password()
-    args = [db_name, "-U", config["postgress_user"]]
+    args = [db_name, "-U", CONFIG["postgress_user"]]
     if schema:
         args.append("-n")
         args.append("schema")
@@ -188,7 +189,7 @@ def connect_to_db(user, db_name=None, host="/tmp", password=None):
     db_connection_string = build_connection_string(user, db_name, host, password)
     try:
         conn = psycopg2.connect(db_connection_string)
-        logger.debug("Connected to %s database as user '%s'", db_name, user)
+        LOGGER.debug("Connected to %s database as user '%s'", db_name, user)
         if not conn:
             print "Failed to connect to {db_name}".format(db_name=db_name)
             raise Exception
@@ -199,7 +200,7 @@ def connect_to_db(user, db_name=None, host="/tmp", password=None):
 
         return conn
     except Exception:
-        logger.exception("Unable to connect to the database.")
+        LOGGER.exception("Unable to connect to the database.")
         raise
 
 #----------------------------------------------------------
@@ -241,8 +242,8 @@ def postgres_status():
     try:
         status = esg_functions.call_binary("service", ["postgresql", "status"])
     except ProcessExecutionError, err:
-        logger.error("Postgres status check failed failed")
-        logger.error(err)
+        LOGGER.error("Postgres status check failed failed")
+        LOGGER.error(err)
         raise
     else:
         print "Postgres server status:", status
@@ -256,10 +257,10 @@ def restart_postgres():
     '''Restarts the postgres server'''
     print "Restarting postgres server"
     try:
-        restart_process = esg_functions.call_binary("service", ["postgresql", "restart"])
+        esg_functions.call_binary("service", ["postgresql", "restart"])
     except ProcessExecutionError, err:
-        logger.error("Restarting Postgres failed")
-        logger.error(err)
+        LOGGER.error("Restarting Postgres failed")
+        LOGGER.error(err)
         raise
     sleep(1)
     postgres_status()
@@ -293,32 +294,32 @@ def setup_hba_conf_file():
 #----------------------------------------------------------
 def log_postgres_properties():
     '''Write postgres properties to /esg/config/esgf.properties'''
-    esg_property_manager.set_property("db.user", config["postgress_user"])
-    esg_property_manager.set_property("db.host", config["postgress_host"])
-    esg_property_manager.set_property("db.port", config["postgress_port"])
+    esg_property_manager.set_property("db.user", CONFIG["postgress_user"])
+    esg_property_manager.set_property("db.host", CONFIG["postgress_host"])
+    esg_property_manager.set_property("db.port", CONFIG["postgress_port"])
     esg_property_manager.set_property("db.database", "esgcet")
 
 def write_postgress_env():
     '''Write postgres environment properties to /etc/esg.env'''
     EnvWriter.export("PGHOME", "/usr/bin/postgres")
-    EnvWriter.export("PGUSER", config["postgress_user"])
-    EnvWriter.export("PGPORT", config["postgress_port"])
-    EnvWriter.export("PGBINDIR", config["postgress_bin_dir"])
-    EnvWriter.export("PGLIBDIR", config["postgress_lib_dir"])
-    EnvWriter.export("PATH", config["myPATH"])
-    EnvWriter.export("LD_LIBRARY_PATH", config["myLD_LIBRARY_PATH"],)
+    EnvWriter.export("PGUSER", CONFIG["postgress_user"])
+    EnvWriter.export("PGPORT", CONFIG["postgress_port"])
+    EnvWriter.export("PGBINDIR", CONFIG["postgress_bin_dir"])
+    EnvWriter.export("PGLIBDIR", CONFIG["postgress_lib_dir"])
+    EnvWriter.export("PATH", CONFIG["myPATH"])
+    EnvWriter.export("LD_LIBRARY_PATH", CONFIG["myLD_LIBRARY_PATH"],)
 
 def write_postgress_install_log():
     '''Write postgres version to install manifest'''
     try:
         postgres_version_found = esg_functions.call_binary("psql", ["--version"])
     except ProcessExecutionError, err:
-        logger.error("Postgres version check failed failed")
-        logger.error(err)
+        LOGGER.error("Postgres version check failed failed")
+        LOGGER.error(err)
         raise
     else:
         postgres_version_number = re.search(r"\d.*", postgres_version_found).group()
-        esg_functions.write_to_install_manifest("postgres", config["postgress_install_dir"], postgres_version_number)
+        esg_functions.write_to_install_manifest("postgres", CONFIG["postgress_install_dir"], postgres_version_number)
 
 #----------------------------------------------------------
 # Postgresql informational functions
@@ -339,7 +340,7 @@ def create_database(database_name, cursor=None):
     except psycopg2.ProgrammingError, error:
         # Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
         if error.pgcode == "42P04":
-            logger.info("%s database already exists.  Skipping creation.", database_name)
+            LOGGER.info("%s database already exists.  Skipping creation.", database_name)
 
 
 def postgres_list_db_schemas(conn=None, user_name="postgres", db_name="postgres", password=None):
@@ -352,8 +353,8 @@ def postgres_list_db_schemas(conn=None, user_name="postgres", db_name="postgres"
         schemas = cur.fetchall()
         schema_list = [schema[0] for schema in schemas]
         return schema_list
-    except Exception:
-        logger.exception("Could not list database schemas")
+    except psycopg2.ProgrammingError:
+        LOGGER.exception("Could not list database schemas")
 
 
 def postgres_list_schemas_tables(conn=None, user_name="postgres", db_name="postgres"):
@@ -364,10 +365,10 @@ def postgres_list_schemas_tables(conn=None, user_name="postgres", db_name="postg
     try:
         cur.execute("SELECT schemaname,relname FROM pg_stat_user_tables;")
         schemas_tables = cur.fetchall()
-        logger.debug("schemas_tables: %s", schemas_tables)
+        LOGGER.debug("schemas_tables: %s", schemas_tables)
         return schemas_tables
-    except Exception:
-        logger.exception("Could not list schema tables")
+    except psycopg2.ProgrammingError:
+        LOGGER.exception("Could not list schema tables")
 
 
 def postgres_list_dbs(conn=None, user_name="postgres", db_name="postgres"):
@@ -380,8 +381,8 @@ def postgres_list_dbs(conn=None, user_name="postgres", db_name="postgres"):
         databases = cur.fetchall()
         database_list = [database[0] for database in databases]
         return database_list
-    except Exception:
-        logger.exception("Could not list databases")
+    except psycopg2.ProgrammingError:
+        LOGGER.exception("Could not list databases")
 
 
 def list_users(conn=None, user_name="postgres", db_name="postgres"):
@@ -394,8 +395,8 @@ def list_users(conn=None, user_name="postgres", db_name="postgres"):
         users = cur.fetchall()
         user_list = [user[0] for user in users]
         return user_list
-    except Exception:
-        logger.exception("Could not list users")
+    except psycopg2.ProgrammingError:
+        LOGGER.exception("Could not list users")
 
 
 def list_roles(conn=None, user_name="postgres", db_name="postgres"):
@@ -430,7 +431,7 @@ def postgres_clean_schema_migration(repository_id):
     "src/python/esgf/<reponame>/schema_migration/migrate.cfg" in
     each relevant repository.'''
     db_user_password = esg_functions.get_publisher_password()
-    conn = connect_to_db(config["postgress_user"], config["node_db_name"], password=db_user_password)
+    conn = connect_to_db(CONFIG["postgress_user"], CONFIG["node_db_name"], password=db_user_password)
     cur = conn.cursor()
 
     try:
@@ -442,7 +443,7 @@ def postgres_clean_schema_migration(repository_id):
             print "cleaning out schema migration bookeeping for esgf_node_manager..."
             cur.execute(
                 "delete from esgf_migrate_version where repository_id LIKE '%$%s%'", repository_id)
-    except Exception, error:
+    except psycopg2.ProgrammingError, error:
         print "error: ", error
 
 

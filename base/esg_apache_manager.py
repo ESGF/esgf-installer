@@ -5,21 +5,18 @@ import logging
 import datetime
 import ConfigParser
 from distutils.spawn import find_executable
-import yaml
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from plumbum.commands import ProcessExecutionError
 
-logger = logging.getLogger("esgf_logger" + "." + __name__)
-
-with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
+LOGGER = logging.getLogger("esgf_logger" + "." + __name__)
 
 
 def check_for_apache_installation():
     '''Check for existing httpd installation'''
     return find_executable("httpd")
+
 
 def start_apache():
     '''Start httpd server'''
@@ -54,13 +51,14 @@ def run_apache_config_test():
 
 
 def check_apache_version():
+    '''Checks the apache version that's installed'''
     esg_functions.call_binary("httpd", ["-version"])
 
 
 def install_apache_httpd():
     '''Install apache from yum'''
     pkg_list = ["mod_ssl"]
-    
+
     if check_for_apache_installation():
         print "Found existing Apache installation."
         check_apache_version()
@@ -88,6 +86,7 @@ def install_mod_wsgi():
 
     esg_functions.pip_install("mod_wsgi==4.5.3")
     esg_functions.call_binary("mod_wsgi-express", ["install-module"])
+
 
 def make_python_eggs_dir():
     '''Create Python egg directories'''
@@ -120,14 +119,16 @@ def copy_apache_conf_files():
         with open("/etc/certs/esgf-ca-bundle.crt", "a") as cert_bundle_file:
             cert_bundle_file.write(open("/etc/tempcerts/cacert.pem").read())
     except OSError:
-        logger.exception()
+        LOGGER.exception()
 
     # add LD_LIBRARY_PATH to /etc/sysconfig/httpd
     with open("/etc/sysconfig/httpd", "a") as httpd_file:
         httpd_file.write("OPTIONS='-f /etc/httpd/conf/esgf-httpd.conf'\n")
         httpd_file.write("export LD_LIBRARY_PATH=/usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server\n")
 
+
 def main():
+    '''Main function'''
     print "\n*******************************"
     print "Setting up Apache (httpd) Web Server"
     print "******************************* \n"

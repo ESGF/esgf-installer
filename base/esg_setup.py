@@ -1,23 +1,22 @@
+'''Performs preliminary checks and setup for an ESGF node'''
 import os
-import socket
 import logging
 import platform
-import sys
 
 import yaml
 from esgf_utilities import pybash
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+LOGGER = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
+    CONFIG = yaml.load(config_file)
 
 def exit_on_false(assertion, err_msg):
     ''' Exit if the assertion fails '''
     try:
         assert assertion, err_msg
     except AssertionError:
-        logger.error(err_msg)
+        LOGGER.error(err_msg)
         raise
 
 def check_if_root():
@@ -28,7 +27,7 @@ def check_if_root():
     err_msg = "This program must be run with root privileges"
     exit_on_false(os.geteuid() == 0, err_msg)
 
-    logger.debug("Root privileges found")
+    LOGGER.debug("Root privileges found")
     return True
 
 def check_os():
@@ -52,7 +51,7 @@ def check_os():
     err_msg = "Accepted versions: {}, Found: {}".format(req_major, major or "None")
     exit_on_false(major in req_major, err_msg)
 
-    logger.debug("dist: %s", dist)
+    LOGGER.debug("dist: %s", dist)
     return True
 
 
@@ -71,18 +70,18 @@ def check_prerequisites():
 def create_esg_directories():
     '''Create directories to hold ESGF scripts, config files, and logs'''
     directories_to_check = [
-        config["scripts_dir"],
-        config["esg_backup_dir"],
-        config["esg_tools_dir"],
-        config["esg_log_dir"],
-        config["esg_config_dir"],
-        config["esg_etc_dir"],
-        config["tomcat_conf_dir"]
+        CONFIG["scripts_dir"],
+        CONFIG["esg_backup_dir"],
+        CONFIG["esg_tools_dir"],
+        CONFIG["esg_log_dir"],
+        CONFIG["esg_config_dir"],
+        CONFIG["esg_etc_dir"],
+        CONFIG["tomcat_conf_dir"]
     ]
     for directory in directories_to_check:
         if not os.path.isdir(directory):
             pybash.mkdir_p(directory)
 
-    os.chmod(config["esg_etc_dir"], 0777)
+    os.chmod(CONFIG["esg_etc_dir"], 0777)
 
     return True

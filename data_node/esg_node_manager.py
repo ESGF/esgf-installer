@@ -208,7 +208,7 @@ def configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_nod
 
     esg_postgres.start_postgres()
     pg_sys_acct_passwd = esg_functions.get_postgres_password()
-    if node_db_name not in esg_postgres.postgres_list_dbs(password=pg_sys_acct_passwd):
+    if node_db_name not in esg_postgres.postgres_list_dbs(user_name="dbsuper", password=pg_sys_acct_passwd):
         esg_postgres.create_database(node_db_name)
     else:
         if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas():

@@ -67,6 +67,9 @@ def backup_esg_installation():
     for file_name in files_to_backup:
         esg_functions.create_backup_file(file_name, backup_dir=migration_backup_dir)
 
+    #Remove old install manifest
+    os.remove("/esg/esgf-install-manifest")
+
     properties_backup_path = os.path.join(migration_backup_dir, "esgf.properties-{}.bak".format(str(datetime.date.today())))
     add_config_file_section_header(properties_backup_path, "installer.properties")
     install_manifest_backup_path = os.path.join(migration_backup_dir, "esgf-install-manifest-{}.bak".format(str(datetime.date.today())))

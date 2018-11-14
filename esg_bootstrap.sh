@@ -127,6 +127,6 @@ run_migration_script(){
 
 
 if [ ! -d "/usr/local/conda" ]; then
-    install_dependencies_yum; install_miniconda; install_dependencies_pip; run_migration_script; copy_autoinstall_file; initialize_config_file
+    install_dependencies_yum && install_miniconda && install_dependencies_pip && run_migration_script && copy_autoinstall_file && initialize_config_file
     echo "Bootstrap complete!"
 fi

@@ -228,7 +228,7 @@ def configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_nod
         #install the egg....
         esg_functions.call_binary("easy_install", [esgf_node_manager_egg_file])
 
-        if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas():
+        if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas(user_name="dbsuper", password=pg_sys_acct_passwd):
             schema_backup = raw_input("Do you want to make a back up of the existing database schema [{}:{}]? [Y/n]".format(node_db_name, node_db_node_manager_schema_name)) or "y"
             if schema_backup.lower() in ["y", "yes"]:
                 print "Creating a backup archive of the database schema [{}:{}]".format(node_db_name, node_db_node_manager_schema_name)

@@ -208,11 +208,10 @@ def configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_nod
 
     esg_postgres.start_postgres()
     pg_sys_acct_passwd = esg_functions.get_postgres_password()
-    logger.debug("pg_sys_acct_passwd: %s", pg_sys_acct_passwd)
     if node_db_name not in esg_postgres.postgres_list_dbs(user_name="dbsuper", password=pg_sys_acct_passwd):
         esg_postgres.create_database(node_db_name)
     else:
-        if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas():
+        if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas(user_name="dbsuper", password=pg_sys_acct_passwd):
             logger.info("Detected an existing node manager schema installation...")
         else:
             esg_postgres.postgres_clean_schema_migration("ESGF Node Manager")

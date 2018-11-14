@@ -168,7 +168,6 @@ def system_component_installation(esg_dist_url, node_type_list):
     '''
     if "INSTALL" in node_type_list:
         esg_java.setup_java()
-        esg_java.setup_ant()
         esg_postgres.setup_postgres()
         esg_tomcat_manager.main()
         esg_apache_manager.main()

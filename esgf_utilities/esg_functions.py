@@ -317,7 +317,7 @@ def fetch_remote_file(local_file, remote_file):
                     downloaded_file.flush()
     except requests.exceptions.RequestException:
         logger.exception("Could not download %s", remote_file)
-        sys.exit()
+        raise
 
 
 def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.date.today())):

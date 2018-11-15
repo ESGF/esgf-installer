@@ -1,4 +1,8 @@
-import sys, getopt, os, shutil
+import sys
+import getopt
+import re
+import os
+import shutil
 import datetime
 import StringIO
 import ConfigParser
@@ -6,9 +10,42 @@ from backports import configparser
 from esgf_utilities import esg_functions, pybash
 from base import esg_postgres
 
+
+#TODO: Create function to get version numbers from existing installation
+def copy_previous_component_versions():
+    previous_versions = {}
+    with open("/usr/local/bin/esg-init") as init_file:
+        for line in init_file:
+            try:
+                key, val = line.split("=")
+                if "version" in key:
+                    version_number = re.search(r"\d.*", val).group().strip('"}')
+                    previous_versions[key] = version_number
+            except ValueError:
+                pass
+    logger.debug("previous_versions: %s", previous_versions)
+    #TODO: Write out to YAML file
+
 def check_previous_install():
     return os.path.exists("/usr/local/bin/esg-node")
 
+def copy_previous_settings(old_config_file, new_config_file):
+    print "\n*******************************"
+    print "Copying settings from 2.x esgf.properties to 3.0 esgf.properties file"
+    print "******************************* \n"
+    old_parser = configparser.ConfigParser()
+    old_parser.read(old_config_file)
+
+    previous_values = dict(old_parser.items('installer.properties'))
+
+    new_parser = configparser.ConfigParser()
+    new_parser.read(new_config_file)
+
+    for key, value in previous_values.iteritems():
+        new_parser["installer.properties"][key] = str(value)
+
+    with open(new_config_file, "w") as file_object:
+        new_parser.write(file_object, space_around_delimiters=False)
 
 #TODO: Create a function to port values from old config files to new esgf.properties file
 def copy_config_settings(old_config_file, new_config_file):
@@ -68,12 +105,20 @@ def backup_esg_installation():
     for file_name in files_to_backup:
         esg_functions.create_backup_file(file_name, backup_dir=migration_backup_dir)
 
-    add_config_file_section_header(os.path.join(migration_backup_dir, "esgf.properties-{}.bak".format(str(datetime.date.today()))), "installer.properties")
-    add_config_file_section_header(os.path.join(migration_backup_dir, "esgf-install-manifest-{}.bak".format(str(datetime.date.today()))), "install_manifest")
+    #Remove old install manifest
+    os.remove("/esg/esgf-install-manifest")
+
+    properties_backup_path = os.path.join(migration_backup_dir, "esgf.properties-{}.bak".format(str(datetime.date.today())))
+    add_config_file_section_header(properties_backup_path, "installer.properties")
+    install_manifest_backup_path = os.path.join(migration_backup_dir, "esgf-install-manifest-{}.bak".format(str(datetime.date.today())))
+    add_config_file_section_header(install_manifest_backup_path, "install_manifest")
 
     directories_to_backup = ["/usr/local/tomcat", "/usr/local/solr", "/etc/grid-security", "/esg/config", "/usr/local/cog/cog_config", "/etc/esgfcerts", "/etc/certs"]
     for directory in directories_to_backup:
         esg_functions.backup(directory, migration_backup_dir)
+
+    current_directory = os.path.join(os.path.dirname(__file__))
+    copy_previous_settings(properties_backup_path, os.path.join(current_directory, "esgf.properties.template"))
 
 
 

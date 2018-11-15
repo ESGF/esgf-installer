@@ -183,24 +183,21 @@ def connect_to_db(user, db_name=None, host="/tmp", password=None):
     root_id = pwd.getpwnam("root").pw_uid
     if user == "postgres":
         postgres_id = pwd.getpwnam("postgres").pw_uid
-
         os.seteuid(postgres_id)
     db_connection_string = build_connection_string(user, db_name, host, password)
     try:
         conn = psycopg2.connect(db_connection_string)
+    except psycopg2.OperationalError:
+        logger.error("Unable to connect to the database.")
+        raise
+    else:
         logger.debug("Connected to %s database as user '%s'", db_name, user)
-        if not conn:
-            print "Failed to connect to {db_name}".format(db_name=db_name)
-            raise Exception
-
+        return conn
+    finally:
         # Set effective user id (euid) back to root
         if os.geteuid() != root_id:
             os.seteuid(root_id)
 
-        return conn
-    except Exception:
-        logger.exception("Unable to connect to the database.")
-        raise
 
 #----------------------------------------------------------
 # Postgresql user/group management functions

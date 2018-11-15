@@ -1,10 +1,30 @@
-import sys, getopt, os, shutil
+import sys
+import getopt
+import re
+import os
+import shutil
 import datetime
 import StringIO
 import ConfigParser
 from backports import configparser
 from esgf_utilities import esg_functions, pybash
 from base import esg_postgres
+
+
+#TODO: Create function to get version numbers from existing installation
+def copy_previous_component_versions():
+    previous_versions = {}
+    with open("/usr/local/bin/esg-init") as init_file:
+        for line in init_file:
+            try:
+                key, val = line.split("=")
+                if "version" in key:
+                    version_number = re.search(r"\d.*", val).group().strip('"}')
+                    previous_versions[key] = version_number
+            except ValueError:
+                pass
+    logger.debug("previous_versions: %s", previous_versions)
+    #TODO: Write out to YAML file
 
 def check_previous_install():
     return os.path.exists("/usr/local/bin/esg-node")

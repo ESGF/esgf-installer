@@ -83,9 +83,7 @@ def setup_dashboard():
     DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
     DASHBOARD_GROUP_ID = grp.getgrnam("dashboard").gr_gid
     esg_functions.change_ownership_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)
-    os.chmod("/var/run", stat.S_IWRITE)
-    os.chmod("/var/run", stat.S_IWGRP)
-    os.chmod("/var/run", stat.S_IWOTH)
+    os.chmod("/var/run", 0755)
 
     dburl = "{user}:{password}@{host}:{port}/{db}".format(
         user=config["postgress_user"],

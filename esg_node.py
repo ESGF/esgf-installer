@@ -205,8 +205,7 @@ def system_component_installation(esg_dist_url, node_type_list):
             orp.main()
         from index_node import esg_cog, esg_search, solr
         esg_cog.main()
-        index_config = config["index_config"].split()
-        solr.main(index_config)
+        solr.main()
         esg_search.main()
 
 

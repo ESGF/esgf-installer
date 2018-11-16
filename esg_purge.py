@@ -78,7 +78,7 @@ def purge_java():
     print "Purging Java"
     print "******************************* \n"
 
-    java_tarfile = pybash.trim_string_from_head(config["java_dist_url"])
+    java_tarfile = "jdk{}-64.tar.gz".format(config["java_version"])
     try:
         os.remove("/usr/local/src/esgf/workbench/esg/{}".format(java_tarfile))
     except OSError:

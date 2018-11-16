@@ -215,7 +215,7 @@ def write_solr_install_log(solr_config_type, solr_version, solr_install_dir):
 
 '''
 
-def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
+def setup_solr(index_config = ["master", "slave"], SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
     if os.path.isdir("/usr/local/solr"):
         print "Solr directory found."
@@ -288,8 +288,8 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     pybash.mkdir_p("/esg/solr-logs")
 
 
-def main(index_config):
-    setup_solr(index_config)
+def main():
+    setup_solr()
 
 if __name__ == '__main__':
-    main(index_config=config["index_config"])
+    main()

@@ -248,8 +248,10 @@ def install_extkeytool():
     print "\n*******************************"
     print "Installing Extkeytool"
     print "******************************* \n"
-    extkeytool_tarfile = pybash.trim_string_from_head(config["extkeytool_download_url"])
-    esg_functions.download_update(extkeytool_tarfile, config["extkeytool_download_url"])
+    esg_root_url = esg_property_manager.get_property("esg.root.url")
+    extkeytool_download_url = "{}/etc/idptools.tar.gz".format(esg_root_url)
+    extkeytool_tarfile = pybash.trim_string_from_head(extkeytool_download_url)
+    esg_functions.download_update(extkeytool_tarfile, extkeytool_download_url)
     esg_functions.extract_tarball(extkeytool_tarfile, "/esg/tools/idptools")
 
 def copy_cert_to_tomcat_conf(public_cert):

@@ -106,10 +106,10 @@ def setup_java():
         pybash.symlink_force(os.path.join(java_install_dir_parent,
                                           jdk_directory), config["java_install_dir"])
 
-        os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
+        os.chown(config["java_install_dir"], esg_functions.get_user_id("root"), esg_functions.get_group_id("root"))
         # recursively change permissions
         esg_functions.change_ownership_recursive(
-            config["java_install_dir"], config["installer_uid"], config["installer_gid"])
+            config["java_install_dir"], esg_functions.get_user_id("root"), esg_functions.get_group_id("root"))
 
     # set_default_java()
     # print check_java_version()

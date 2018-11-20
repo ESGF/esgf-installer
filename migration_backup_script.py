@@ -6,13 +6,16 @@ import shutil
 import datetime
 import StringIO
 import ConfigParser
+import yaml
 from backports import configparser
 from esgf_utilities import esg_functions, pybash
 from base import esg_postgres
 
 
-#TODO: Create function to get version numbers from existing installation
 def copy_previous_component_versions():
+    print "\n*******************************"
+    print "Copying settings from 2.x esg-init to 3.0 esg_config.yaml file"
+    print "******************************* \n"
     previous_versions = {}
     with open("/usr/local/bin/esg-init") as init_file:
         for line in init_file:
@@ -23,11 +26,20 @@ def copy_previous_component_versions():
                     previous_versions[key] = version_number
             except ValueError:
                 pass
-    logger.debug("previous_versions: %s", previous_versions)
-    #TODO: Write out to YAML file
+    print "previous_versions: %s", previous_versions
+    with open("esg_config.yaml") as yaml_file:
+        config_settings = yaml.load(yaml_file)
+
+    for key, version in previous_versions.iteritems():
+        config_settings[key] = version
+
+    with open("esg_config.yaml") as yaml_file:
+        yaml.dump(config_settings, yaml_file)
+
 
 def check_previous_install():
     return os.path.exists("/usr/local/bin/esg-node")
+
 
 def copy_previous_settings(old_config_file, new_config_file):
     print "\n*******************************"

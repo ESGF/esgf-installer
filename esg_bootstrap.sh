@@ -99,20 +99,7 @@ copy_autoinstall_file(){
 
 }
 
-initialize_config_file(){
-  echo
-  echo "-----------------------------------"
-  echo "Initializing esg_config.yaml file"
-  echo "-----------------------------------"
-  echo
-
-  source ${CDAT_HOME}/bin/activate esgf-pub
-    python esg_init.py
-  source deactivate
-
-}
-
 if [ ! -d "/usr/local/conda" ]; then
-    install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file; initialize_config_file
+    install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file
     echo "Bootstrap complete!"
 fi

@@ -24,17 +24,17 @@ def copy_previous_component_versions():
                 key, val = line.split("=")
                 if "version" in key:
                     version_number = re.search(r"\d.*", val).group().strip('"}')
-                    previous_versions[key] = version_number
+                    previous_versions[key.strip()] = version_number
             except ValueError:
                 pass
-    print "previous_versions: %s", previous_versions
+    print "previous_versions:", previous_versions
     with open("esg_config.yaml") as yaml_file:
         config_settings = yaml.load(yaml_file)
 
     for key, version in previous_versions.iteritems():
         config_settings[key] = version
 
-    with open("esg_config.yaml") as yaml_file:
+    with open("esg_config.yaml", "w") as yaml_file:
         yaml.dump(config_settings, yaml_file)
 
 

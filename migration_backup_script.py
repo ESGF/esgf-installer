@@ -28,13 +28,17 @@ def copy_previous_component_versions():
             except ValueError:
                 pass
     print "previous_versions:", previous_versions
-    with open("esg_config.yaml") as yaml_file:
+    yaml_config = os.path.join(os.path.dirname(__file__), "esg_config.yaml")
+    with open(yaml_config) as yaml_file:
         config_settings = yaml.load(yaml_file)
 
+    print "config_settings:", config_settings
     for key, version in previous_versions.iteritems():
+        print "key:", key
+        print "version:", version
         config_settings[key] = version
 
-    with open("esg_config.yaml", "w") as yaml_file:
+    with open(yaml_config, "w") as yaml_file:
         yaml.dump(config_settings, yaml_file)
 
 

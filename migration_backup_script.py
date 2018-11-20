@@ -113,6 +113,7 @@ def backup_esg_installation():
 
     current_directory = os.path.join(os.path.dirname(__file__))
     copy_previous_settings(properties_backup_path, os.path.join(current_directory, "esgf.properties.template"))
+    copy_previous_component_versions()
 
 
 

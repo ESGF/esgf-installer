@@ -38,9 +38,12 @@ def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin",
     version_line = java_version_output.split("\n")[0]
     version = version_line.split("version")[1].strip()
     installed_java_version = version.strip('\"')
-
-    assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
-    print "Installed java version meets the minimum requirement {}".format(config["java_version"])
+    try:
+        assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
+    except AssertionError:
+        print "Found version mismatch: {} != {}".format(installed_java_version, config["java_version"])
+    else:
+        print "Installed java version meets the minimum requirement {}".format(config["java_version"])
     return installed_java_version
 
 

@@ -173,7 +173,7 @@ def setup_slcs():
             esg_property_manager.set_property("short.lived.certificate.server", esg_functions.get_esgf_host())
 
             pybash.mkdir_p("/usr/local/esgf-slcs-server")
-            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
+            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
 
             #TODO: check if there's an ansible Python module
             esg_functions.call_binary("ansible-playbook", ["-i", "playbook/inventories/localhost", "-e", "@playbook/overrides/production_venv_only.yml", "playbook/playbook.yml"])

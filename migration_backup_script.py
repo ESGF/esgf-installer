@@ -79,6 +79,28 @@ def add_config_file_section_header(config_file_name, section_header):
         shutil.copyfileobj(config, file_object)
 
 
+def migrate_solr_shards_config_file(config_file_path):
+    '''Copy over settings from the esgf_shards.config file and format it so it can be parsed by ConfigParser'''
+    # try:
+    #     os.remove("/esg/config/esgf_shards.config")
+    # except OSError, error:
+    #     if error.errno == errno.ENOENT:
+    #         pass
+    # pybash.touch("/esg/config/esgf_shards.config")
+    parser = configparser.ConfigParser()
+    parser.add_section("esgf_solr_shards")
+
+    with open(config_file_path) as shard_config:
+        for line in shard_config:
+            key, val = line.split(":")
+            print "key:", key
+            print "value:", val
+            parser["esgf_solr_shards"][key] = str(val)
+
+    with open("/esg/config/esgf_shards.config") as shard_config:
+        parser.write(shard_config, space_around_delimiters=False)
+
+
 def backup_esg_installation():
     '''From https://github.com/ESGF/esgf-installer/wiki/ESGF-Pre-Installation-Backup
 
@@ -100,7 +122,7 @@ def backup_esg_installation():
     migration_backup_dir = "/etc/esg_installer_backup_{}".format(str(datetime.date.today()))
     pybash.mkdir_p(migration_backup_dir)
 
-    files_to_backup = ["/esg/content/thredds/catalog.xml", "/esg/config/esgf.properties", "/esg/esgf-install-manifest", "/etc/esg.env", "/esg/config/config_type"]
+    files_to_backup = ["/esg/content/thredds/catalog.xml", "/esg/config/esgf.properties", "/esg/esgf-install-manifest", "/etc/esg.env", "/esg/config/config_type", "/esg/config/esgf_shards.config"]
     for file_name in files_to_backup:
         esg_functions.create_backup_file(file_name, backup_dir=migration_backup_dir)
 
@@ -115,6 +137,8 @@ def backup_esg_installation():
     add_config_file_section_header(properties_backup_path, "installer.properties")
     install_manifest_backup_path = os.path.join(migration_backup_dir, "esgf-install-manifest-{}.bak".format(str(datetime.date.today())))
     add_config_file_section_header(install_manifest_backup_path, "install_manifest")
+    shards_config_backup_path = os.path.join(migration_backup_dir, "esgf_shards.config-{}.bak".format(str(datetime.date.today())))
+    migrate_solr_shards_config_file(shards_config_backup_path)
 
     directories_to_backup = ["/usr/local/tomcat", "/usr/local/solr", "/etc/grid-security", "/esg/config", "/usr/local/cog/cog_config", "/etc/esgfcerts", "/etc/certs"]
     for directory in directories_to_backup:

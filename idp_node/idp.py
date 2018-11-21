@@ -5,6 +5,7 @@ import ConfigParser
 import stat
 import yaml
 from git import Repo
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
@@ -130,6 +131,7 @@ def setup_slcs():
     # create slcs Database
     pg_sys_acct_passwd = esg_functions.get_postgres_password()
     conn = esg_postgres.connect_to_db("dbsuper", "postgres", password=pg_sys_acct_passwd)
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
     esg_postgres.create_database("slcsdb", cursor=cur)
 

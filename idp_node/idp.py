@@ -109,6 +109,13 @@ def clone_slcs():
         print "SLCS repo already exists.  Skipping cloning from Github."
         return
     Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
+    checkout_playbook_branch()
+
+
+def checkout_playbook_branch(branch="devel"):
+    '''Checkout playbook branch'''
+    publisher_repo_local = Repo("/usr/local/src/esgf-slcs-server-playbook")
+    publisher_repo_local.git.checkout(branch)
 
 #TODO: convert slcs to use Ansible python API
 def setup_slcs():
@@ -143,9 +150,6 @@ def setup_slcs():
         esg_functions.change_ownership_recursive("esgf-slcs-server-playbook", apache_user, apache_group)
 
         with pybash.pushd("esgf-slcs-server-playbook"):
-            #TODO: extract to function
-            publisher_repo_local = Repo(os.getcwd())
-            publisher_repo_local.git.checkout("devel")
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
 

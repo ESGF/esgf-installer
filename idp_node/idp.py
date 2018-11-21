@@ -127,8 +127,11 @@ def setup_slcs():
 
     esg_functions.call_binary("yum", ["-y", "install", "ansible"])
 
-    #create slcs Database
-    esg_postgres.create_database("slcsdb")
+    # create slcs Database
+    pg_sys_acct_passwd = esg_functions.get_postgres_password()
+    conn = esg_postgres.connect_to_db("dbsuper", "postgres", password=pg_sys_acct_passwd)
+    cur = conn.cursor()
+    esg_postgres.create_database("slcsdb", cursor=cur)
 
     with pybash.pushd("/usr/local/src"):
         clone_slcs()

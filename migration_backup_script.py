@@ -97,7 +97,7 @@ def migrate_solr_shards_config_file(config_file_path):
             print "value:", val
             parser["esgf_solr_shards"][key] = str(val)
 
-    with open("/esg/config/esgf_shards.config") as shard_config:
+    with open("/esg/config/esgf_shards.config", "w") as shard_config:
         parser.write(shard_config, space_around_delimiters=False)
 
 

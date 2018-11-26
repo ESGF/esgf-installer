@@ -43,7 +43,7 @@ def set_env_variables():
     os.environ["PGUSER"] = "dbsuper"
     os.environ["PGHOST"] = "localhost"
     os.environ["PGPORT"] = "5432"
-    os.environ["JAVA_HOME"] = "/usr/local/java/bin/java"
+    os.environ["JAVA_HOME"] = "/usr/local/java/"
     os.environ["CATALINA_HOME"] = "/usr/local/tomcat"
     os.environ["CATALINA_BASE"] = "/usr/local/tomcat"
 

@@ -297,7 +297,7 @@ def log_postgres_properties():
 
 def write_postgress_env():
     '''Write postgres environment properties to /etc/esg.env'''
-    EnvWriter.export("PGHOME", "/usr/bin/postgres")
+    EnvWriter.export("PGHOME", "/usr/bin/psql")
     EnvWriter.export("PGUSER", config["postgress_user"])
     EnvWriter.export("PGPORT", config["postgress_port"])
     EnvWriter.export("PGBINDIR", config["postgress_bin_dir"])

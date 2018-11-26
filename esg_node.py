@@ -35,10 +35,17 @@ with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as co
 
 force_install = False
 
-#--------------
-# User Defined / Settable (public)
-#--------------
-#--------------
+def set_env_variables():
+    '''Set environment variables for process'''
+    os.environ["GIT_SSL_NO_VERIFY"] = "1"
+    os.environ["PGHOME"] = "/usr/bin/psql"
+    os.environ["PGLIBDIR"] = "/usr/lib64/pgsql"
+    os.environ["PGUSER"] = "dbsuper"
+    os.environ["PGHOST"] = "localhost"
+    os.environ["PGPORT"] = "5432"
+    os.environ["JAVA_HOME"] = "/usr/local/java/bin/java"
+    os.environ["CATALINA_HOME"] = "/usr/local/tomcat"
+    os.environ["CATALINA_BASE"] = "/usr/local/tomcat"
 
 def setup_esg_config_permissions():
     '''Set permissions on /esg directory and subdirectories'''
@@ -276,6 +283,7 @@ def main():
 
     esg_setup.check_prerequisites()
     esg_setup.create_esg_directories()
+    set_env_variables()
 
     script_version, script_maj_version, script_release = esg_version_manager.set_version_info()
 

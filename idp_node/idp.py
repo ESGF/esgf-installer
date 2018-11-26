@@ -176,6 +176,7 @@ def setup_slcs():
                 ],
                 conda_env=slcs_env
             )
+            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
 
     # Setup the mod_wsgi-express server. Note this does NOT start/stop/restart it.
     with pybash.pushd("/usr/local/esgf-slcs-server/src/esgf_slcs_server"):

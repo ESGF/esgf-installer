@@ -5,6 +5,7 @@ import ConfigParser
 import stat
 import yaml
 from git import Repo
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
@@ -108,6 +109,13 @@ def clone_slcs():
         print "SLCS repo already exists.  Skipping cloning from Github."
         return
     Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
+    checkout_playbook_branch()
+
+
+def checkout_playbook_branch(branch="devel"):
+    '''Checkout playbook branch'''
+    publisher_repo_local = Repo("/usr/local/src/esgf-slcs-server-playbook")
+    publisher_repo_local.git.checkout(branch)
 
 #TODO: convert slcs to use Ansible python API
 def setup_slcs():
@@ -127,8 +135,12 @@ def setup_slcs():
 
     esg_functions.call_binary("yum", ["-y", "install", "ansible"])
 
-    #create slcs Database
-    esg_postgres.create_database("slcsdb")
+    # create slcs Database
+    pg_sys_acct_passwd = esg_functions.get_postgres_password()
+    conn = esg_postgres.connect_to_db("dbsuper", "postgres", password=pg_sys_acct_passwd)
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+    esg_postgres.create_database("slcsdb", cursor=cur)
 
     with pybash.pushd("/usr/local/src"):
         clone_slcs()
@@ -138,9 +150,6 @@ def setup_slcs():
         esg_functions.change_ownership_recursive("esgf-slcs-server-playbook", apache_user, apache_group)
 
         with pybash.pushd("esgf-slcs-server-playbook"):
-            #TODO: extract to function
-            publisher_repo_local = Repo(os.getcwd())
-            publisher_repo_local.git.checkout("devel")
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
 
@@ -164,7 +173,7 @@ def setup_slcs():
             esg_property_manager.set_property("short.lived.certificate.server", esg_functions.get_esgf_host())
 
             pybash.mkdir_p("/usr/local/esgf-slcs-server")
-            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
+            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
 
             #TODO: check if there's an ansible Python module
             esg_functions.call_binary("ansible-playbook", ["-i", "playbook/inventories/localhost", "-e", "@playbook/overrides/production_venv_only.yml", "playbook/playbook.yml"])

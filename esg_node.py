@@ -69,7 +69,7 @@ def esgf_node_info():
 
 
 
-def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8"):
+def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="9"):
     '''Sets the distribution mirror url'''
     try:
         local_mirror = esg_property_manager.get_property("local_mirror")

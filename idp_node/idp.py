@@ -182,9 +182,8 @@ def setup_slcs():
         esg_functions.call_binary(
             "mod_wsgi-express",
             [
-                "start-server",
+                "setup-server",
                 "esgf_slcs_server/wsgi.py",
-                "--setup-only",
                 "--server-root", "/etc/slcs-wsgi-8888",
                 "--user", "apache",
                 "--group", "apache",

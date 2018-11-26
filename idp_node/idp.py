@@ -177,6 +177,33 @@ def setup_slcs():
                 conda_env=slcs_env
             )
 
+    # Setup the mod_wsgi-express server. Note this does NOT start/stop/restart it.
+    with pybash.pushd("/usr/local/esgf-slcs-server/src/esgf_slcs_server"):
+        esg_functions.call_binary(
+            "mod_wsgi-express",
+            [
+                "start-server",
+                "esgf_slcs_server/wsgi.py",
+                "--setup-only",
+                "--server-root", "/etc/slcs-wsgi-8888",
+                "--user", "apache",
+                "--group", "apache",
+                "--host", "localhost",
+                "--port", "8888",
+                "--mount-point", "/esgf-slcs",
+                "--url-alias", "/static", "/var/www/static"
+            ],
+            conda_env=slcs_env
+        )
+
+def slcs_apachectl(directive):
+    esg_functions.call_binary(
+        "/etc/slcs-wsgi-8888/apachectl",
+        [
+            directive
+        ]
+    )
+
 def main():
     '''Main function'''
     setup_idp()

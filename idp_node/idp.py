@@ -141,7 +141,7 @@ def setup_slcs():
         with pybash.pushd("esgf-slcs-server-playbook"):
             #TODO: extract to function
             publisher_repo_local = Repo(os.getcwd())
-            publisher_repo_local.git.checkout("3.0")
+            publisher_repo_local.git.checkout("slcs_conda_env")
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
 

@@ -126,7 +126,7 @@ def setup_slcs():
 
     slcs_env = "slcs-env"
     esg_functions.call_binary("conda", ["create", "-y", "-n", slcs_env, "python<3", "pip"])
-    esg_functions.call_binary("pip", ["install", "-y", "mod_wsgi<4.6", "ansible"], conda_env=slcs_env)
+    esg_functions.call_binary("pip", ["install", "mod_wsgi<4.6", "ansible"], conda_env=slcs_env)
 
     #create slcs Database
     esg_postgres.create_database("slcsdb")

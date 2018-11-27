@@ -120,18 +120,6 @@ def select_idp_peer(esgf_idp_peer=None):
     myproxy_endpoint = esgf_idp_peer
     esgf_host = esg_functions.get_esgf_host()
 
-    # print "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
-    if esgf_host != esgf_idp_peer:
-        print '''
-          ----------------------------------------------------------------------
-          The IDP selected must share at least one of the peer group(s)
-          [${node_peer_group}] that this node is a member of!
-
-          run: esg-node --federation-sanity-check ${esgf_idp_peer}
-
-          for confirmation.
-          ----------------------------------------------------------------------'''
-
     if esgf_host != myproxy_endpoint:
         esg_truststore_manager.install_peer_node_cert(myproxy_endpoint)
 

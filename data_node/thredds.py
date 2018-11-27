@@ -5,7 +5,6 @@ import getpass
 import ConfigParser
 import zipfile
 import re
-from urlparse import urlparse
 from distutils.dir_util import copy_tree
 import requests
 import yaml
@@ -78,132 +77,47 @@ def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=c
 
     tree.write(open(tomcat_users_file, "w"), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
-def add_another_user():
-    '''Helper function for deciding to add more Tomcat users or not'''
-    valid_selection = False
-    done_adding_users = None
-    while not valid_selection:
-        try:
-            another_user = esg_property_manager.get_property("add.another.user")
-        except ConfigParser.NoOptionError:
-            another_user = raw_input("Would you like to add another user? [y/N]:") or "n"
-
-        if another_user.lower().strip() in ["n", "no"]:
-            valid_selection = True
-            done_adding_users = True
-        elif another_user.lower().strip() in ["y", "yes"]:
-            valid_selection = True
-            done_adding_users = False
-        else:
-            print "Invalid selection"
-            continue
-    return done_adding_users
-
 def add_tomcat_user():
     '''Add a user to the default Tomcat user database (tomcat-users.xml) for container-managed authentication'''
     print "Create user credentials\n"
-    done_adding_users = False
-    while not done_adding_users:
-        try:
-            tomcat_username = esg_property_manager.get_property("tomcat.user")
-        except ConfigParser.NoOptionError:
-            default_user = "dnode_user"
-            tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user=default_user)) or default_user
+    try:
+        tomcat_username = esg_property_manager.get_property("tomcat.user")
+    except ConfigParser.NoOptionError:
+        default_user = "dnode_user"
+        tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user=default_user)) or default_user
 
-        valid_password = False
-        while not valid_password:
-            tomcat_user_password = esg_functions.get_security_admin_password()
-            if not tomcat_user_password:
-                tomcat_user_password = getpass.getpass("Please enter password for user, \"{tomcat_username}\" [********]:   ".format(tomcat_username=tomcat_username))
+    valid_password = False
+    while not valid_password:
+        tomcat_user_password = esg_functions.get_security_admin_password()
+        if not tomcat_user_password:
+            tomcat_user_password = getpass.getpass("Please enter password for user, \"{tomcat_username}\" [********]:   ".format(tomcat_username=tomcat_username))
 
-            if esg_functions.is_valid_password(tomcat_user_password):
-                valid_password = True
+        if esg_functions.is_valid_password(tomcat_user_password):
+            valid_password = True
 
-        password_hash = create_password_hash(tomcat_user_password)
+    password_hash = create_password_hash(tomcat_user_password)
 
-        update_tomcat_users_file(tomcat_username, password_hash)
-
-        done_adding_users = add_another_user()
+    update_tomcat_users_file(tomcat_username, password_hash)
 
 
-#TODO: terrible, undescriptive name; come up with something better
-def register(remote_host):
-    '''This function is for pulling in keys from hosts we wish to
-    communicate with over an encrypted ssl connection.  This function
-    must be run after tomcat is set up since it references server.xml.
-
-    (called by setup_idp_peer)
-    arg1 - hostname of the machine with the cert you want to get
-    (arg2 - password to truststore where cert will be inserted)
-    (arg3 - password to keystore - only applicable in "local" registration scenario)'''
-
-    print "Installing Public Certificate of Target Peer Node...[{}]".format(remote_host)
-
-    with pybash.pushd(config["tomcat_conf_dir"]):
-        esgf_host = esg_functions.get_esgf_host()
-        ssl_endpoint = urlparse(remote_host).hostname
-        ssl_port = "443"
-
-        if ssl_endpoint == esgf_host:
-            #For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition
-            esg_truststore_manager.add_my_cert_to_truststore()
-        else:
-            pybash.mkdir_p(config["workdir"])
-            with pybash.pushd(config["workdir"]):
-                esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-                if not esg_functions.download_update('./InstallCert.class', "{}/utils/InstallCert.class".format(esg_dist_url)):
-                    raise RuntimeError("Could not download utility class(1) for installing certificates")
-                if not esg_functions.download_update('./InstallCert$SavingTrustManager.class', "{}/utils/InstallCert$SavingTrustManager.class".format(esg_dist_url)):
-                    raise RuntimeError("Could not download utility class(2) for installing certificates")
-
-            class_path = ".:{}".format(config["workdir"])
-
-            #NOTE: The InstallCert code fetches Java's jssecacerts file (if
-            #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
-            #The output of the program is a new file named jssecacerts!      So here we get the output and rename it.
-            esg_functions.call_binary("/usr/local/java/bin/java", ["-classpath", class_path, "InstallCert", "{}:{}".format(ssl_endpoint, ssl_port), config["truststore_password"], config["truststore_file"]])
-
-            with pybash.pushd(config["tomcat_conf_dir"]):
-                os.chmod(config["truststore_file"], 0644)
-
-                tomcat_user = esg_functions.get_user_id("tomcat")
-                tomcat_group = esg_functions.get_group_id("tomcat")
-
-                os.chown(config["truststore_file"], tomcat_user, tomcat_group)
-
-                esg_truststore_manager.sync_with_java_truststore(config["truststore_file"])
-
-
-def select_idp_peer():
-    '''called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags'''
-
+def get_idp_peer_from_config():
     node_type_list = esg_functions.get_node_type()
-
     if "INDEX" in node_type_list and not set(["idp", "data", "compute"]).issubset(node_type_list):
-        #TODO: check if esgf_idp_peer = esgf.host
-        #TODO: esg_property_manager.get_property("esgf_idp_peer") == esg_property_manager.get_property("esgf.host"); then no external IDP
-        #TODO: check esgf.properties first
         try:
-            external_idp = esg_property_manager.get_property("use_external_idp")
+            esgf_idp_peer = esg_property_manager.get_property("esgf.idp.peer")
         except ConfigParser.NoOptionError:
-            external_idp = raw_input("Do you wish to use an external IDP peer?(N/y): ") or 'n'
+            default_idp_peer = esg_functions.get_esgf_host()
+            esgf_idp_peer = raw_input("Please specify your IDP peer node's FQDN [{}]: ".format(default_idp_peer)) or default_idp_peer
 
-        if external_idp.lower() in ["no", 'n']:
-            esgf_idp_peer = esg_functions.get_esgf_host()
-            esgf_idp_peer_name = esgf_idp_peer.upper()
+        return esgf_idp_peer
 
-        else:
-            while True:
-                idp_fqdn = raw_input("Please specify your IDP peer node's FQDN: ")
-                if not idp_fqdn:
-                    print "IDP peer node's FQDN can't be blank."
-                    continue
 
-            esgf_idp_peer = idp_fqdn
-            esgf_idp_peer_name = esgf_idp_peer.upper()
-    else:
-        esgf_idp_peer = esg_functions.get_esgf_host()
-        esgf_idp_peer_name = esgf_idp_peer.upper()
+def select_idp_peer(esgf_idp_peer=None):
+    '''called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags'''
+    if not esgf_idp_peer:
+        esgf_idp_peer = get_idp_peer_from_config()
+
+    esgf_idp_peer_name = esgf_idp_peer.upper()
 
     myproxy_endpoint = esgf_idp_peer
     esgf_host = esg_functions.get_esgf_host()
@@ -221,7 +135,7 @@ def select_idp_peer():
           ----------------------------------------------------------------------'''
 
     if esgf_host != myproxy_endpoint:
-        register(myproxy_endpoint)
+        esg_truststore_manager.install_peer_node_cert(myproxy_endpoint)
 
     esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
     esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)

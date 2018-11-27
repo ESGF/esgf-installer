@@ -133,7 +133,7 @@ def prefix_to_path(path, prepend_value):
     return path_unique(prepend_value) + ":" + path
 
 
-def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num_backups_to_keep"]):
+def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=7):
     '''
         Given a directory the contents of the directory is backed up as a tar.gz file in
         path - a filesystem path
@@ -317,7 +317,7 @@ def fetch_remote_file(local_file, remote_file):
                     downloaded_file.flush()
     except requests.exceptions.RequestException:
         logger.exception("Could not download %s", remote_file)
-        sys.exit()
+        raise
 
 
 def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.date.today())):
@@ -469,8 +469,7 @@ def set_security_admin_password(updated_password, password_file=config['esgf_sec
 
     os.chmod(config['esgf_secret_file'], 0640)
     try:
-        os.chown(config['esgf_secret_file'], config[
-            "installer_uid"], tomcat_group_id)
+        os.chown(config['esgf_secret_file'], get_user_id("root"), tomcat_group_id)
     except OSError:
         logger.exception("Unable to change ownership of %s", password_file)
 
@@ -515,12 +514,9 @@ def set_publisher_password(password=None):
 
 def set_postgres_password(password):
     '''Updates the Postgres superuser account password; gets saved to /esg/config/.esg_pg_pass'''
-
-    config["pg_sys_acct_passwd"] = password
-
     try:
         with open(config['pg_secret_file'], "w") as secret_file:
-            secret_file.write(config["pg_sys_acct_passwd"])
+            secret_file.write(password)
     except IOError:
         logger.exception("Could not open %s", config['pg_secret_file'])
 
@@ -531,8 +527,7 @@ def set_postgres_password(password):
     tomcat_group_id = get_tomcat_group_id()
 
     try:
-        os.chown(config['pg_secret_file'], config[
-                 "installer_uid"], tomcat_group_id)
+        os.chown(config['pg_secret_file'], get_user_id("root"), tomcat_group_id)
     except OSError:
         logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
 
@@ -913,13 +908,19 @@ def esgf_node_info():
         print info_file.read()
 
 
-def call_binary(binary_name, arguments=None, silent=False):
+def call_binary(binary_name, arguments=None, silent=False, conda_env=None):
     '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
     RETURN_CODE = 0
     STDOUT = 1
     STDERR = 2
     logger.debug("binary_name: %s", binary_name)
     logger.debug("arguments: %s", arguments)
+    if conda_env is not None:
+        if arguments is not None:
+            arguments = [conda_env, binary_name] + arguments
+        else:
+            arguments = [conda_env, binary_name]
+        binary_name = os.path.join(os.path.dirname(__file__), "run_in_env.sh")
     try:
         command = local[binary_name]
     except ProcessExecutionError:

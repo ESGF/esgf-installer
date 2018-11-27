@@ -44,12 +44,7 @@ install_miniconda(){
         echo "-----------------------------------"
         echo
         PATH=${CDAT_HOME}/bin:$PATH
-        conda create -y -n esgf-pub "python<3" cdutil cmor \
-        lxml requests psycopg2 decorator Tempita \
-        GitPython coloredlogs pip progressbar2 pyOpenSSL pylint \
-        setuptools semver Pyyaml configobj psutil \
-        -c conda-forge -c cdat
-
+        conda create -y -n esgf-pub "python<3" cdutil cmor "hdf5==1.10.3" -c pcmdi/label/nightly -c conda-forge
   popd
 
 }
@@ -63,6 +58,10 @@ install_dependencies_pip(){
   # activate virtual env and fetch some pre-requisites
   source ${CDAT_HOME}/bin/activate esgf-pub && \
 
+      pip install --upgrade pip
+      pip install coloredlogs GitPython progressbar2 pyOpenSSL \
+                  lxml "requests==2.19.1" psycopg2 decorator Tempita \
+                  setuptools semver Pyyaml configparser psutil
       pip install -r requirements.txt
 
   source deactivate
@@ -100,20 +99,7 @@ copy_autoinstall_file(){
 
 }
 
-initialize_config_file(){
-  echo
-  echo "-----------------------------------"
-  echo "Initializing esg_config.yaml file"
-  echo "-----------------------------------"
-  echo
-
-  source ${CDAT_HOME}/bin/activate esgf-pub
-    python esg_init.py
-  source deactivate
-
-}
-
 if [ ! -d "/usr/local/conda" ]; then
-    install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file; initialize_config_file
+    install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file
     echo "Bootstrap complete!"
 fi

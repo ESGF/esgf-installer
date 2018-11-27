@@ -231,6 +231,7 @@ def download_esg_search_war(esg_search_war_url):
                 f.write(chunk)
                 f.flush()
 
+
 def main():
     print "*******************************"
     print "Setting up The ESGF Search Sub-Project..."

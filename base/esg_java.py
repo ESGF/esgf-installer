@@ -14,6 +14,10 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+esg_root_url = esg_property_manager.get_property("esg.root.url")
+java_version = config["java_version"]
+JAVA_DIST_URL = "{}/java/{}/jdk{}-64.tar.gz".format(esg_root_url, java_version, java_version)
+
 def set_default_java():
     '''Sets the default Java binary to the version installed with ESGF'''
     esg_functions.call_binary("alternatives", ["--install", "/usr/bin/java", "/usr/local/java/bin/java", "3"])
@@ -34,16 +38,19 @@ def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin",
     version_line = java_version_output.split("\n")[0]
     version = version_line.split("version")[1].strip()
     installed_java_version = version.strip('\"')
-
-    assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
-    print "Installed java version meets the minimum requirement {}".format(config["java_version"])
+    try:
+        assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
+    except AssertionError:
+        print "Found version mismatch: {} != {}".format(installed_java_version, config["java_version"])
+    else:
+        print "Installed java version meets the minimum requirement {}".format(config["java_version"])
     return installed_java_version
 
 
 def download_java(java_tarfile):
     '''Download Java from distribution mirror'''
-    print "Downloading Java from ", config["java_dist_url"]
-    if not esg_functions.download_update(java_tarfile, config["java_dist_url"]):
+    print "Downloading Java from ", JAVA_DIST_URL
+    if not esg_functions.download_update(java_tarfile, JAVA_DIST_URL):
         logger.error("ERROR: Could not download Java")
         raise RuntimeError
 
@@ -86,7 +93,7 @@ def setup_java():
     pybash.mkdir_p(config["workdir"])
     with pybash.pushd(config["workdir"]):
 
-        java_tarfile = pybash.trim_string_from_head(config["java_dist_url"])
+        java_tarfile = pybash.trim_string_from_head(JAVA_DIST_URL)
         jdk_directory = java_tarfile.split("-")[0]
         java_install_dir_parent = config["java_install_dir"].rsplit("/", 1)[0]
 
@@ -102,46 +109,12 @@ def setup_java():
         pybash.symlink_force(os.path.join(java_install_dir_parent,
                                           jdk_directory), config["java_install_dir"])
 
-        os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
+        os.chown(config["java_install_dir"], esg_functions.get_user_id("root"), esg_functions.get_group_id("root"))
         # recursively change permissions
         esg_functions.change_ownership_recursive(
-            config["java_install_dir"], config["installer_uid"], config["installer_gid"])
+            config["java_install_dir"], esg_functions.get_user_id("root"), esg_functions.get_group_id("root"))
 
     # set_default_java()
     # print check_java_version()
     write_java_install_log()
     write_java_env()
-
-
-def write_ant_env():
-    '''Writes Ant config to /etc/esg.env'''
-    EnvWriter.export("ANT_HOME", "/usr/bin/ant")
-
-def write_ant_install_log():
-    '''Writes Ant config to install manifest'''
-    ant_version = esg_functions.call_subprocess("ant -version")["stderr"]
-    esg_functions.write_to_install_manifest("ant", "/usr/bin/ant", ant_version)
-
-
-def setup_ant():
-    '''Install ant via yum'''
-
-    print "\n*******************************"
-    print "Setting up Ant"
-    print "******************************* \n"
-
-    if os.path.exists(os.path.join("/usr", "bin", "ant")):
-        esg_functions.call_binary("ant", ["-version"])
-
-        try:
-            setup_ant_answer = esg_property_manager.get_property("update.ant")
-        except ConfigParser.NoOptionError:
-            setup_ant_answer = raw_input(
-                "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
-
-        if setup_ant_answer.lower() in ["n", "no"]:
-            return
-
-    esg_functions.call_binary("yum", ["-y", "install", "ant"])
-    write_ant_install_log()
-    write_ant_env()

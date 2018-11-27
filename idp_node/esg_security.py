@@ -76,9 +76,11 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
             #------------------------------------------------------------------------
             #Based on the node type selection we build the appropriate database tables
             #------------------------------------------------------------------------
+            esg_root_url = esg_property_manager.get_property("esg.root.url")
             python_version = "2.7"
+            # https://aims1.llnl.gov/esgf/dist/devel/3.0/a/esgf-security/esgf_security-0.1.5-py2.7.egg
             esgf_security_egg_file = "esgf_security-{}-py{}.egg".format(config["esgf_security_db_version"], python_version)
-            esgf_security_egg_url = "{}/esgf-security/{}".format(esg_dist_url, esgf_security_egg_file)
+            esgf_security_egg_url = "{}/devel/3.0/a/esgf-security/{}".format(esg_root_url, esgf_security_egg_file)
 
             #download the egg file from the distribution server is necessary....
             esg_functions.download_update(esgf_security_egg_file, esgf_security_egg_url)
@@ -254,6 +256,7 @@ def clean_security_webapp_subsystem():
 
 
 def fetch_user_migration_launcher(node_type_list, esg_dist_url):
+    #TODO: Appears to be deprecated
     if "IDP" in node_type_list:
         with pybash.pushd(config["scripts_dir"]):
             shutil.copyfile(os.path.join(current_directory, "esgf_security_scripts/esgf-user-migrate"), "esgf-user-migrate")
@@ -262,6 +265,7 @@ def fetch_user_migration_launcher(node_type_list, esg_dist_url):
         logger.debug("This function, fetch_user_migration_launcher(), is not applicable to current node type (%s)", set(node_type_list))
 
 def fetch_policy_check_launcher(node_type_list, esg_dist_url):
+    #TODO: Appears to be deprecated
     if "IDP" in node_type_list and "DATA" in node_type_list:
         with pybash.pushd(config["scripts_dir"]):
             shutil.copyfile(os.path.join(current_directory, "esgf_security_scripts/esgf-policy-check"), "esgf-policy-check")

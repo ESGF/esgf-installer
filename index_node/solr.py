@@ -153,11 +153,32 @@ def add_shards(config_type, port_number=None):
         port_number = "8984"
     elif config_type == "slave":
         port_number = "8983"
+    os.environ["SOLR_HOME"] = "/usr/local/solr-home/"
 
-    esg_functions.stream_subprocess_output("/usr/local/bin/add_shard.sh {} {}".format(config_type, port_number))
+    esg_functions.call_binary("/usr/local/bin/add_shard.sh", [config_type, port_number])
 
     commit_shard_config(config_type, port_number)
 
+
+def remove_shard(name, port_number):
+    print "\n*******************************"
+    print "Remove Shard"
+    print "******************************* \n"
+    if name == "master":
+        port_number = "8984"
+    elif name == "slave":
+        port_number = "8983"
+
+    os.environ["SOLR_HOME"] = "/usr/local/solr-home/"
+    esg_functions.call_binary("/usr/local/bin/remove_shard.sh", [name, port_number])
+
+    config_file = "/esg/config/esgf_shards.config"
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(config_file)
+
+    parser.remove_option("esgf_solr_shards", name)
+    with open(config_file, "w") as config_file_object:
+        parser.write(config_file_object)
 
 def write_solr_install_log(solr_config_type, solr_version, solr_install_dir):
     if solr_config_type == "master" or solr_config_type == "slave":
@@ -194,7 +215,7 @@ def write_solr_install_log(solr_config_type, solr_version, solr_install_dir):
 
 '''
 
-def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
+def setup_solr(index_config = ["master", "slave"], SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
     if os.path.isdir("/usr/local/solr"):
         print "Solr directory found."
@@ -267,8 +288,8 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     pybash.mkdir_p("/esg/solr-logs")
 
 
-def main(index_config):
-    setup_solr(index_config)
+def main():
+    setup_solr()
 
 if __name__ == '__main__':
-    main(index_config=config["index_config"])
+    main()

@@ -230,7 +230,6 @@ def initial_setup_questionnaire(force_install=False):
         os.chmod(config['pub_secret_file'], 0640)
         if "tomcat" not in esg_functions.get_group_list():
             esg_functions.add_unix_group(config["tomcat_group"])
-        os.chown(config['esgf_secret_file'], config[
-                 "installer_uid"], esg_functions.get_tomcat_group_id())
+        os.chown(config['esgf_secret_file'], esg_functions.get_user_id("root"), esg_functions.get_tomcat_group_id())
 
     return True

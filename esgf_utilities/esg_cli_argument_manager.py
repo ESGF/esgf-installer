@@ -16,7 +16,7 @@ from base import esg_tomcat_manager
 from base import esg_postgres
 from data_node import esg_dashboard, esg_publisher, orp
 from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError
-from idp_node import globus, gridftp, myproxy, esg_security
+from idp_node import globus, gridftp, myproxy, esg_security, idp
 from index_node import solr, esg_search
 from plumbum.commands import ProcessExecutionError
 
@@ -101,6 +101,7 @@ def start(node_types):
             globus.start_globus("IDP")
         except ProcessExecutionError, error:
             logger.error("Could not start globus: %s", error)
+        idp.slcs_apachectl("start")
 
     if "INDEX" in node_types:
         esg_search.start_search_services()
@@ -120,6 +121,7 @@ def stop(node_types):
 
     if "IDP" in node_types:
         globus.stop_globus("IDP")
+        idp.slcs_apachectl("stop")
 
     if "INDEX" in node_types:
         solr_shards = solr.read_shard_config()
@@ -295,9 +297,6 @@ def define_acceptable_arguments():
     parser.add_argument("--uninstall", "--purge", dest="uninstall", help="Uninstalls the ESGF installation", action="store_true")
     parser.add_argument("--get-idp-peer", dest="getidppeer", help="Displays the IDP peer node name", action="store_true")
     parser.add_argument("--set-idp-peer", "--set-admin-peer", dest="setidppeer", help="Selects the IDP peer node", action="store_true")
-    parser.add_argument("--get-index-peer", dest="getindexpeer", help="Displays the index peer node name", action="store_true")
-    parser.add_argument("--set-index-peer", dest="setindexpeer", help="Sets the (index peer) node to which we will publish", action="store_true")
-    parser.add_argument("--set-publication-target", dest="setpublicationtarget", help="Sets the publication target", action="store_true")
     parser.add_argument("--get-default-peer", dest="getdefaultpeer", help="Displays the default peer", action="store_true")
     parser.add_argument("--set-default-peer", dest="setdefaultpeer", help="Sets the default peer", action="store_true")
     parser.add_argument("--get-peer-group", "--get-peer-groups",  dest="getpeergroup", help="Displays the peer groups", action="store_true")
@@ -318,9 +317,8 @@ def define_acceptable_arguments():
     parser.add_argument("--force-install", dest="forceinstall", help="", action="store_true")
     parser.add_argument("--index-config", dest="indexconfig", help="", action="store_true")
     parser.add_argument("--check-shards", dest="checkshards", help="", action="store_true")
-    parser.add_argument("--add-replica-shard", dest="addreplicashard", help="", action="store_true")
-    parser.add_argument("--remove-replica-shard", dest="removereplicashard", help="", action="store_true")
-    parser.add_argument("--time-shards", dest="timeshards", help="", action="store_true")
+    parser.add_argument("--add-replica-shard", dest="addreplicashard", nargs=2, help="Specify a hostname and port of the replica shard to add")
+    parser.add_argument("--remove-replica-shard", dest="removereplicashard", nargs=2, help="Specify a hostname and port of the replica shard to remove")
     parser.add_argument("--update-publisher-resources", dest="updatepublisherresources", help="", action="store_true")
 
     return parser
@@ -394,7 +392,8 @@ def process_arguments():
         logger.debug("args: %s", args)
         node_type_list = esg_functions.get_node_type()
         logger.debug("START SERVICES: %s", node_type_list)
-        return start(node_type_list)
+        start(node_type_list)
+        sys.exit(0)
     elif args.stop:
         logger.debug("STOP SERVICES")
         node_type_list = esg_functions.get_node_type()
@@ -482,16 +481,6 @@ def process_arguments():
         node_type_list = esg_functions.get_node_type()
         from data_node import thredds
         thredds.select_idp_peer()
-    elif args.getindexpeer:
-        try:
-            print "Current Index Peer: {}".format(esg_property_manager.get_property("esgf_index_peer"))
-        except ConfigParser.NoOptionError:
-            logger.error("Could not find Index peer")
-    elif args.setindexpeer:
-        from data_node import esg_publisher
-        esg_publisher.set_index_peer()
-    elif args.setpublicationtarget:
-        pass
     elif args.getdefaultpeer:
         try:
             print "Current Default Peer: {}".format(esg_property_manager.get_property("esgf_default_peer"))
@@ -534,7 +523,6 @@ def process_arguments():
     elif args.migratetomcatcredentialstoesgf:
         from base import esg_tomcat_manager
         esg_tomcat_manager.migrate_tomcat_credentials_to_esgf()
-        esg_tomcat_manager.sanity_check_web_xmls()
     elif args.updatetempca:
         from esgf_utilities import CA
         logger.debug("updating temporary CA")
@@ -571,15 +559,13 @@ def process_arguments():
         from index_node import esg_search
         esg_search.check_shards()
     elif args.addreplicashard:
-        from index_node import esg_search
-        #expecting <hostname>:<solr port> | master | slave
-        esg_search.add_shard()
+        hostname = args.addreplicashard[0]
+        port = args.addreplicashard[1]
+        solr.add_shards(hostname, port)
     elif args.removereplicashard:
-        from index_node import esg_search
-        esg_search.remove_shard()
-    elif args.timeshard:
-        from index_node import esg_search
-        esg_search.time_shards()
+        hostname = args.removereplicashard[0]
+        port = args.removereplicashard[1]
+        solr.remove_shard(hostname, port)
     elif args.updatepublisherresources:
         from index_node import esg_search
         esg_search.setup_publisher_resources()

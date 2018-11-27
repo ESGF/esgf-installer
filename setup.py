@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 
-with open('README.rst') as f:
+with open('README.md') as f:
     readme = f.read()
 
 with open('LICENSE') as f:
@@ -18,5 +18,10 @@ setup(
     author_email='hill119@llnl.gov',
     url='https://github.com/ESGF/esgf-installer',
     license=license,
-    packages=find_packages(exclude=('tests', 'docs'))
+    packages=find_packages(exclude=('tests', 'docs')),
+    package_data={'': ['esg_config.yaml']},
+    include_package_data=True,
+    scripts=[
+        "esg_node.py"
+    ]
 )

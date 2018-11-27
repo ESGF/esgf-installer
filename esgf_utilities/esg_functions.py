@@ -908,13 +908,19 @@ def esgf_node_info():
         print info_file.read()
 
 
-def call_binary(binary_name, arguments=None, silent=False):
+def call_binary(binary_name, arguments=None, silent=False, conda_env=None):
     '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
     RETURN_CODE = 0
     STDOUT = 1
     STDERR = 2
     logger.debug("binary_name: %s", binary_name)
     logger.debug("arguments: %s", arguments)
+    if conda_env is not None:
+        if arguments is not None:
+            arguments = [conda_env, binary_name] + arguments
+        else:
+            arguments = [conda_env, binary_name]
+        binary_name = os.path.join(os.path.dirname(__file__), "run_in_env.sh")
     try:
         command = local[binary_name]
     except ProcessExecutionError:

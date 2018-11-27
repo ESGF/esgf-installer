@@ -101,15 +101,13 @@ def add_tomcat_user():
 
 
 def get_idp_peer_from_config():
-    node_type_list = esg_functions.get_node_type()
-    if "INDEX" in node_type_list and not set(["idp", "data", "compute"]).issubset(node_type_list):
-        try:
-            esgf_idp_peer = esg_property_manager.get_property("esgf.idp.peer")
-        except ConfigParser.NoOptionError:
-            default_idp_peer = esg_functions.get_esgf_host()
-            esgf_idp_peer = raw_input("Please specify your IDP peer node's FQDN [{}]: ".format(default_idp_peer)) or default_idp_peer
+    try:
+        esgf_idp_peer = esg_property_manager.get_property("esgf.idp.peer")
+    except ConfigParser.NoOptionError:
+        default_idp_peer = esg_functions.get_esgf_host()
+        esgf_idp_peer = raw_input("Please specify your IDP peer node's FQDN [{}]: ".format(default_idp_peer)) or default_idp_peer
 
-        return esgf_idp_peer
+    return esgf_idp_peer
 
 
 def select_idp_peer(esgf_idp_peer=None):

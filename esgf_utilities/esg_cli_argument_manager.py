@@ -16,7 +16,7 @@ from base import esg_tomcat_manager
 from base import esg_postgres
 from data_node import esg_dashboard, esg_publisher, orp
 from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError
-from idp_node import globus, gridftp, myproxy, esg_security
+from idp_node import globus, gridftp, myproxy, esg_security, idp
 from index_node import solr, esg_search
 from plumbum.commands import ProcessExecutionError
 
@@ -101,6 +101,7 @@ def start(node_types):
             globus.start_globus("IDP")
         except ProcessExecutionError, error:
             logger.error("Could not start globus: %s", error)
+        idp.slcs_apachectl("start")
 
     if "INDEX" in node_types:
         esg_search.start_search_services()
@@ -120,6 +121,7 @@ def stop(node_types):
 
     if "IDP" in node_types:
         globus.stop_globus("IDP")
+        idp.slcs_apachectl("stop")
 
     if "INDEX" in node_types:
         solr_shards = solr.read_shard_config()

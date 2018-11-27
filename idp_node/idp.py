@@ -124,7 +124,9 @@ def setup_slcs():
     print "Setting up SLCS Oauth Server"
     print "*******************************"
 
-    esg_functions.call_binary("yum", ["-y", "-q", "install", "epel-release", "ansible"])
+    slcs_env = "slcs-env"
+    esg_functions.call_binary("conda", ["create", "-y", "-n", slcs_env, "python<3", "pip"])
+    esg_functions.call_binary("pip", ["install", "mod_wsgi<4.6", "ansible"], conda_env=slcs_env)
 
     #create slcs Database
     esg_postgres.create_database("slcsdb")
@@ -156,7 +158,6 @@ def setup_slcs():
             db_password = esg_functions.get_postgres_password()
             production_venv_only["esgf_slcsdb"]["password"] = db_password
             production_venv_only["esgf_userdb"]["password"] = db_password
-            production_venv_only["virtualenv_command"] = distutils.spawn.find_executable("virtualenv")
 
             with open('playbook/overrides/production_venv_only.yml', 'w') as yaml_file:
                 yaml.dump(production_venv_only, yaml_file)
@@ -166,7 +167,42 @@ def setup_slcs():
             pybash.mkdir_p("/usr/local/esgf-slcs-server/src")
             esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
 
-            esg_functions.call_binary("ansible-playbook", ["-i", "playbook/inventories/localhost", "-e", "@playbook/overrides/production_venv_only.yml", "playbook/playbook.yml"])
+            esg_functions.call_binary(
+                "ansible-playbook",
+                [
+                    "-i", "playbook/inventories/localhost",
+                    "-e", "@playbook/overrides/production_venv_only.yml",
+                    "playbook/playbook.yml"
+                ],
+                conda_env=slcs_env
+            )
+            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
+
+    # Setup the mod_wsgi-express server. Note this does NOT start/stop/restart it.
+    with pybash.pushd("/usr/local/esgf-slcs-server/src/esgf_slcs_server"):
+        esg_functions.call_binary(
+            "mod_wsgi-express",
+            [
+                "setup-server",
+                "esgf_slcs_server/wsgi.py",
+                "--server-root", "/etc/slcs-wsgi-8888",
+                "--user", "apache",
+                "--group", "apache",
+                "--host", "localhost",
+                "--port", "8888",
+                "--mount-point", "/esgf-slcs",
+                "--url-alias", "/static", "/var/www/static"
+            ],
+            conda_env=slcs_env
+        )
+
+def slcs_apachectl(directive):
+    esg_functions.call_binary(
+        "/etc/slcs-wsgi-8888/apachectl",
+        [
+            directive
+        ]
+    )
 
 def main():
     '''Main function'''

@@ -408,20 +408,6 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     esg_property_manager.set_property("version", script_version)
     esg_property_manager.set_property("release", script_release)
     EnvWriter.add_source("/usr/local/conda/bin/activate esgf-pub")
-    #     write_as_property gridftp_config
-    esg_node_finally(node_type_list)
-
-def esg_node_finally(node_type_list):
-    '''Runs after installation, final setup'''
-    global_x509_cert_dir = "/etc/grid-security/certificates"
-    esg_functions.change_ownership_recursive(global_x509_cert_dir, config["installer_uid"], config["installer_gid"])
-
-    if "IDP" in node_type_list:
-        os.environ["PGPASSWORD"] = esg_functions.get_postgres_password()
-        print "Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard."
-        # psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
-        #     echo "Node installation is complete."
-
 
 if __name__ == '__main__':
     main()

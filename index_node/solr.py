@@ -73,11 +73,6 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
     # -a Start Solr with additional JVM parameters,
     # -m Start Solr with the defined value as the min (-Xms) and max (-Xmx) heap size for the JVM
 
-    # Switch to solr user
-    root_id = pwd.getpwnam("root").pw_uid
-    solr_id = pwd.getpwnam("solr").pw_uid
-    os.seteuid(solr_id)
-
     if solr_config_type == "master":
         enable_nodes = "-Denable.master=true"
     elif solr_config_type == "localhost":
@@ -87,11 +82,11 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
 
     server_directory = "{}/server".format(SOLR_INSTALL_DIR)
     solr_solr_home = "{}/{}-{}".format(SOLR_HOME, solr_config_type, port_number)
-    start_solr_options = ["start", "-d", server_directory, "-s", solr_solr_home, "-p", port_number, "-a", enable_nodes, "-m", "512m"]
-    esg_functions.call_binary("/usr/local/solr/bin/solr", start_solr_options)
-
-    # Switch back to root
-    os.seteuid(root_id)
+    # start_solr_options = ["start", "-d", server_directory, "-s", solr_solr_home, "-p", port_number, "-a", enable_nodes, "-m", "512m"]
+    # esg_functions.call_binary("/usr/local/solr/bin/solr", start_solr_options)
+    # solr -c "/usr/local/solr/bin/solr start"
+    start_options = ["solr", "-c", '/usr/local/solr/bin/solr start -d {} -s {} -p {} -a {} -m 512m'.format(server_directory, solr_solr_home, port_number, enable_nodes)]
+    esg_functions.call_binary("su", start_options)
 
 def solr_status():
     '''Check the status of solr'''
@@ -202,6 +197,18 @@ def write_solr_install_log(solr_config_type, solr_version, solr_install_dir):
 
 '''
 
+
+def create_solr_user():
+    '''Create non-privilged user to run Solr server'''
+    adduser_options = ["--system", "-U", "-m", "--home-dir", "/usr/local/solr", "solr"]
+    try:
+        esg_functions.call_binary("adduser", adduser_options)
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
+
 def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
     if os.path.isdir("/usr/local/solr"):
@@ -239,17 +246,7 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
 
     pybash.mkdir_p(SOLR_HOME)
 
-    # create non-privilged user to run Solr server
-    esg_functions.add_unix_group("solr")
-
-    useradd_options = ["-s", "/sbin/nologin", "-g", "solr", "-d", "/usr/local/solr", "solr"]
-    try:
-        esg_functions.call_binary("useradd", useradd_options)
-    except ProcessExecutionError, err:
-        if err.retcode == 9:
-            pass
-        else:
-            raise
+    create_solr_user()
 
     SOLR_USER_ID = pwd.getpwnam("solr").pw_uid
     SOLR_GROUP_ID = grp.getgrnam("solr").gr_gid

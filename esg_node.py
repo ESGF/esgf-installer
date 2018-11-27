@@ -377,7 +377,8 @@ def remove_unused_esgf_webapps():
 def install_bash_completion_file(esg_dist_url):
     '''Install bash_completion file from distribution mirror'''
     if os.path.exists("/etc/bash_completion") and not os.path.exists("/etc/bash_completion.d/esg-node"):
-        esg_functions.download_update("/etc/bash_completion.d/esg-node", "{}/esgf-installer/esg-node.completion".format(esg_dist_url))
+        current_directory = os.path.join(os.path.dirname(__file__))
+        shutil.copyfile(os.path.join(current_directory, "../config/esg-node.completion"), "/etc/bash_completion.d/esg-node")
 
 def write_script_version_file(script_version):
     '''Write version file'''

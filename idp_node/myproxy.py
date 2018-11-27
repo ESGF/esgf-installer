@@ -251,40 +251,29 @@ def copy_myproxy_certificate_apps():
     shutil.copy2(retriever_file, myproxy_config_dir)
 
 def edit_pam_pgsql_conf():
-    with pybash.pushd("/etc"):
-        pgsql_conf_file = "pam_pgsql.conf"
-        "Download and Modifying pam pgsql configuration file: {}".format(pgsql_conf_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
-        try:
-            esg_functions.download_update(pgsql_conf_file, myproxy_dist_url_base+"/etc_{}".format(pgsql_conf_file))
-        except HTTPError:
-            raise
+    pgsql_conf_file = "/etc/pam_pgsql.conf"
+    logger.info("Copy and Modifying pam pgsql configuration file: pam_pgsql.conf")
+    shutil.copyfile(os.path.join(current_directory, "myproxy_conf_files/etc_pam_pgsql.conf"), pgsql_conf_file)
+    os.chmod(pgsql_conf_file, 0600)
 
-        os.chmod(pgsql_conf_file, 0600)
+    #Replace placeholder values
+    with open(pgsql_conf_file, 'r') as file_handle:
+        filedata = file_handle.read()
+    filedata = filedata.replace("@@esgf_db_name@@", esg_property_manager.get_property("db.database"))
+    filedata = filedata.replace("@@postgress_host@@", esg_property_manager.get_property("db.host"))
+    filedata = filedata.replace("@@postgress_port@@", esg_property_manager.get_property("db.port"))
+    filedata = filedata.replace("@@postgress_user@@", esg_property_manager.get_property("db.user"))
+    filedata = filedata.replace("@@esgf_idp_peer@@", esg_property_manager.get_property("esgf.index.peer"))
+    filedata = filedata.replace("@@pg_sys_acct_passwd@@", esg_functions.get_postgres_password())
 
-        #Replace placeholder values
-        with open(pgsql_conf_file, 'r') as file_handle:
-            filedata = file_handle.read()
-        filedata = filedata.replace("@@esgf_db_name@@", esg_property_manager.get_property("db.database"))
-        filedata = filedata.replace("@@postgress_host@@", esg_property_manager.get_property("db.host"))
-        filedata = filedata.replace("@@postgress_port@@", esg_property_manager.get_property("db.port"))
-        filedata = filedata.replace("@@postgress_user@@", esg_property_manager.get_property("db.user"))
-        filedata = filedata.replace("@@esgf_idp_peer@@", esg_property_manager.get_property("esgf.index.peer"))
-        filedata = filedata.replace("@@pg_sys_acct_passwd@@", esg_functions.get_postgres_password())
-
-        # Write the file out again
-        with open(pgsql_conf_file, 'w') as file_handle:
-            file_handle.write(filedata)
+    # Write the file out again
+    with open(pgsql_conf_file, 'w') as file_handle:
+        file_handle.write(filedata)
 
 def fetch_etc_pam_d_myproxy():
-    with pybash.pushd("/etc/pam.d"):
-        myproxy_file = "myproxy"
-        "Fetching pam's myproxy resource file: {}".format(myproxy_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
-        try:
-            esg_functions.download_update(myproxy_file, myproxy_dist_url_base+"/etc_pam.d_{}".format(myproxy_file))
-        except HTTPError:
-            raise
+    myproxy_file = "/etc/pam.d/myproxy"
+    logger.info("Copying pam's MyProxy resource file to %s", myproxy_file)
+    shutil.copyfile(os.path.join(current_directory, "myproxy_conf_files/etc_pam.d_myproxy"), myproxy_file)
 
 def edit_etc_myproxyd(myproxy_esgf_path="/etc/myproxy.d/myproxy-esgf"):
     shutil.copyfile(os.path.join(current_directory, "../config/myproxy-esgf"), myproxy_esgf_path)

@@ -142,7 +142,7 @@ def setup_orp():
         tomcat_group_id = esg_functions.get_tomcat_group_id()
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-orp", tomcat_user_id, tomcat_group_id)
 
-    setup_providers_dropdown(esg_dist_url)
+    setup_providers_dropdown()
     get_orp_support_libs("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib", esg_dist_url)
 
     write_orp_install_log(orp_service_app_home)
@@ -183,16 +183,15 @@ def update_common_loader(config_dir):
 
 
 
-def setup_providers_dropdown(esg_dist_url):
+def setup_providers_dropdown():
     '''Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs'''
-    known_providers_url = "{}/lists/esgf_known_providers.xml".format(esg_dist_url)
     config_dir = os.path.join("{esg_root_dir}".format(esg_root_dir=config["esg_root_dir"]), "config")
     known_providers_file = os.path.join("{config_dir}".format(config_dir=config_dir), "esgf_known_providers.xml")
+    current_directory = os.path.join(os.path.dirname(__file__))
+    shutil.copyfile(os.path.join(current_directory, "../config/esgf_known_providers.xml"), known_providers_file)
 
     # add /esg/config/ to common.loader in catalina.properties if not already present
     update_common_loader(config_dir)
-
-    esg_functions.download_update(known_providers_file, known_providers_url)
 
     esg_property_manager.set_property("orp_provider_list", known_providers_file)
 

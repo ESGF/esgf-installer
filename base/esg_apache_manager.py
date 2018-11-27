@@ -100,11 +100,9 @@ def make_python_eggs_dir():
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
     pybash.mkdir_p("/etc/certs")
-    remote_bundle = "{}/certs/{}".format(
-        esg_property_manager.get_property("esg.root.url"),
-        "esgf-ca-bundle.crt"
-    )
-    esg_functions.download_update("/etc/certs/esgf-ca-bundle.crt", remote_bundle)
+    current_directory = os.path.join(os.path.dirname(__file__))
+    shutil.copyfile(os.path.join(current_directory, "../config/esg-node.completion"), "/etc/bash_completion.d/esg-node")
+    shutil.copyfile(os.path.join(current_directory, "../config/esgf-ca-bundle.crt"), "/etc/certs/esgf-ca-bundle.crt")
     # Custom ESGF Apache files that setup proxying
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
     os.chmod("/etc/init.d/esgf-httpd", 0755)

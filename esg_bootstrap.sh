@@ -25,7 +25,7 @@ trap 'handle_error $LINENO ${BASH_LINENO[@]}' ERR
 
 install_miniconda(){
   # install Anaconda
-  if [ ! -d "/usr/local/conda" ]; then
+  if [ -d "/usr/local/conda" ]; then
     echo
     echo "-----------------------------------"
     echo "Miniconda already installed."

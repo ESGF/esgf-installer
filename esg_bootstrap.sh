@@ -37,6 +37,7 @@ install_miniconda(){
     echo "-----------------------------------"
     echo
     /usr/local/conda/bin/conda install -y -n esgf-pub cdutil cmor -c pcmdi/label/nightly -c conda-forge
+    /usr/local/conda/bin/conda remove -y -n esgf-pub postgresql
     return 0
   fi
 
@@ -126,7 +127,6 @@ run_migration_script(){
       return 0
     fi
     source /usr/local/conda/bin/activate esgf-pub
-    /usr/local/conda/bin/conda remove -y -n esgf-pub postgresql
     echo
     echo "-----------------------------------"
     echo "Running ESGF 2->3 migration script"

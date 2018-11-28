@@ -36,7 +36,7 @@ install_miniconda(){
     echo "Installing dependencies to conda environment: esgf-pub"
     echo "-----------------------------------"
     echo
-    /usr/local/conda/bin/conda install -n esgf-pub cdutil cmor -c pcmdi/label/nightly -c conda-forge
+    /usr/local/conda/bin/conda install -y -n esgf-pub cdutil cmor -c pcmdi/label/nightly -c conda-forge
     return 0
   fi
 

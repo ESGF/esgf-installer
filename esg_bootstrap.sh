@@ -37,7 +37,7 @@ install_miniconda(){
     echo "-----------------------------------"
     echo
     /usr/local/conda/bin/conda install -y -n esgf-pub cdutil cmor -c pcmdi/label/nightly -c conda-forge
-    /usr/local/conda/bin/conda remove -y -n esgf-pub postgresql
+    /usr/local/conda/bin/conda remove -y -n esgf-pub postgresql psycopg2
     return 0
   fi
 

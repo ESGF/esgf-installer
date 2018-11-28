@@ -126,6 +126,7 @@ run_migration_script(){
       return 0
     fi
     source /usr/local/conda/bin/activate esgf-pub
+    /usr/local/conda/bin/conda remove -y -n esgf-pub postgresql
     echo
     echo "-----------------------------------"
     echo "Running ESGF 2->3 migration script"

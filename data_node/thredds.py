@@ -120,8 +120,10 @@ def select_idp_peer(esgf_idp_peer=None):
     myproxy_endpoint = esgf_idp_peer
     esgf_host = esg_functions.get_esgf_host()
 
-    if esgf_host != myproxy_endpoint:
-        esg_truststore_manager.install_peer_node_cert(myproxy_endpoint)
+    # If issues arise where sites are not using commercial certs from
+    # trusted root certificate authorities, uncomment this and fix it
+    #if esgf_host != myproxy_endpoint:
+    #    esg_truststore_manager.install_peer_node_cert(myproxy_endpoint)
 
     esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
     esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)

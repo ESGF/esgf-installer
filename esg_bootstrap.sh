@@ -80,7 +80,7 @@ install_dependencies_pip(){
                   setuptools semver Pyyaml configparser psutil
       pip install -r requirements.txt
 
-  source deactivate
+  source ${CDAT_HOME}/bin/deactivate
 
 }
 
@@ -124,7 +124,7 @@ run_migration_script(){
     echo "-----------------------------------"
     echo
       python migration_backup_script.py
-    source deactivate
+    source ${CDAT_HOME}/bin/deactivate
   fi
 }
 

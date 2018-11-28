@@ -231,6 +231,7 @@ def fetch_esgf_certificates(globus_certs_dir="/etc/grid-security/certificates"):
     #Download trusted certs tarball
     esg_trusted_certs_file = "esg_trusted_certificates.tar"
     esg_root_url = esg_property_manager.get_property("esg.root.url")
+    #TODO: Add in check of node-peer-group
     esg_trusted_certs_file_url = "{esg_root_url}/certs/{esg_trusted_certs_file}".format(esg_root_url=esg_root_url, esg_trusted_certs_file=esg_trusted_certs_file)
     esg_functions.download_update(os.path.join(globus_certs_dir, esg_trusted_certs_file), esg_trusted_certs_file_url)
 
@@ -263,9 +264,9 @@ def download_truststore(truststore_file, esg_root_url, node_peer_group):
     truststore_file_name = pybash.trim_string_from_head(truststore_file)
 
     if node_peer_group == "esgf-test":
-        esg_functions.download_update(truststore_file, "{}/certs/test-federation/{}".format(esg_root_url, truststore_file_name))
+        shutil.copyfile(os.path.join(current_directory, "../config/esg-truststore-test-federation.ts"), truststore_file)
     else:
-        esg_functions.download_update(truststore_file, "{}/certs/{}".format(esg_root_url, truststore_file_name))
+        shutil.copyfile(os.path.join(current_directory, "../config/esg-truststore.ts"), truststore_file)
 
 def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group):
     '''Download apache truststore file from distribution mirror'''
@@ -279,9 +280,9 @@ def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
         print "Downloading Apache Truststore... "
         print "******************************* \n"
         if node_peer_group == "esgf-test":
-            esg_functions.download_update(apache_truststore, "{}/certs/test-federation/{}".format(esg_root_url, apache_truststore_file_name))
+            shutil.copyfile(os.path.join(current_directory, "../config/esgf-ca-bundle-test-federation.crt"), apache_truststore)
         else:
-            esg_functions.download_update(apache_truststore, "{}/certs/{}".format(esg_root_url, apache_truststore_file_name))
+            shutil.copyfile(os.path.join(current_directory, "../config/esgf-ca-bundle.crt"), apache_truststore)
 
 def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_truststore='/etc/certs/esgf-ca-bundle.crt', globus_certs_dir="/etc/grid-security/certificates"):
     '''Download ESGF Truststore from the distribution mirror'''

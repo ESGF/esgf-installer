@@ -29,7 +29,7 @@ This will checkout out the alpha release tag and create a new branch called 3.0_
 ### Configure
 Note that, to avoid being prompted for various parameters, the `esgf.properties.template` should be populated with the proper values for your node.
 
-See [the documentation](https://esgf.github.io/esgf-installer/autoinstall_usage.html) for information when populating.
+See [the properties file documentation](https://esgf.github.io/esgf-installer/autoinstall_usage.html) for information when populating.
 
 ### Bootstrap and Activate
 Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script:
@@ -42,7 +42,7 @@ source /usr/local/conda/bin/activate esgf-pub
 ```
 
 ### Install
-Run an installation by invoking the `esg_node.py` script.
+Run an installation by invoking the `esg_node.py` script. For example, a data-only node installation:
 ```
 python esg_node.py --install --type data
 ```

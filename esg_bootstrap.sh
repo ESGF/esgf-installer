@@ -25,6 +25,21 @@ trap 'handle_error $LINENO ${BASH_LINENO[@]}' ERR
 
 install_miniconda(){
   # install Anaconda
+  if [ ! -d "/usr/local/conda" ]; then
+    echo
+    echo "-----------------------------------"
+    echo "Miniconda already installed."
+    echo "-----------------------------------"
+    echo
+    echo
+    echo "-----------------------------------"
+    echo "Installing dependencies to conda environment: esgf-pub"
+    echo "-----------------------------------"
+    echo
+    conda install -n esgf-pub cdutil cmor -c pcmdi/label/nightly -c conda-forge
+    return 0
+  fi
+
   echo
   echo "-----------------------------------"
   echo "Installing Miniconda"
@@ -56,6 +71,7 @@ install_dependencies_pip(){
   echo "-----------------------------------"
   echo
   # activate virtual env and fetch some pre-requisites
+  CDAT_HOME=/usr/local/conda
   source ${CDAT_HOME}/bin/activate esgf-pub && \
 
       pip install --upgrade pip
@@ -99,21 +115,8 @@ copy_autoinstall_file(){
 
 }
 
-initialize_config_file(){
-  echo
-  echo "-----------------------------------"
-  echo "Initializing esg_config.yaml file"
-  echo "-----------------------------------"
-  echo
-
-  source ${CDAT_HOME}/bin/activate esgf-pub
-    python esg_init.py
-  source deactivate
-
-}
-
 run_migration_script(){
-  if [ -e "/usr/local/bin/esg-node" ]; then
+  if [ -e "/usr/local/bin/esg-node" ] && [ $1 == "migrate" ]; then
     source /usr/local/conda/bin/activate esgf-pub
     echo
     echo "-----------------------------------"
@@ -126,7 +129,7 @@ run_migration_script(){
 }
 
 
-if [ ! -d "/usr/local/conda" ]; then
+if [ ! -d "/usr/local/conda" ] || [ $1 == "migrate" ]; then
     install_dependencies_yum && install_miniconda && install_dependencies_pip && run_migration_script && copy_autoinstall_file
     echo "Bootstrap complete!"
 fi

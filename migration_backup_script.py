@@ -51,7 +51,10 @@ def copy_previous_settings(old_config_file, new_config_file):
     print "Copying settings from 2.x esgf.properties to 3.0 esgf.properties file"
     print "******************************* \n"
     old_parser = configparser.ConfigParser()
-    old_parser.read(old_config_file)
+    try:
+        old_parser.read(old_config_file)
+    except backports.configparser.DuplicateSectionError:
+        pass
 
     previous_values = dict(old_parser.items('installer.properties'))
 

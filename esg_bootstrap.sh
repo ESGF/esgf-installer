@@ -116,8 +116,8 @@ copy_autoinstall_file(){
 }
 
 run_migration_script(){
-  if [ "$1" = "migrate" ]; then
-    if [[ ! -e "/usr/local/bin/esg-node" ]]; then
+  if [ "$1" == "migrate" ]; then
+    if [ ! -e "/usr/local/bin/esg-node" ]; then
       echo
       echo "-----------------------------------"
       echo "ESGF 2.x installation not found.  Skipping migration"
@@ -137,7 +137,7 @@ run_migration_script(){
 }
 
 
-if [[ ! -d "/usr/local/conda" ]] || [[ "$1" = "migrate" ]]; then
-    install_dependencies_yum && install_miniconda && install_dependencies_pip && run_migration_script && copy_autoinstall_file
+if [[ ! -d "/usr/local/conda" ]] || [[ "$1" == "migrate" ]]; then
+    install_dependencies_yum && install_miniconda && install_dependencies_pip && run_migration_script $1 && copy_autoinstall_file
     echo "Bootstrap complete!"
 fi

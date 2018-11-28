@@ -74,12 +74,9 @@ tomcat_group=${tomcat_group:-"tomcat"}
 ferret_envfile=${ferret_envfile:-${envfile}}
 
 ferret_version=${ferret_version:-"6.8"}
-las_version=${las_version:-"8.6.8"}
-#There seems to be two different variables keeping track of the LAS version; this makes no sense smh.
-VERSION=8.6.8
-
+VERSION=${VERSION:-"8.6.9"}
 esg_install_prefix=${esg_install_prefix:-"/usr/local"}
-INSTALLPATH=${esg_install_prefix}/las-esgf/$VERSION
+INSTALLPATH=${esg_install_prefix}/las-esgf/${VERSION}
 las_server_dir=${content_dir}/las #why did you decide to make it there and not /esg/content/las/[conf/server] ??
 
 esg_functions_file=${esg_install_prefix}/bin/esg-functions
@@ -133,8 +130,8 @@ setup_product_server() {
 setup_ferret() {
 
     # Reinstall ferret if LAS does not exist
-    echo -n "Checking for LAS Product Server v${las_version}"
-    check_webapp_version "las" ${las_version}
+    echo -n "Checking for LAS Product Server v${VERSION}"
+    check_webapp_version "las" ${VERSION}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -176,8 +173,8 @@ FER_END
 
 setup_las() {
 
-    echo -n "Checking for LAS Product Server v${las_version}"
-    check_webapp_version "las" ${las_version}
+    echo -n "Checking for LAS Product Server v${VERSION}"
+    check_webapp_version "las" ${VERSION}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -232,7 +229,7 @@ setup_las() {
 
 init_ferret() {
 
-    ferret_workdir=${workdir}/ferret/${las_version}
+    ferret_workdir=${workdir}/ferret/${VERSION}
     mkdir -p ${ferret_workdir}
 
     ferret_install_dir=${FERRET_HOME:-/usr/local/ferret}
@@ -402,7 +399,7 @@ write_ferret_install_log() {
 ########
 init_las() {
     echo "init_las..."
-    las_tar_url=${esg_dist_url}/las/las-esgf-v${las_version}.tar.gz
+    las_tar_url=${esg_dist_url}/las/las-esgf-v${VERSION}.tar.gz
     las_dist_file=${las_tar_url##*/}
     las_dir=${INSTALLPATH}/$(echo ${las_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
     echo "las_tar_url = ${las_tar_url}"
@@ -471,7 +468,7 @@ install_las() {
 }
 
 write_las_install_log() {
-    echo "$(date ${date_format}) webapp:las=${las_version} ${tomcat_install_dir}/webapps/las" >> ${install_logfile}
+    echo "$(date ${date_format}) webapp:las=${VERSION} ${tomcat_install_dir}/webapps/las" >> ${install_logfile}
     write_as_property las_service_endpoint "http://${esgf_host}/las"
     write_as_property las_service_app_home "${tomcat_install_dir}/webapps/las"
     dedup ${install_logfile}

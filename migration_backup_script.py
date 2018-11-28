@@ -53,7 +53,7 @@ def copy_previous_settings(old_config_file, new_config_file):
     old_parser = configparser.ConfigParser()
     try:
         old_parser.read(old_config_file)
-    except backports.configparser.DuplicateSectionError:
+    except configparser.DuplicateSectionError:
         pass
 
     previous_values = dict(old_parser.items('installer.properties'))

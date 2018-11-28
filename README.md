@@ -22,7 +22,8 @@ Checkout the appropriate branch/tag. For example, the 3.0 alpha version can be a
 ```
 git checkout tags/v3.0a5 -b 3.0_alpha
 ```
-This will checkout out the alpha release tag and create a new branch called 3.0_alpha
+This will checkout out the alpha release tag and create a new branch called 3.0_alpha.
+
 Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script:
 ```
 ./esg_bootstrap.sh

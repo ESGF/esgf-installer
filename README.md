@@ -14,16 +14,24 @@ The custom ESGF software includes:
 - [ESGF-SLCS-server](https://github.com/ESGF/esgf-slcs-server)
 
 ## Installation
+### Clone
 Clone this repo using 
 ```
 git clone https://github.com/ESGF/esgf-installer.git
 ```
+### Checkout
 Checkout the appropriate branch/tag. For example, the 3.0 alpha version can be accessed with the following command: 
 ```
 git checkout tags/v3.0a5 -b 3.0_alpha
 ```
 This will checkout out the alpha release tag and create a new branch called 3.0_alpha.
 
+### Configure
+Note that, to avoid being prompted for various parameters, the `esgf.properties.template` should be populated with the proper values for your node.
+
+See [the documentation](https://esgf.github.io/esgf-installer/autoinstall_usage.html) for information when populating.
+
+### Bootstrap and Activate
 Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script:
 ```
 ./esg_bootstrap.sh
@@ -33,11 +41,8 @@ Activate the esgf-pub conda environment
 source /usr/local/conda/bin/activate esgf-pub
 ```
 
->Note that, to avoid being prompted for various parameters, the `esgf.properties.template` should be populated with the proper values for your node.
->See [the documentation](https://esgf.github.io/esgf-installer/autoinstall_usage.html) for information when populating.
-
-After doing this run an installation by invoking the `esg_node.py` script.
-
+### Install
+Run an installation by invoking the `esg_node.py` script.
 ```
 python esg_node.py --install --type data
 ```

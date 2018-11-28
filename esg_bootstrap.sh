@@ -60,7 +60,7 @@ install_dependencies_pip(){
 
       pip install --upgrade pip
       pip install coloredlogs GitPython progressbar2 pyOpenSSL \
-                  lxml "requests==2.19.1" psycopg2 decorator Tempita \
+                  lxml requests psycopg2 decorator Tempita \
                   setuptools semver Pyyaml configparser psutil
       pip install -r requirements.txt
 

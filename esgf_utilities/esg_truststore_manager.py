@@ -10,7 +10,6 @@ import OpenSSL
 import jks
 import pybash
 import esg_functions
-from urlparse import urlparse
 from esgf_utilities import esg_property_manager
 from plumbum.commands import ProcessExecutionError
 
@@ -365,7 +364,7 @@ def install_peer_node_cert(remote_host):
 
     with pybash.pushd(config["tomcat_conf_dir"]):
         esgf_host = esg_functions.get_esgf_host()
-        ssl_endpoint = urlparse(remote_host).hostname
+        ssl_endpoint = remote_host
         ssl_port = "443"
 
         if ssl_endpoint == esgf_host:

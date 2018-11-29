@@ -55,20 +55,21 @@ def setup_idp():
     idp_service_app_home = os.path.join(config["tomcat_install_dir"], "webapps", "esgf-idp")
 
     if os.path.isdir(idp_service_app_home):
-        print "Detected an existing idp services installation..."
-        continue_install = raw_input("Do you want to continue with idp services installation and setup? [Y/n]: ") or "y"
-        if continue_install.lower() in ["n", "no"]:
-            print "Skipping IDP installation."
+        try:
+            idp_install = esg_property_manager.get_property("update.idp")
+        except ConfigParser.NoOptionError:
+            idp_install = raw_input("Detected an existing idp services installation.  Do you want to continue with the IDP installation [y/N]: ") or "no"
+        if idp_install.strip().lower() in ["no", "n"]:
+            logger.info("Using existing IDP installation.  Skipping setup.")
             return
+        try:
+            backup_idp = esg_property_manager.get_property("backup.idp")
+        except ConfigParser.NoOptionError:
+            backup_idp = raw_input("Do you want to make a back up of the existing distribution?? [Y/n] ") or "y"
 
-    try:
-        backup_idp = esg_property_manager.get_property("backup.idp")
-    except ConfigParser.NoOptionError:
-        backup_idp = raw_input("Do you want to make a back up of the existing distribution?? [Y/n] ") or "y"
-
-    if backup_idp.lower() in ["yes", "y"]:
-        "Creating a backup archive of this web application {}".format(idp_service_app_home)
-        esg_functions.backup(idp_service_app_home)
+        if backup_idp.lower() in ["yes", "y"]:
+            "Creating a backup archive of this web application {}".format(idp_service_app_home)
+            esg_functions.backup(idp_service_app_home)
 
     pybash.mkdir_p(idp_service_app_home)
     with pybash.pushd(idp_service_app_home):

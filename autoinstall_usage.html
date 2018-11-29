@@ -170,144 +170,199 @@
   <div class="section" id="autoinstaller-configuration-options">
 <h1>Autoinstaller Configuration Options<a class="headerlink" href="#autoinstaller-configuration-options" title="Permalink to this headline">¶</a></h1>
 <p>The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.</p>
+<p>===
+Core Parameters
+===</p>
 <div class="topic">
 <p class="topic-title first">esg.root.url</p>
 <p>The URL of the distribution mirror that will be used to fetch ESGF resources</p>
 </div>
-<table border="1" class="colwidths-given docutils" id="id1">
-<caption><span class="caption-text">Autoinstaller Configuration Options</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
-<colgroup>
-<col width="50%" />
-<col width="50%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Property</th>
-<th class="head">Description</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>esg.root.url</td>
-<td>The URL of the distribution mirror that will be used to fetch ESGF resources</td>
-</tr>
-<tr class="row-odd"><td>esgf.host.ip</td>
-<td>The IP address of the node</td>
-</tr>
-<tr class="row-even"><td>esgf.host</td>
-<td>The fully qualified domain name (fqdn) of your server</td>
-</tr>
-<tr class="row-odd"><td>node.short.name</td>
-<td>Used to set the the Endpoint name in the Globus configuration (see: <a class="reference external" href="https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf">https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf</a>)</td>
-</tr>
-<tr class="row-even"><td>node.long.name</td>
-<td>More descriptive name of ESGF node (DEPRECATED)</td>
-</tr>
-<tr class="row-odd"><td>node.namespace</td>
-<td>Set to your reverse fqdn Ex: gov.llnl (DEPRECATED)</td>
-</tr>
-<tr class="row-even"><td>node.peer.group &lt;esgf-test | esgf-dev | esgf-prod&gt;</td>
-<td>Determines the node’s peer group, i.e which federation the node will belong to</td>
-</tr>
-<tr class="row-odd"><td>esgf.index.peer</td>
-<td>Hostname of the index peer you wish to publish to</td>
-</tr>
-<tr class="row-even"><td>mail.admin.address</td>
-<td>Email address that will receive notifications from the ESGF server</td>
-</tr>
-<tr class="row-odd"><td>publisher.db.user</td>
-<td>Name that will be created as a low privilege user account in Postgres for the ESGF Publisher</td>
-</tr>
-<tr class="row-even"><td>esg.org.name</td>
-<td>Organization name that is used as the root ID when running the esgsetup binary. Usually the name of the institution where the node is location (llnl, ipsl, etc.)</td>
-</tr>
-<tr class="row-odd"><td>update.java &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Java if previous Java installation is found</td>
-</tr>
-<tr class="row-even"><td>update.ant &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Ant if previous Ant installation is found</td>
-</tr>
-<tr class="row-odd"><td>backup.database &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to create a backup dump of the database if an existing Postgres installation is found</td>
-</tr>
-<tr class="row-even"><td>update.postgres &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Postgres if previous Postgres installation is found</td>
-</tr>
-<tr class="row-odd"><td>update.apache &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Apache if previous Apache installation is found</td>
-</tr>
-<tr class="row-even"><td>update.tomcat &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Tomcat if previous Tomcat installation is found</td>
-</tr>
-<tr class="row-odd"><td>update.orp &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update ORP if previous ORP webapp installation is found</td>
-</tr>
-<tr class="row-even"><td>update.node.manager &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Node Manager if previous Node Manager webapp installation is found</td>
-</tr>
-<tr class="row-odd"><td>update.thredds &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Thredds if previous Thredds webapp installation is found</td>
-</tr>
-<tr class="row-even"><td>update.dashboard &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Dashboard if previous Dashboard installation is found</td>
-</tr>
-<tr class="row-odd"><td>update.publisher &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Publisher if previous Publisher installation is found</td>
-</tr>
-<tr class="row-even"><td>gridftp-config [defaults to:bdm end-user]</td>
-<td>Seems to be nonfunctional (DEPRECATED)</td>
-</tr>
-<tr class="row-odd"><td>tomcat.user</td>
-<td>Name of tomcat user to be used with Thredds. Defaults to dnode_user if not populated</td>
-</tr>
-<tr class="row-even"><td>add.another.user &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update ORP if previous ORP webapp installation is found</td>
-</tr>
-<tr class="row-odd"><td>update.esg.search &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update ESG Search if previous ESG Search webapp installation is found</td>
-</tr>
-<tr class="row-even"><td>update.cog &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update CoG if previous CoG installation is found</td>
-</tr>
-<tr class="row-odd"><td>update.solr &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Solr if previous Solr installation is found</td>
-</tr>
-<tr class="row-even"><td>backup.idp &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update IDP if previous IDP webapp installation is found</td>
-</tr>
-<tr class="row-odd"><td>register.myproxy &lt;y | yes | n | no&gt;</td>
-<td>Determines if the MyProxy server will be registered with Globus</td>
-</tr>
-<tr class="row-even"><td>update.globus &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update Globus if previous Globus installation is found</td>
-</tr>
-<tr class="row-odd"><td>globus.user</td>
-<td>Your Globus Username</td>
-</tr>
-<tr class="row-even"><td>globus.password</td>
-<td>Your Globus Password</td>
-</tr>
-<tr class="row-odd"><td>myproxy.endpoint</td>
-<td>Specifies the hostname of the myproxy-server</td>
-</tr>
-<tr class="row-even"><td>register.gridftp &lt;y | yes | n | no&gt;</td>
-<td>Determines if the GridFTP server will be registered with Globus</td>
-</tr>
-<tr class="row-odd"><td>update.slcs &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to update SLCS if previous SLCS server installation is found</td>
-</tr>
-<tr class="row-even"><td>install.signed.certs &lt;y | yes | n | no&gt;</td>
-<td>Determines whether to install a commercially signed SSL certificate</td>
-</tr>
-<tr class="row-odd"><td>commercial.key.path</td>
-<td>Absolute path to commercial key</td>
-</tr>
-<tr class="row-even"><td>commercial.cert.path</td>
-<td>Absolute path to commercially signed cert</td>
-</tr>
-<tr class="row-odd"><td>cachain.path</td>
-<td>A comma separated list of the absolute paths that make up the cachain</td>
-</tr>
-</tbody>
-</table>
+<div class="topic">
+<p class="topic-title first">esgf.host.ip</p>
+<p>The IP address of the node</p>
+</div>
+<div class="topic">
+<p class="topic-title first">esgf.host</p>
+<p>The fully qualified domain name (fqdn) of your server</p>
+</div>
+<div class="topic">
+<p class="topic-title first">node.short.name</p>
+<p>Used to set the the Endpoint name in the Globus configuration (see: <a class="reference external" href="https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf">https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf</a>)</p>
+</div>
+<div class="topic">
+<p class="topic-title first">node.long.name</p>
+<p>More descriptive name of ESGF node (DEPRECATED)</p>
+</div>
+<div class="topic">
+<p class="topic-title first">node.namespace</p>
+<p>Set to your reverse fqdn Ex: gov.llnl (DEPRECATED)</p>
+</div>
+<div class="topic">
+<p class="topic-title first">node.peer.group</p>
+<p>&lt;esgf-test | esgf-dev | esgf-prod&gt;</p>
+<p>Determines the node’s peer group, i.e which federation the node will belong to</p>
+</div>
+<div class="topic">
+<p class="topic-title first">esgf.index.peer</p>
+<p>Hostname of the index peer you wish to publish to</p>
+</div>
+<div class="topic">
+<p class="topic-title first">esgf.idp.peer</p>
+<p>Hostname of the IDP peer you wish to authenicate with</p>
+</div>
+<div class="topic">
+<p class="topic-title first">mail.admin.address</p>
+<p>Email address that will receive notifications from the ESGF server</p>
+</div>
+<div class="topic">
+<p class="topic-title first">publisher.db.user</p>
+<p>Name that will be created as a low privilege user account in Postgres for the ESGF Publisher</p>
+</div>
+<div class="topic">
+<p class="topic-title first">esg.org.name</p>
+<p>Organization name that is used as the root ID when running the esgsetup binary. Usually the name of the institution where the node is location (llnl, ipsl, etc.)</p>
+</div>
+<div class="topic">
+<p class="topic-title first">register.gridftp</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines if the GridFTP server will be registered with Globus</p>
+</div>
+<div class="topic">
+<p class="topic-title first">register.myproxy</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines if the MyProxy server will be registered with Globus</p>
+</div>
+<div class="topic">
+<p class="topic-title first">globus.user</p>
+<p>Your Globus Username</p>
+</div>
+<div class="topic">
+<p class="topic-title first">globus.password</p>
+<p>Your Globus Password</p>
+</div>
+<div class="topic">
+<p class="topic-title first">publisher.db.user</p>
+<p>Name that will be created as a low privilege user account in Postgres for the ESGF Publisher</p>
+</div>
+<p>===
+Certificates
+===</p>
+<div class="topic">
+<p class="topic-title first">install.signed.certs</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to install a commercially signed SSL certificate</p>
+</div>
+<div class="topic">
+<p class="topic-title first">commercial.key.path</p>
+<p>Absolute path to commercial key</p>
+</div>
+<div class="topic">
+<p class="topic-title first">commercial.cert.path</p>
+<p>Absolute path to commercially signed cert</p>
+</div>
+<div class="topic">
+<p class="topic-title first">cachain.path</p>
+<p>A comma separated list of the absolute paths that make up the cachain</p>
+</div>
+<p>===
+Update
+===</p>
+<div class="topic">
+<p class="topic-title first">update.java</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Java if previous Java installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.ant</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Ant if previous Ant installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">backup.database</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to create a backup dump of the database if an existing Postgres installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.postgres</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Postgres if previous Postgres installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.apache</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Apache if previous Apache installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.tomcat</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Tomcat if previous Tomcat installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.orp</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update ORP if previous ORP webapp installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.node.manager</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Node Manager if previous Node Manager webapp installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.thredds</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Thredds if previous Thredds webapp installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.dashboard</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Dashboard if previous Dashboard installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.publisher</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Publisher if previous Publisher installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.esg.search</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update ESG Search if previous ESG Search webapp installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.cog</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update CoG if previous CoG installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.solr</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Solr if previous Solr installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">backup.idp</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update IDP if previous IDP webapp installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.globus</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update Globus if previous Globus installation is found</p>
+</div>
+<div class="topic">
+<p class="topic-title first">update.slcs</p>
+<p>&lt;y | yes | n | no&gt;</p>
+<p>Determines whether to update SLCS if previous SLCS server installation is found</p>
+</div>
+<p>===
+Advanced User Settings
+===</p>
+<div class="topic">
+<p class="topic-title first">tomcat.user</p>
+<p>Name of tomcat user to be used with Thredds. Defaults to dnode_user if not populated</p>
+</div>
+<div class="topic">
+<p class="topic-title first">myproxy.endpoint</p>
+<p>Specifies the hostname of the myproxy-server</p>
+</div>
 </div>
 
 

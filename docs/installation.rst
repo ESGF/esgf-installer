@@ -8,11 +8,11 @@ Installation
 
     git clone https://github.com/ESGF/esgf-installer.git
 
-2. Checkout the appropriate branch/tag. For example, the 3.0 alpha version can be accessed with the following command: 
+2. Checkout the appropriate branch/tag. For example, the 3.0 beta version can be accessed with the following command: 
 
 .. code-block::
 
-    git checkout tags/v3.0a5 -b 3.0_alpha
+    git checkout tags/v3.0b1 -b 3.0_beta
 
 3. To avoid being prompted for various parameters, the ``esgf.properties.template`` should be populated with the proper values for your node. See `the properties file documentation <https://esgf.github.io/esgf-installer/autoinstall_usage.html>`_ for information when populating.
 

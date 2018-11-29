@@ -20,11 +20,11 @@ Clone this repo using
 git clone https://github.com/ESGF/esgf-installer.git
 ```
 ### Checkout
-Checkout the appropriate branch/tag. For example, the 3.0 alpha version can be accessed with the following command: 
+Checkout the appropriate branch/tag. For example, the 3.0 beta version can be accessed with the following command: 
 ```
-git checkout tags/v3.0a5 -b 3.0_alpha
+git checkout tags/v3.0b1 -b 3.0_beta
 ```
-This will checkout out the alpha release tag and create a new branch called 3.0_alpha.
+This will checkout out the beta release tag and create a new branch called 3.0_beta.
 
 ### Configure
 Note that, to avoid being prompted for various parameters, the `esgf.properties.template` should be populated with the proper values for your node.

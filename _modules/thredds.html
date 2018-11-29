@@ -24,8 +24,7 @@
 
   
 
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -84,11 +83,8 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">ESGF Command Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../cli.html">ESGF CLI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../autoinstall_usage.html">Autoinstaller Configuration Options</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -174,7 +170,6 @@
 <span class="kn">import</span> <span class="nn">ConfigParser</span>
 <span class="kn">import</span> <span class="nn">zipfile</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">urlparse</span> <span class="k">import</span> <span class="n">urlparse</span>
 <span class="kn">from</span> <span class="nn">distutils.dir_util</span> <span class="k">import</span> <span class="n">copy_tree</span>
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
@@ -184,7 +179,6 @@
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">pybash</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_truststore_manager</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
 <span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_tomcat_manager</span><span class="p">,</span> <span class="n">esg_postgres</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities.esg_env_manager</span> <span class="k">import</span> <span class="n">EnvWriter</span>
 <span class="kn">from</span> <span class="nn">plumbum.commands</span> <span class="k">import</span> <span class="n">ProcessExecutionError</span>
@@ -248,132 +242,47 @@
 
     <span class="n">tree</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">tomcat_users_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">),</span> <span class="n">pretty_print</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">xml_declaration</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="add_another_user"><a class="viewcode-back" href="../api.html#thredds.add_another_user">[docs]</a><span class="k">def</span> <span class="nf">add_another_user</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Helper function for deciding to add more Tomcat users or not&#39;&#39;&#39;</span>
-    <span class="n">valid_selection</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">done_adding_users</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">while</span> <span class="ow">not</span> <span class="n">valid_selection</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">another_user</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;add.another.user&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
-            <span class="n">another_user</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Would you like to add another user? [y/N]:&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;n&quot;</span>
-
-        <span class="k">if</span> <span class="n">another_user</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
-            <span class="n">valid_selection</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">done_adding_users</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">elif</span> <span class="n">another_user</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
-            <span class="n">valid_selection</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">done_adding_users</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s2">&quot;Invalid selection&quot;</span>
-            <span class="k">continue</span>
-    <span class="k">return</span> <span class="n">done_adding_users</span></div>
-
 <div class="viewcode-block" id="add_tomcat_user"><a class="viewcode-back" href="../api.html#thredds.add_tomcat_user">[docs]</a><span class="k">def</span> <span class="nf">add_tomcat_user</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Add a user to the default Tomcat user database (tomcat-users.xml) for container-managed authentication&#39;&#39;&#39;</span>
     <span class="nb">print</span> <span class="s2">&quot;Create user credentials</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">done_adding_users</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">while</span> <span class="ow">not</span> <span class="n">done_adding_users</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">tomcat_username</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;tomcat.user&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
-            <span class="n">default_user</span> <span class="o">=</span> <span class="s2">&quot;dnode_user&quot;</span>
-            <span class="n">tomcat_username</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please enter username for tomcat [</span><span class="si">{default_user}</span><span class="s2">]:  &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">default_user</span><span class="o">=</span><span class="n">default_user</span><span class="p">))</span> <span class="ow">or</span> <span class="n">default_user</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tomcat_username</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;tomcat.user&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
+        <span class="n">default_user</span> <span class="o">=</span> <span class="s2">&quot;dnode_user&quot;</span>
+        <span class="n">tomcat_username</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please enter username for tomcat [</span><span class="si">{default_user}</span><span class="s2">]:  &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">default_user</span><span class="o">=</span><span class="n">default_user</span><span class="p">))</span> <span class="ow">or</span> <span class="n">default_user</span>
 
-        <span class="n">valid_password</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">while</span> <span class="ow">not</span> <span class="n">valid_password</span><span class="p">:</span>
-            <span class="n">tomcat_user_password</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_security_admin_password</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">tomcat_user_password</span><span class="p">:</span>
-                <span class="n">tomcat_user_password</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span><span class="s2">&quot;Please enter password for user, </span><span class="se">\&quot;</span><span class="si">{tomcat_username}</span><span class="se">\&quot;</span><span class="s2"> [********]:   &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_username</span><span class="o">=</span><span class="n">tomcat_username</span><span class="p">))</span>
+    <span class="n">valid_password</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">valid_password</span><span class="p">:</span>
+        <span class="n">tomcat_user_password</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_security_admin_password</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tomcat_user_password</span><span class="p">:</span>
+            <span class="n">tomcat_user_password</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span><span class="s2">&quot;Please enter password for user, </span><span class="se">\&quot;</span><span class="si">{tomcat_username}</span><span class="se">\&quot;</span><span class="s2"> [********]:   &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_username</span><span class="o">=</span><span class="n">tomcat_username</span><span class="p">))</span>
 
-            <span class="k">if</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">is_valid_password</span><span class="p">(</span><span class="n">tomcat_user_password</span><span class="p">):</span>
-                <span class="n">valid_password</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">is_valid_password</span><span class="p">(</span><span class="n">tomcat_user_password</span><span class="p">):</span>
+            <span class="n">valid_password</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="n">password_hash</span> <span class="o">=</span> <span class="n">create_password_hash</span><span class="p">(</span><span class="n">tomcat_user_password</span><span class="p">)</span>
+    <span class="n">password_hash</span> <span class="o">=</span> <span class="n">create_password_hash</span><span class="p">(</span><span class="n">tomcat_user_password</span><span class="p">)</span>
 
-        <span class="n">update_tomcat_users_file</span><span class="p">(</span><span class="n">tomcat_username</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">)</span>
-
-        <span class="n">done_adding_users</span> <span class="o">=</span> <span class="n">add_another_user</span><span class="p">()</span></div>
+    <span class="n">update_tomcat_users_file</span><span class="p">(</span><span class="n">tomcat_username</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">)</span></div>
 
 
-<span class="c1">#TODO: terrible, undescriptive name; come up with something better</span>
-<div class="viewcode-block" id="register"><a class="viewcode-back" href="../api.html#thredds.register">[docs]</a><span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">remote_host</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;This function is for pulling in keys from hosts we wish to</span>
-<span class="sd">    communicate with over an encrypted ssl connection.  This function</span>
-<span class="sd">    must be run after tomcat is set up since it references server.xml.</span>
-
-<span class="sd">    (called by setup_idp_peer)</span>
-<span class="sd">    arg1 - hostname of the machine with the cert you want to get</span>
-<span class="sd">    (arg2 - password to truststore where cert will be inserted)</span>
-<span class="sd">    (arg3 - password to keystore - only applicable in &quot;local&quot; registration scenario)&#39;&#39;&#39;</span>
-
-    <span class="nb">print</span> <span class="s2">&quot;Installing Public Certificate of Target Peer Node...[</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remote_host</span><span class="p">)</span>
-
-    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">]):</span>
-        <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
-        <span class="n">ssl_endpoint</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">remote_host</span><span class="p">)</span><span class="o">.</span><span class="n">hostname</span>
-        <span class="n">ssl_port</span> <span class="o">=</span> <span class="s2">&quot;443&quot;</span>
-
-        <span class="k">if</span> <span class="n">ssl_endpoint</span> <span class="o">==</span> <span class="n">esgf_host</span><span class="p">:</span>
-            <span class="c1">#For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition</span>
-            <span class="n">esg_truststore_manager</span><span class="o">.</span><span class="n">add_my_cert_to_truststore</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">])</span>
-            <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">]):</span>
-                <span class="n">esg_dist_url</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s1">&#39;./InstallCert.class&#39;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/utils/InstallCert.class&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">)):</span>
-                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Could not download utility class(1) for installing certificates&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s1">&#39;./InstallCert$SavingTrustManager.class&#39;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/utils/InstallCert$SavingTrustManager.class&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">)):</span>
-                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Could not download utility class(2) for installing certificates&quot;</span><span class="p">)</span>
-
-            <span class="n">class_path</span> <span class="o">=</span> <span class="s2">&quot;.:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">])</span>
-
-            <span class="c1">#NOTE: The InstallCert code fetches Java&#39;s jssecacerts file (if</span>
-            <span class="c1">#not there then uses the cacerts file) from java&#39;s jre and then adds the target&#39;s cert to it.</span>
-            <span class="c1">#The output of the program is a new file named jssecacerts!      So here we get the output and rename it.</span>
-            <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;/usr/local/java/bin/java&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-classpath&quot;</span><span class="p">,</span> <span class="n">class_path</span><span class="p">,</span> <span class="s2">&quot;InstallCert&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ssl_endpoint</span><span class="p">,</span> <span class="n">ssl_port</span><span class="p">),</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_password&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">]])</span>
-
-            <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">]):</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">],</span> <span class="mi">0644</span><span class="p">)</span>
-
-                <span class="n">tomcat_user</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
-                <span class="n">tomcat_group</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
-
-                <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">],</span> <span class="n">tomcat_user</span><span class="p">,</span> <span class="n">tomcat_group</span><span class="p">)</span>
-
-                <span class="n">esg_truststore_manager</span><span class="o">.</span><span class="n">sync_with_java_truststore</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">])</span></div>
-
-
-<div class="viewcode-block" id="select_idp_peer"><a class="viewcode-back" href="../api.html#thredds.select_idp_peer">[docs]</a><span class="k">def</span> <span class="nf">select_idp_peer</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags&#39;&#39;&#39;</span>
-
+<span class="k">def</span> <span class="nf">get_idp_peer_from_config</span><span class="p">():</span>
     <span class="n">node_type_list</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_node_type</span><span class="p">()</span>
-
     <span class="k">if</span> <span class="s2">&quot;INDEX&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;idp&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;compute&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">):</span>
-        <span class="c1">#TODO: check if esgf_idp_peer = esgf.host</span>
-        <span class="c1">#TODO: esg_property_manager.get_property(&quot;esgf_idp_peer&quot;) == esg_property_manager.get_property(&quot;esgf.host&quot;); then no external IDP</span>
-        <span class="c1">#TODO: check esgf.properties first</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">external_idp</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;use_external_idp&quot;</span><span class="p">)</span>
+            <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.idp.peer&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
-            <span class="n">external_idp</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you wish to use an external IDP peer?(N/y): &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;n&#39;</span>
+            <span class="n">default_idp_peer</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+            <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please specify your IDP peer node&#39;s FQDN [</span><span class="si">{}</span><span class="s2">]: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">default_idp_peer</span><span class="p">))</span> <span class="ow">or</span> <span class="n">default_idp_peer</span>
 
-        <span class="k">if</span> <span class="n">external_idp</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">]:</span>
-            <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
-            <span class="n">esgf_idp_peer_name</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">esgf_idp_peer</span>
 
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="n">idp_fqdn</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please specify your IDP peer node&#39;s FQDN: &quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">idp_fqdn</span><span class="p">:</span>
-                    <span class="nb">print</span> <span class="s2">&quot;IDP peer node&#39;s FQDN can&#39;t be blank.&quot;</span>
-                    <span class="k">continue</span>
 
-            <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">idp_fqdn</span>
-            <span class="n">esgf_idp_peer_name</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
-        <span class="n">esgf_idp_peer_name</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+<div class="viewcode-block" id="select_idp_peer"><a class="viewcode-back" href="../api.html#thredds.select_idp_peer">[docs]</a><span class="k">def</span> <span class="nf">select_idp_peer</span><span class="p">(</span><span class="n">esgf_idp_peer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">esgf_idp_peer</span><span class="p">:</span>
+        <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">get_idp_peer_from_config</span><span class="p">()</span>
+
+    <span class="n">esgf_idp_peer_name</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
 
     <span class="n">myproxy_endpoint</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span>
     <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
@@ -391,7 +300,7 @@
 <span class="s1">          ----------------------------------------------------------------------&#39;&#39;&#39;</span>
 
     <span class="k">if</span> <span class="n">esgf_host</span> <span class="o">!=</span> <span class="n">myproxy_endpoint</span><span class="p">:</span>
-        <span class="n">register</span><span class="p">(</span><span class="n">myproxy_endpoint</span><span class="p">)</span>
+        <span class="n">esg_truststore_manager</span><span class="o">.</span><span class="n">install_peer_node_cert</span><span class="p">(</span><span class="n">myproxy_endpoint</span><span class="p">)</span>
 
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_idp_peer_name&quot;</span><span class="p">,</span> <span class="n">esgf_idp_peer_name</span><span class="p">)</span>
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_idp_peer&quot;</span><span class="p">,</span> <span class="n">esgf_idp_peer</span><span class="p">)</span>
@@ -490,44 +399,6 @@
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/jdom-legacy-1.1.3.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{esg_dist_url}</span><span class="s2">/filters/jdom-legacy-1.1.3.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="o">=</span><span class="n">esg_dist_url</span><span class="p">))</span>
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{esg_dist_url}</span><span class="s2">/filters/commons-httpclient-3.1.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="o">=</span><span class="n">esg_dist_url</span><span class="p">))</span>
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{esg_dist_url}</span><span class="s2">/filters/commons-lang-2.6.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="o">=</span><span class="n">esg_dist_url</span><span class="p">))</span></div>
-
-
-    <span class="c1"># esg_functions.download_update(&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/XSGroupRole-1.0.0.jar&quot;, &quot;{esg_dist_url}/filters/XSGroupRole-1.0.0.jar&quot;.format(esg_dist_url=esg_dist_url))</span>
-    <span class="c1">#</span>
-    <span class="c1"># #TODO: refactor orp and security jar to pull versions from config yaml; move other jar versions from filters module to config yaml</span>
-    <span class="c1"># esg_functions.download_update(&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esg-orp-2.9.3.jar&quot;, &quot;{esg_dist_url}/esg-orp/esg-orp-2.9.3.jar&quot;.format(esg_dist_url=esg_dist_url))</span>
-    <span class="c1"># esg_functions.download_update(&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-common-1.0.0.jar&quot;, &quot;{esg_dist_url}/esgf-node-manager/esgf-node-manager-common-1.0.0.jar&quot;.format(esg_dist_url=esg_dist_url))</span>
-    <span class="c1"># esg_functions.download_update(&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-filters-1.0.0.jar&quot;, &quot;{esg_dist_url}/esgf-node-manager/esgf-node-manager-filters-1.0.0.jar&quot;.format(esg_dist_url=esg_dist_url))</span>
-    <span class="c1"># esg_functions.download_update(&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-security-2.7.10.jar&quot;, &quot;{esg_dist_url}/esgf-security/esgf-security-2.7.10.jar&quot;.format(esg_dist_url=esg_dist_url))</span>
-    <span class="c1"># esg_functions.download_update(&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/opensaml-2.3.2.jar&quot;, &quot;{esg_dist_url}/filters/opensaml-2.3.2.jar&quot;.format(esg_dist_url=esg_dist_url))</span>
-    <span class="c1"># esg_functions.download_update(&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/openws-1.3.1.jar&quot;, &quot;{esg_dist_url}/filters/openws-1.3.1.jar&quot;.format(esg_dist_url=esg_dist_url))</span>
-    <span class="c1"># esg_functions.download_update(&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmltooling-1.2.2.jar&quot;, &quot;{esg_dist_url}/filters/xmltooling-1.2.2.jar&quot;.format(esg_dist_url=esg_dist_url))</span>
-    <span class="c1">#</span>
-    <span class="c1"># # shutil.copyfile(&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/serializer-2.9.1.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar&quot;)</span>
-    <span class="c1"># # shutil.copyfile(&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/velocity-1.5.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/velocity-1.5.jar&quot;)</span>
-    <span class="c1"># # shutil.copyfile(&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xalan-2.7.2.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xalan-2.7.2.jar&quot;)</span>
-    <span class="c1"># # shutil.copyfile(&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xercesImpl-2.10.0.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xercesImpl-2.10.0.jar&quot;)</span>
-    <span class="c1"># # shutil.copyfile(&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xml-apis-1.4.01.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xml-apis-1.4.01.jar&quot;)</span>
-    <span class="c1"># # shutil.copyfile(&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xmlsec-1.4.2.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmlsec-1.4.2.jar&quot;)</span>
-    <span class="c1"># # shutil.copyfile(&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/log4j-1.2.17.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/log4j-1.2.17.jar&quot;)</span>
-    <span class="c1"># # shutil.copyfile(&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/commons-io-2.4.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-io-2.4.jar&quot;)</span>
-    <span class="c1">#</span>
-    <span class="c1"># try:</span>
-    <span class="c1">#     shutil.copyfile(&quot;/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar&quot;)</span>
-    <span class="c1"># except IOError:</span>
-    <span class="c1">#     urllib.urlretrieve(&quot;{}/filters/commons-dbcp-1.4.jar&quot;.format(esg_dist_url), &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar&quot;)</span>
-    <span class="c1"># try:</span>
-    <span class="c1">#     shutil.copyfile(&quot;/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar&quot;)</span>
-    <span class="c1"># except IOError:</span>
-    <span class="c1">#     urllib.urlretrieve(&quot;{}/filters/commons-dbutils-1.3.jar&quot;.format(esg_dist_url), &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar&quot;)</span>
-    <span class="c1"># try:</span>
-    <span class="c1">#     shutil.copyfile(&quot;/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar&quot;)</span>
-    <span class="c1"># except IOError:</span>
-    <span class="c1">#     urllib.urlretrieve(&quot;{}/filters/commons-pool-1.5.4.jar&quot;.format(esg_dist_url), &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar&quot;)</span>
-    <span class="c1"># try:</span>
-    <span class="c1">#     shutil.copyfile(&quot;/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar&quot;, &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar&quot;)</span>
-    <span class="c1"># except IOError:</span>
-    <span class="c1">#     urllib.urlretrieve(&quot;{}/filters/postgresql-8.4-703.jdbc3.jar&quot;.format(esg_dist_url), &quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar&quot;)</span>
 
 
 <div class="viewcode-block" id="copy_xml_files"><a class="viewcode-back" href="../api.html#thredds.copy_xml_files">[docs]</a><span class="k">def</span> <span class="nf">copy_xml_files</span><span class="p">():</span>
@@ -656,7 +527,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, William Hill.
+        &copy; Copyright 2017, William Hill
 
     </p>
   </div>
@@ -675,33 +546,21 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'alpha',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
-          
-          SphinxRtdTheme.Navigation.enableSticky();
-          
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script> 
 

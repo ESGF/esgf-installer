@@ -24,8 +24,7 @@
 
   
 
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -84,11 +83,8 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">ESGF Command Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../cli.html">ESGF CLI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../autoinstall_usage.html">Autoinstaller Configuration Options</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -302,7 +298,7 @@
     <span class="k">return</span> <span class="n">path_unique</span><span class="p">(</span><span class="n">prepend_value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">path</span></div>
 
 
-<div class="viewcode-block" id="backup"><a class="viewcode-back" href="../api.html#esg_functions.backup">[docs]</a><span class="k">def</span> <span class="nf">backup</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">backup_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_backup_dir&quot;</span><span class="p">],</span> <span class="n">num_of_backups</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;num_backups_to_keep&quot;</span><span class="p">]):</span>
+<div class="viewcode-block" id="backup"><a class="viewcode-back" href="../api.html#esg_functions.backup">[docs]</a><span class="k">def</span> <span class="nf">backup</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">backup_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_backup_dir&quot;</span><span class="p">],</span> <span class="n">num_of_backups</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Given a directory the contents of the directory is backed up as a tar.gz file in</span>
 <span class="sd">        path - a filesystem path</span>
@@ -486,7 +482,7 @@
                     <span class="n">downloaded_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not download </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">remote_file</span><span class="p">)</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span></div>
+        <span class="k">raise</span></div>
 
 
 <div class="viewcode-block" id="create_backup_file"><a class="viewcode-back" href="../api.html#esg_functions.create_backup_file">[docs]</a><span class="k">def</span> <span class="nf">create_backup_file</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">backup_extension</span><span class="o">=</span><span class="s2">&quot;.bak&quot;</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())):</span>
@@ -638,8 +634,7 @@
 
     <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;esgf_secret_file&#39;</span><span class="p">],</span> <span class="mi">0640</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;esgf_secret_file&#39;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span>
-            <span class="s2">&quot;installer_uid&quot;</span><span class="p">],</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;esgf_secret_file&#39;</span><span class="p">],</span> <span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">),</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unable to change ownership of </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">password_file</span><span class="p">)</span>
 
@@ -684,12 +679,9 @@
 
 <div class="viewcode-block" id="set_postgres_password"><a class="viewcode-back" href="../api.html#esg_functions.set_postgres_password">[docs]</a><span class="k">def</span> <span class="nf">set_postgres_password</span><span class="p">(</span><span class="n">password</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Updates the Postgres superuser account password; gets saved to /esg/config/.esg_pg_pass&#39;&#39;&#39;</span>
-
-    <span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_passwd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">password</span>
-
     <span class="k">try</span><span class="p">:</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;pg_secret_file&#39;</span><span class="p">],</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">secret_file</span><span class="p">:</span>
-            <span class="n">secret_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_sys_acct_passwd&quot;</span><span class="p">])</span>
+            <span class="n">secret_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not open </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;pg_secret_file&#39;</span><span class="p">])</span>
 
@@ -700,8 +692,7 @@
     <span class="n">tomcat_group_id</span> <span class="o">=</span> <span class="n">get_tomcat_group_id</span><span class="p">()</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;pg_secret_file&#39;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span>
-                 <span class="s2">&quot;installer_uid&quot;</span><span class="p">],</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;pg_secret_file&#39;</span><span class="p">],</span> <span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">),</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unable to change ownership of </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_secret_file&quot;</span><span class="p">])</span></div>
 
@@ -1082,13 +1073,19 @@
         <span class="nb">print</span> <span class="n">info_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="call_binary"><a class="viewcode-back" href="../api.html#esg_functions.call_binary">[docs]</a><span class="k">def</span> <span class="nf">call_binary</span><span class="p">(</span><span class="n">binary_name</span><span class="p">,</span> <span class="n">arguments</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="call_binary"><a class="viewcode-back" href="../api.html#esg_functions.call_binary">[docs]</a><span class="k">def</span> <span class="nf">call_binary</span><span class="p">(</span><span class="n">binary_name</span><span class="p">,</span> <span class="n">arguments</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">conda_env</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings&#39;&#39;&#39;</span>
     <span class="n">RETURN_CODE</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">STDOUT</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">STDERR</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;binary_name: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">binary_name</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;arguments: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">arguments</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">conda_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">arguments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">arguments</span> <span class="o">=</span> <span class="p">[</span><span class="n">conda_env</span><span class="p">,</span> <span class="n">binary_name</span><span class="p">]</span> <span class="o">+</span> <span class="n">arguments</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arguments</span> <span class="o">=</span> <span class="p">[</span><span class="n">conda_env</span><span class="p">,</span> <span class="n">binary_name</span><span class="p">]</span>
+        <span class="n">binary_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;run_in_env.sh&quot;</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">command</span> <span class="o">=</span> <span class="n">local</span><span class="p">[</span><span class="n">binary_name</span><span class="p">]</span>
     <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
@@ -1196,7 +1193,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, William Hill.
+        &copy; Copyright 2017, William Hill
 
     </p>
   </div>
@@ -1215,33 +1212,21 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'alpha',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
-          
-          SphinxRtdTheme.Navigation.enableSticky();
-          
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script> 
 

@@ -24,8 +24,7 @@
 
   
 
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -84,11 +83,8 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">ESGF Command Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../cli.html">ESGF CLI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../autoinstall_usage.html">Autoinstaller Configuration Options</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -183,6 +179,7 @@
 <span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">import</span> <span class="nn">psutil</span>
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="k">import</span> <span class="n">etree</span>
 <span class="kn">from</span> <span class="nn">clint.textui</span> <span class="k">import</span> <span class="n">progress</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
@@ -235,6 +232,19 @@
 
     <span class="k">return</span> <span class="kc">True</span></div>
 
+<div class="viewcode-block" id="remove_default_error_page"><a class="viewcode-back" href="../api.html#esg_tomcat_manager.remove_default_error_page">[docs]</a><span class="k">def</span> <span class="nf">remove_default_error_page</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Removes the default Tomcat error page.</span>
+<span class="sd">    From https://www.owasp.org/index.php/Securing_tomcat:</span>
+<span class="sd">    The default error page shows a full stacktrace which is a disclosure of sensitive information. Place the following within the web-app tag (after the welcome-file-list tag is fine). The following solution is not ideal as it produces a blank page because Tomcat cannot find the file specified, but without a better solution this, at least, achieves the desired result. A well configured web application will override this default in CATALINA_HOME/webapps/APP_NAME/WEB-INF/web.xml so it won&#39;t cause problems.&#39;&#39;&#39;</span>
+
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/conf/web.xml&quot;</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+    <span class="n">error_subelement</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;error-page&quot;</span><span class="p">)</span>
+    <span class="n">exception_subelement</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">error_subelement</span><span class="p">,</span> <span class="s2">&quot;exception-type&quot;</span><span class="p">)</span>
+    <span class="n">exception_subelement</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;java.lang.Throwable&quot;</span>
+    <span class="n">location_subelement</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">error_subelement</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">)</span>
+    <span class="n">location_subelement</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;/error.jsp&quot;</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/conf/web.xml&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">),</span> <span class="n">pretty_print</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">xml_declaration</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="extract_tomcat_tarball"><a class="viewcode-back" href="../api.html#esg_tomcat_manager.extract_tomcat_tarball">[docs]</a><span class="k">def</span> <span class="nf">extract_tomcat_tarball</span><span class="p">(</span><span class="n">dest_dir</span><span class="o">=</span><span class="s2">&quot;/usr/local&quot;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Extract tomcat tarball that was downloaded from the distribution mirror&#39;&#39;&#39;</span>
@@ -249,58 +259,31 @@
             <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span>
                 <span class="s2">&quot;/tmp/apache-tomcat-</span><span class="si">{TOMCAT_VERSION}</span><span class="s2">.tar.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">TOMCAT_VERSION</span><span class="o">=</span><span class="n">TOMCAT_VERSION</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s2">&quot;error:&quot;</span><span class="p">,</span> <span class="n">error</span></div>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+        <span class="c1">#From https://www.owasp.org/index.php/Securing_tomcat</span>
+        <span class="n">tomcat_user_id</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span>
+        <span class="n">tomcat_group_id</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat&quot;</span><span class="p">,</span> <span class="n">tomcat_user_id</span><span class="p">,</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
+
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_permissions_recursive</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/conf&quot;</span><span class="p">,</span> <span class="mi">0400</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_permissions_recursive</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/logs&quot;</span><span class="p">,</span> <span class="mi">0300</span><span class="p">)</span>
+        <span class="n">remove_default_error_page</span><span class="p">()</span></div>
+
+
 
 <div class="viewcode-block" id="remove_example_webapps"><a class="viewcode-back" href="../api.html#esg_tomcat_manager.remove_example_webapps">[docs]</a><span class="k">def</span> <span class="nf">remove_example_webapps</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;remove Tomcat example applications&#39;&#39;&#39;</span>
     <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps&quot;</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;docs&quot;</span><span class="p">)</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;examples&quot;</span><span class="p">)</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;host-manager&quot;</span><span class="p">)</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;manager&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
-                <span class="k">pass</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="setup_root_app"><a class="viewcode-back" href="../api.html#esg_tomcat_manager.setup_root_app">[docs]</a><span class="k">def</span> <span class="nf">setup_root_app</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Install ROOT appplication&#39;&#39;&#39;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s2">&quot;REFRESH&quot;</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/ROOT/index.html&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
-            <span class="nb">print</span> <span class="s2">&quot;ROOT app in place..&quot;</span>
-            <span class="k">return</span>
-    <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;Don&#39;t see ESGF ROOT web application&quot;</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">backup</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/ROOT&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
-            <span class="k">pass</span>
-
-
-    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Setting up Apache Tomcat...(v</span><span class="si">{}</span><span class="s2">) ROOT webapp&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_version&quot;</span><span class="p">])</span>
-    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
-
-    <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">])</span>
-    <span class="k">with</span> <span class="n">pybash</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">]):</span>
-        <span class="n">esg_root_url</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.root.url&quot;</span><span class="p">)</span>
-        <span class="n">root_app_dist_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/ROOT.tgz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_root_url</span><span class="p">)</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;ROOT.tgz&quot;</span><span class="p">,</span> <span class="n">root_app_dist_url</span><span class="p">)</span>
-
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">extract_tarball</span><span class="p">(</span><span class="s2">&quot;ROOT.tgz&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esgf-node-manager&quot;</span><span class="p">):</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/ROOT/index.html.nm&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/ROOT/index.html&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esgf-web-fe&quot;</span><span class="p">):</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/ROOT/index.html.fe&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/ROOT/index.html&quot;</span><span class="p">)</span>
-
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/ROOT&quot;</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">),</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">))</span>
-        <span class="nb">print</span> <span class="s2">&quot;ROOT application </span><span class="se">\&quot;</span><span class="s2">installed</span><span class="se">\&quot;</span><span class="s2">&quot;</span></div>
-
+        <span class="n">webapps</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">webapp</span> <span class="ow">in</span> <span class="n">webapps</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">webapp</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span></div>
 
 <div class="viewcode-block" id="copy_config_files"><a class="viewcode-back" href="../api.html#esg_tomcat_manager.copy_config_files">[docs]</a><span class="k">def</span> <span class="nf">copy_config_files</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;copy custom configuration</span>
@@ -313,7 +296,7 @@
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;tomcat_conf/context.xml&quot;</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/conf/context.xml&quot;</span><span class="p">)</span>
         <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/esg/config/tomcat&quot;</span><span class="p">)</span>
 
-        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;certs/tomcat-users.xml&quot;</span><span class="p">),</span> <span class="s2">&quot;/esg/config/tomcat/tomcat-users.xml&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;tomcat_conf/tomcat-users.xml&quot;</span><span class="p">),</span> <span class="s2">&quot;/esg/config/tomcat/tomcat-users.xml&quot;</span><span class="p">)</span>
         <span class="n">tomcat_user_id</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span>
         <span class="n">tomcat_group_id</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span>
         <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="s2">&quot;/esg/config/tomcat/tomcat-users.xml&quot;</span><span class="p">,</span> <span class="n">tomcat_user_id</span><span class="p">,</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
@@ -351,16 +334,14 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;tomcat&quot;</span> <span class="ow">in</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_list</span><span class="p">():</span>
         <span class="n">create_tomcat_group</span><span class="p">()</span>
 
-    <span class="n">useradd_options</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="s2">&quot;/sbin/nologin&quot;</span><span class="p">,</span> <span class="s2">&quot;-g&quot;</span><span class="p">,</span> <span class="s2">&quot;tomcat&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat&quot;</span><span class="p">,</span> <span class="s2">&quot;tomcat&quot;</span><span class="p">]</span>
+    <span class="n">useradd_options</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="s2">&quot;/sbin/nologin&quot;</span><span class="p">,</span> <span class="s2">&quot;-M&quot;</span><span class="p">,</span> <span class="s2">&quot;-g&quot;</span><span class="p">,</span> <span class="s2">&quot;tomcat&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat&quot;</span><span class="p">,</span> <span class="s2">&quot;tomcat&quot;</span><span class="p">]</span>
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">add_unix_user</span><span class="p">(</span><span class="n">useradd_options</span><span class="p">)</span>
 
     <span class="n">tomcat_directory</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/apache-tomcat-</span><span class="si">{TOMCAT_VERSION}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">TOMCAT_VERSION</span><span class="o">=</span><span class="n">TOMCAT_VERSION</span><span class="p">)</span>
     <span class="n">tomcat_user_id</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span>
     <span class="n">tomcat_group_id</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="n">tomcat_directory</span><span class="p">,</span> <span class="n">tomcat_user_id</span><span class="p">,</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
-
-    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps&quot;</span><span class="p">,</span> <span class="mi">0775</span><span class="p">)</span></div>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="n">tomcat_directory</span><span class="p">,</span> <span class="n">tomcat_user_id</span><span class="p">,</span> <span class="n">tomcat_group_id</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="start_tomcat"><a class="viewcode-back" href="../api.html#esg_tomcat_manager.start_tomcat">[docs]</a><span class="k">def</span> <span class="nf">start_tomcat</span><span class="p">():</span>
@@ -600,9 +581,13 @@
             <span class="c1">#Setup temp CA</span>
             <span class="n">CA</span><span class="o">.</span><span class="n">setup_temp_ca</span><span class="p">()</span>
 
-            <span class="c1">#Fetch/Copy truststore to $tomcat_conf_dir</span>
+            <span class="c1">#Fetch truststore to $tomcat_conf_dir</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">]):</span>
-                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;tomcat_certs/esg-truststore.ts&quot;</span><span class="p">),</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">])</span>
+                <span class="n">remote</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/certs/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.root.url&quot;</span><span class="p">),</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">])</span>
+                <span class="p">)</span>
+                <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">],</span> <span class="n">remote</span><span class="p">)</span>
 
             <span class="n">esg_truststore_manager</span><span class="o">.</span><span class="n">add_my_cert_to_truststore</span><span class="p">()</span>
 
@@ -617,15 +602,13 @@
     <span class="nb">print</span> <span class="s2">&quot;Setting up Tomcat </span><span class="si">{TOMCAT_VERSION}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">TOMCAT_VERSION</span><span class="o">=</span><span class="n">TOMCAT_VERSION</span><span class="p">)</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="k">if</span> <span class="n">download_tomcat</span><span class="p">():</span>
-        <span class="n">extract_tomcat_tarball</span><span class="p">()</span>
         <span class="n">create_tomcat_user</span><span class="p">()</span>
+        <span class="n">extract_tomcat_tarball</span><span class="p">()</span>
         <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CATALINA_PID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/tmp/catalina.pid&quot;</span>
         <span class="n">copy_config_files</span><span class="p">()</span>
         <span class="n">configure_tomcat</span><span class="p">()</span>
         <span class="n">remove_example_webapps</span><span class="p">()</span>
-        <span class="n">setup_root_app</span><span class="p">()</span>
         <span class="n">migrate_tomcat_credentials_to_esgf</span><span class="p">()</span>
-        <span class="c1"># start_tomcat()</span>
         <span class="n">write_tomcat_install_log</span><span class="p">()</span></div>
 
 
@@ -643,7 +626,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, William Hill.
+        &copy; Copyright 2017, William Hill
 
     </p>
   </div>
@@ -662,33 +645,21 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'alpha',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
-          
-          SphinxRtdTheme.Navigation.enableSticky();
-          
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script> 
 

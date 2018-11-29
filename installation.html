@@ -24,8 +24,7 @@
 
   
 
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -86,10 +85,8 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">ESGF CLI</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -172,23 +169,20 @@
   <p><strong>ESGF 3.0 currently supports RHEL/CentOS 6</strong></p>
 <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<ol class="arabic simple">
-<li>Clone this repo using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/ESGF/esgf-installer.git</span></code></li>
-<li>Checkout the appropriate branch/tag. For example, the 3.0 alpha version can be accessed with the following command: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">tags/v3.0.0-alpha-release</span> <span class="pre">-b</span> <span class="pre">3.0_alpha</span></code>.
-This will checkout out the alpha release tag and create a new branch called 3.0_alpha</li>
-<li>If Miniconda has not been installed, install Miniconda and other ESGF dependencies from yum and pip by running the <code class="docutils literal notranslate"><span class="pre">esg_bootstrap.sh</span></code> script</li>
-<li>Activate the esgf-pub conda environment using <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/usr/local/conda/bin/activate</span> <span class="pre">esgf-pub</span></code></li>
-<li>Run an installation by invoking the <code class="docutils literal notranslate"><span class="pre">esg_node.py</span></code> script.
-Example: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">esg_node.py</span> <span class="pre">--install</span> <span class="pre">--type</span> <span class="pre">data</span></code></li>
+<p>The installation is performed on the Node itself.
+1. Clone this repo using</p>
+<ol class="arabic simple" start="2">
+<li>Checkout the appropriate branch/tag. For example, the 3.0 beta version can be accessed with the following command:</li>
 </ol>
-</div>
-<div class="section" id="autoinstaller">
-<h1>Autoinstaller<a class="headerlink" href="#autoinstaller" title="Permalink to this headline">¶</a></h1>
-<p>Instead of answering prompts interactively on the command line, there is an option for configuring a node using a configuration file.</p>
-<ol class="arabic simple">
-<li>Complete steps 1-4 listed above</li>
-<li>Edit the <code class="docutils literal notranslate"><span class="pre">`/esg/config/esgf.properties`</span></code> file with your node configuration.</li>
-<li>Run an installation by invoking the <code class="docutils literal notranslate"><span class="pre">esg_node.py</span></code> script. Example: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">esg_node.py</span> <span class="pre">--install</span> <span class="pre">--type</span> <span class="pre">data</span></code></li>
+<ol class="arabic simple" start="3">
+<li>To avoid being prompted for various parameters, the <code class="docutils literal notranslate"><span class="pre">esgf.properties.template</span></code> should be populated with the proper values for your node. See <a class="reference external" href="https://esgf.github.io/esgf-installer/autoinstall_usage.html">the properties file documentation</a> for information when populating.</li>
+<li>Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script:</li>
+</ol>
+<ol class="arabic simple" start="5">
+<li>Activate the esgf-pub conda environment</li>
+</ol>
+<ol class="arabic simple" start="6">
+<li>Run an installation by invoking the <cite>esg_node.py</cite> script. For example, a data-only node installation:</li>
 </ol>
 </div>
 
@@ -212,7 +206,7 @@ Example: <code class="docutils literal notranslate"><span class="pre">python</sp
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, William Hill.
+        &copy; Copyright 2017, William Hill
 
     </p>
   </div>
@@ -231,33 +225,21 @@ Example: <code class="docutils literal notranslate"><span class="pre">python</sp
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'alpha',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
-          
-          SphinxRtdTheme.Navigation.enableSticky();
-          
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script> 
 

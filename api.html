@@ -24,13 +24,12 @@
 
   
 
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="ESGF Installer Issue Tracking Guidelines" href="issues.html" />
-    <link rel="prev" title="ESGF CLI" href="cli.html" /> 
+    <link rel="prev" title="&lt;no title&gt;" href="autoinstall_usage.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -86,10 +85,8 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">ESGF CLI</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
@@ -541,6 +538,14 @@ Only called when migration conditions are present.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="esg_tomcat_manager.remove_default_error_page">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">remove_default_error_page</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#remove_default_error_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.remove_default_error_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the default Tomcat error page.
+From <a class="reference external" href="https://www.owasp.org/index.php/Securing_tomcat">https://www.owasp.org/index.php/Securing_tomcat</a>:
+The default error page shows a full stacktrace which is a disclosure of sensitive information. Place the following within the web-app tag (after the welcome-file-list tag is fine). The following solution is not ideal as it produces a blank page because Tomcat cannot find the file specified, but without a better solution this, at least, achieves the desired result. A well configured web application will override this default in CATALINA_HOME/webapps/APP_NAME/WEB-INF/web.xml so it won’t cause problems.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="esg_tomcat_manager.remove_example_webapps">
 <code class="descclassname">esg_tomcat_manager.</code><code class="descname">remove_example_webapps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#remove_example_webapps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.remove_example_webapps" title="Permalink to this definition">¶</a></dt>
 <dd><p>remove Tomcat example applications</p>
@@ -556,12 +561,6 @@ Only called when migration conditions are present.</p>
 <dt id="esg_tomcat_manager.run_tomcat_config_test">
 <code class="descclassname">esg_tomcat_manager.</code><code class="descname">run_tomcat_config_test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#run_tomcat_config_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.run_tomcat_config_test" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run tomcat config test</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="esg_tomcat_manager.setup_root_app">
-<code class="descclassname">esg_tomcat_manager.</code><code class="descname">setup_root_app</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#setup_root_app"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.setup_root_app" title="Permalink to this definition">¶</a></dt>
-<dd><p>Install ROOT appplication</p>
 </dd></dl>
 
 <dl class="function">
@@ -646,23 +645,9 @@ No file older than year should be kept.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="esg_publisher.set_index_peer">
-<code class="descclassname">esg_publisher.</code><code class="descname">set_index_peer</code><span class="sig-paren">(</span><em>host=None</em>, <em>index_type='p2p'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#set_index_peer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.set_index_peer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setting the (index peer) node to which we will publish
-This is how we make sure that the publisher is pointing to the correct publishing service.
-We edit the esg.ini file with the information in the esgf.properties file, specifically the hessian_service_url value in esg.ini</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="esg_publisher.setup_publisher">
 <code class="descclassname">esg_publisher.</code><code class="descname">setup_publisher</code><span class="sig-paren">(</span><em>tag='v3.5.0'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#setup_publisher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.setup_publisher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Install ESGF publisher</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="esg_publisher.symlink_pg_binary">
-<code class="descclassname">esg_publisher.</code><code class="descname">symlink_pg_binary</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#symlink_pg_binary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.symlink_pg_binary" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version</p>
 </dd></dl>
 
 <dl class="function">
@@ -735,7 +720,7 @@ This is how we make sure we are always using the proper credentials.</p>
 
 <dl class="function">
 <dt id="orp.setup_providers_dropdown">
-<code class="descclassname">orp.</code><code class="descname">setup_providers_dropdown</code><span class="sig-paren">(</span><em>esg_dist_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orp.html#setup_providers_dropdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orp.setup_providers_dropdown" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">orp.</code><code class="descname">setup_providers_dropdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/orp.html#setup_providers_dropdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orp.setup_providers_dropdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs</p>
 </dd></dl>
 
@@ -760,12 +745,6 @@ This is how we make sure we are always using the proper credentials.</p>
 </div>
 <div class="section" id="module-thredds">
 <span id="esg-thredds-module"></span><h2>ESG Thredds Module<a class="headerlink" href="#module-thredds" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="thredds.add_another_user">
-<code class="descclassname">thredds.</code><code class="descname">add_another_user</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#add_another_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.add_another_user" title="Permalink to this definition">¶</a></dt>
-<dd><p>Helper function for deciding to add more Tomcat users or not</p>
-</dd></dl>
-
 <dl class="function">
 <dt id="thredds.add_tomcat_user">
 <code class="descclassname">thredds.</code><code class="descname">add_tomcat_user</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#add_tomcat_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.add_tomcat_user" title="Permalink to this definition">¶</a></dt>
@@ -824,20 +803,8 @@ So have to manually move over this directory to avert server not starting! -gavi
 </dd></dl>
 
 <dl class="function">
-<dt id="thredds.register">
-<code class="descclassname">thredds.</code><code class="descname">register</code><span class="sig-paren">(</span><em>remote_host</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.register" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function is for pulling in keys from hosts we wish to
-communicate with over an encrypted ssl connection.  This function
-must be run after tomcat is set up since it references server.xml.</p>
-<p>(called by setup_idp_peer)
-arg1 - hostname of the machine with the cert you want to get
-(arg2 - password to truststore where cert will be inserted)
-(arg3 - password to keystore - only applicable in “local” registration scenario)</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="thredds.select_idp_peer">
-<code class="descclassname">thredds.</code><code class="descname">select_idp_peer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#select_idp_peer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.select_idp_peer" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">thredds.</code><code class="descname">select_idp_peer</code><span class="sig-paren">(</span><em>esgf_idp_peer=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#select_idp_peer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.select_idp_peer" title="Permalink to this definition">¶</a></dt>
 <dd><p>called during setup_tds or directly by –set-idp-peer | –set-admin-peer flags</p>
 </dd></dl>
 
@@ -941,7 +908,7 @@ not_before  - Timestamp (relative to now) when the certificate</p>
 
 <dl class="function">
 <dt id="esg_cert_manager.create_key_pair">
-<code class="descclassname">esg_cert_manager.</code><code class="descname">create_key_pair</code><span class="sig-paren">(</span><em>key_type</em>, <em>bits</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_key_pair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_key_pair" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_key_pair</code><span class="sig-paren">(</span><em>key_type</em>, <em>bits=4096</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_key_pair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_key_pair" title="Permalink to this definition">¶</a></dt>
 <dd><p>source: <a class="reference external" href="https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py">https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py</a></p>
 </dd></dl>
 
@@ -1010,7 +977,7 @@ description: Installer Functions for the ESGF Node application stack</p>
 
 <dl class="function">
 <dt id="esg_functions.backup">
-<code class="descclassname">esg_functions.</code><code class="descname">backup</code><span class="sig-paren">(</span><em>path</em>, <em>backup_dir='/esg/backups'</em>, <em>num_of_backups='7'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#backup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.backup" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">esg_functions.</code><code class="descname">backup</code><span class="sig-paren">(</span><em>path</em>, <em>backup_dir='/esg/backups'</em>, <em>num_of_backups=7</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#backup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.backup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a directory the contents of the directory is backed up as a tar.gz file in
 path - a filesystem path
 backup_dir - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
@@ -1025,7 +992,7 @@ num_of_backups - the number of backup files you wish to have present in destinat
 
 <dl class="function">
 <dt id="esg_functions.call_binary">
-<code class="descclassname">esg_functions.</code><code class="descname">call_binary</code><span class="sig-paren">(</span><em>binary_name</em>, <em>arguments=None</em>, <em>silent=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#call_binary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.call_binary" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">esg_functions.</code><code class="descname">call_binary</code><span class="sig-paren">(</span><em>binary_name</em>, <em>arguments=None</em>, <em>silent=False</em>, <em>conda_env=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#call_binary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.call_binary" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings</p>
 </dd></dl>
 
@@ -1078,7 +1045,7 @@ Returns true if passwords match</p>
 
 <dl class="function">
 <dt id="esg_functions.create_backup_file">
-<code class="descclassname">esg_functions.</code><code class="descname">create_backup_file</code><span class="sig-paren">(</span><em>file_name</em>, <em>backup_extension='.bak'</em>, <em>date='2018-10-11'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#create_backup_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.create_backup_file" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">esg_functions.</code><code class="descname">create_backup_file</code><span class="sig-paren">(</span><em>file_name</em>, <em>backup_extension='.bak'</em>, <em>date='2018-11-29'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#create_backup_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.create_backup_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a backup of a file using the given backup extension</p>
 </dd></dl>
 
@@ -1264,7 +1231,7 @@ an alphanumeric string greater than 6 characters long</p>
 
 <dl class="function">
 <dt id="esg_functions.path_unique">
-<code class="descclassname">esg_functions.</code><code class="descname">path_unique</code><span class="sig-paren">(</span><em>path_string='//anaconda/envs/esgf-pub/bin://anaconda/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/local/ant/bin'</em>, <em>path_separator=':'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#path_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.path_unique" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">esg_functions.</code><code class="descname">path_unique</code><span class="sig-paren">(</span><em>path_string='/Users/carlson60/miniconda2/envs/esgf-pub/bin:/Users/carlson60/miniconda2/envs/esgf-dev-env/bin:/Users/carlson60/miniconda2/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/Users/carlson60/miniconda2/bin'</em>, <em>path_separator=':'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#path_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.path_unique" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints a unique path string</p>
 <p>The first (leftmost) instance of a path entry will be the one that
 is preserved.</p>
@@ -1407,7 +1374,7 @@ Formerly called setup_sensible_confs</p>
 <span id="esg-purge"></span><h2>ESG Purge<a class="headerlink" href="#module-esg_purge" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="esg_purge.purge_postgres">
-<code class="descclassname">esg_purge.</code><code class="descname">purge_postgres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#esg_purge.purge_postgres" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">esg_purge.</code><code class="descname">purge_postgres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_purge.html#purge_postgres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_purge.purge_postgres" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes postgres installation via yum</p>
 </dd></dl>
 
@@ -1445,7 +1412,7 @@ In update mode it will always pull down latest after archiving old</p>
 
 <dl class="function">
 <dt id="solr.setup_solr">
-<code class="descclassname">solr.</code><code class="descname">setup_solr</code><span class="sig-paren">(</span><em>index_config</em>, <em>SOLR_INSTALL_DIR='/usr/local/solr'</em>, <em>SOLR_HOME='/usr/local/solr-home'</em>, <em>SOLR_DATA_DIR='/esg/solr-index'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#setup_solr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.setup_solr" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">solr.</code><code class="descname">setup_solr</code><span class="sig-paren">(</span><em>index_config=['master', 'slave'], SOLR_INSTALL_DIR='/usr/local/solr', SOLR_HOME='/usr/local/solr-home', SOLR_DATA_DIR='/esg/solr-index'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#setup_solr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.setup_solr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup Apache Solr for faceted search</p>
 </dd></dl>
 
@@ -1500,7 +1467,7 @@ In update mode it will always pull down latest after archiving old</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.6)"><strong>TypeError</strong></a> – raises an exception</td>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><strong>TypeError</strong> – raises an exception</td>
 </tr>
 </tbody>
 </table>
@@ -1617,12 +1584,6 @@ args* (in the context of “data” node -&gt;  [“bdm”|”end-user”])</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="idp.setup_slcs">
-<code class="descclassname">idp.</code><code class="descname">setup_slcs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/idp.html#setup_slcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#idp.setup_slcs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setup the slcs_server</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="idp.write_idp_install_log">
 <code class="descclassname">idp.</code><code class="descname">write_idp_install_log</code><span class="sig-paren">(</span><em>idp_service_app_home</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/idp.html#write_idp_install_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#idp.write_idp_install_log" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write IDP properties to install manifest and property file</p>
@@ -1642,7 +1603,7 @@ args* (in the context of “data” node -&gt;  [“bdm”|”end-user”])</p>
         <a href="issues.html" class="btn btn-neutral float-right" title="ESGF Installer Issue Tracking Guidelines" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="cli.html" class="btn btn-neutral" title="ESGF CLI" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="autoinstall_usage.html" class="btn btn-neutral" title="&lt;no title&gt;" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -1651,7 +1612,7 @@ args* (in the context of “data” node -&gt;  [“bdm”|”end-user”])</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, William Hill.
+        &copy; Copyright 2017, William Hill
 
     </p>
   </div>
@@ -1670,33 +1631,21 @@ args* (in the context of “data” node -&gt;  [“bdm”|”end-user”])</p>
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'alpha',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
-          
-          SphinxRtdTheme.Navigation.enableSticky();
-          
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script> 
 

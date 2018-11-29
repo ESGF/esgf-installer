@@ -1,7 +1,0 @@
-ESGF CLI
-******************************************
-
-.. argparse::
-   :module: esgf_utilities.esg_cli_argument_manager
-   :func: define_acceptable_arguments
-   :prog: CLI_doc

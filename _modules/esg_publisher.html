@@ -24,8 +24,7 @@
 
   
 
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -84,11 +83,8 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">ESGF Command Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../cli.html">ESGF CLI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../autoinstall_usage.html">Autoinstaller Configuration Options</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -175,10 +171,9 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">ConfigParser</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span><span class="p">,</span> <span class="n">esg_truststore_manager</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">pybash</span>
-<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
 <span class="kn">from</span> <span class="nn">esgf_utilities.esg_env_manager</span> <span class="k">import</span> <span class="n">EnvWriter</span>
 <span class="kn">from</span> <span class="nn">plumbum.commands</span> <span class="k">import</span> <span class="n">ProcessExecutionError</span>
 
@@ -191,10 +186,6 @@
 <div class="viewcode-block" id="check_publisher_version"><a class="viewcode-back" href="../api.html#esg_publisher.check_publisher_version">[docs]</a><span class="k">def</span> <span class="nf">check_publisher_version</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Check if an existing version of the Publisher is found on the system&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">pip_version</span><span class="p">(</span><span class="s2">&quot;esgcet&quot;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="symlink_pg_binary"><a class="viewcode-back" href="../api.html#esg_publisher.symlink_pg_binary">[docs]</a><span class="k">def</span> <span class="nf">symlink_pg_binary</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version&#39;&#39;&#39;</span>
-    <span class="n">pybash</span><span class="o">.</span><span class="n">symlink_force</span><span class="p">(</span><span class="s2">&quot;/usr/pgsql-9.6/bin/pg_config&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/bin/pg_config&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="edit_esg_ini"><a class="viewcode-back" href="../api.html#esg_publisher.edit_esg_ini">[docs]</a><span class="k">def</span> <span class="nf">edit_esg_ini</span><span class="p">(</span><span class="n">node_short_name</span><span class="o">=</span><span class="s2">&quot;test_node&quot;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Edit placeholder values in the generated esg.ini file&#39;&#39;&#39;</span>
@@ -281,7 +272,6 @@
     <span class="n">subdir</span> <span class="o">=</span> <span class="s2">&quot;src/python/esgcet&quot;</span>
     <span class="n">pkg_name</span> <span class="o">=</span> <span class="s2">&quot;esgcet&quot;</span>
     <span class="n">repo</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/ESGF/esg-publisher.git&quot;</span>
-    <span class="n">symlink_pg_binary</span><span class="p">()</span>
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">pip_install_git</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">pkg_name</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">subdir</span><span class="p">)</span>
     <span class="n">pybash</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/esg/data/test&quot;</span><span class="p">)</span></div>
 
@@ -316,44 +306,6 @@
     <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">esg_ini_path</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">))</span>
     <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">esg_ini_path</span><span class="p">,</span> <span class="mi">0644</span><span class="p">)</span></div>
 
-
-<div class="viewcode-block" id="set_index_peer"><a class="viewcode-back" href="../api.html#esg_publisher.set_index_peer">[docs]</a><span class="k">def</span> <span class="nf">set_index_peer</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index_type</span><span class="o">=</span><span class="s2">&quot;p2p&quot;</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Setting the (index peer) node to which we will publish</span>
-<span class="sd">       This is how we make sure that the publisher is pointing to the correct publishing service.</span>
-<span class="sd">       We edit the esg.ini file with the information in the esgf.properties file, specifically the hessian_service_url value in esg.ini</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">index_peer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf_index_peer&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s2">&quot;Could not find esgf_index_peer&quot;</span>
-            <span class="k">return</span>
-    <span class="k">if</span> <span class="n">host</span> <span class="o">==</span> <span class="s2">&quot;localhost&quot;</span> <span class="ow">or</span> <span class="n">host</span> <span class="o">==</span> <span class="s2">&quot;self&quot;</span><span class="p">:</span>
-        <span class="n">index_peer</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
-
-    <span class="nb">print</span> <span class="s2">&quot;Setting Index Peer... to =&gt; [</span><span class="si">{}</span><span class="s2">] (endpoint type = </span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_peer</span><span class="p">,</span> <span class="n">index_type</span><span class="p">)</span>
-
-    <span class="c1">#Fetch and Insert the Certificate for Index Peer (to let in index peer&#39;s publishingService callback)</span>
-    <span class="n">register</span><span class="p">(</span><span class="n">index_peer</span><span class="p">)</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">publishing_service_endpoint</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;publishing_service_endpoint&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;publishing_service_endpoint property hasn&#39;t been set in esgf.properties&quot;</span>
-
-    <span class="k">if</span> <span class="n">index_type</span> <span class="o">==</span> <span class="s2">&quot;gateway&quot;</span><span class="p">:</span>
-        <span class="n">publishing_service_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://</span><span class="si">{}</span><span class="s2">/remote/secure/client-cert/hessian/publishingService&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_peer</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">publishing_service_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://</span><span class="si">{}</span><span class="s2">/esg-search/remote/secure/client-cert/hessian/publishingService&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_peer</span><span class="p">)</span>
-
-    <span class="n">publisher_config_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_home&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_config&quot;</span><span class="p">])</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;hessian_service_url&quot;</span><span class="p">,</span> <span class="n">publishing_service_endpoint</span><span class="p">,</span> <span class="n">property_file</span><span class="o">=</span><span class="n">publisher_config_path</span><span class="p">,</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;DEFAULT&quot;</span><span class="p">)</span>
-
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_index_peer&quot;</span><span class="p">,</span> <span class="n">index_peer</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;publishing_service_endpoint&quot;</span><span class="p">,</span> <span class="n">publishing_service_endpoint</span><span class="p">)</span></div>
-
-
-
 <div class="viewcode-block" id="main"><a class="viewcode-back" href="../api.html#esg_publisher.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Main function&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_home&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_config&quot;</span><span class="p">])):</span>
@@ -385,7 +337,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, William Hill.
+        &copy; Copyright 2017, William Hill
 
     </p>
   </div>
@@ -404,33 +356,21 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'alpha',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
-          
-          SphinxRtdTheme.Navigation.enableSticky();
-          
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script> 
 

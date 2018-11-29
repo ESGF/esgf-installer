@@ -24,26 +24,17 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="esgf-installer alpha documentation" href="../index.html"/>
-        <link rel="up" title="Module code" href="index.html"/> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -92,7 +83,8 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cert_howto.html">ESGF Certificate Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">ESGF Command Line Interface</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -119,7 +111,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">esgf-installer</a>
@@ -127,9 +119,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -159,8 +152,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -179,10 +170,17 @@
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">psutil</span>
-<span class="kn">import</span> <span class="nn">esg_functions</span>
-<span class="kn">from</span> <span class="nn">esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span><span class="p">,</span> <span class="n">pybash</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
+<span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_tomcat_manager</span>
+<span class="kn">from</span> <span class="nn">index_node</span> <span class="k">import</span> <span class="n">solr</span>
+<span class="kn">from</span> <span class="nn">plumbum.commands</span> <span class="k">import</span> <span class="n">ProcessExecutionError</span>
+
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 
 <div class="viewcode-block" id="purge_postgres"><a class="viewcode-back" href="../api.html#esg_purge.purge_postgres">[docs]</a><span class="k">def</span> <span class="nf">purge_postgres</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Removes postgres installation via yum&#39;&#39;&#39;</span>
@@ -191,35 +189,32 @@
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service postgresql stop&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;Error stopping Postgres&quot;</span><span class="p">,</span> <span class="n">error</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum remove -y postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64&quot;</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
     <span class="k">try</span><span class="p">:</span>
-        <span class="c1"># shutil.rmtree(&quot;/usr/local/pgsql&quot;)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;postgresql-server.x86_64&quot;</span><span class="p">,</span> <span class="s2">&quot;postgresql.x86_64&quot;</span><span class="p">,</span> <span class="s2">&quot;postgresql-devel.x86_64&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/var/lib/pgsql&quot;</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HOME&quot;</span><span class="p">],</span> <span class="s2">&quot;.pgpass&quot;</span><span class="p">))</span>
-    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not delete /var/lib/pgsql&quot;</span><span class="p">)</span></div>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span></div>
 
 <span class="k">def</span> <span class="nf">purge_tomcat</span><span class="p">():</span>
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;Purging Tomcat&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
-    <span class="c1">#Get all processes belonging to Tomcat</span>
-    <span class="n">tomcat_processes</span> <span class="o">=</span> <span class="p">[</span><span class="n">proc</span> <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">process_iter</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;username&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;tomcat&quot;</span><span class="p">]</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;tomcat processes: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tomcat_processes</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">tomcat_processes</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">tomcat_processes</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">kill</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;pid&quot;</span><span class="p">])</span>
-            <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not kill </span><span class="si">%s</span><span class="s2"> process with pid </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">proc</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="n">proc</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;pid&quot;</span><span class="p">])</span>
+    <span class="n">esg_tomcat_manager</span><span class="o">.</span><span class="n">stop_tomcat</span><span class="p">()</span>
+
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/etc/logrotate.d/esgf_tomcat&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/etc/logrotate.d/esgf_tomcat&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/logrotate.d/esgf_tomcat&quot;</span><span class="p">)</span>
+        <span class="k">pass</span>
 
     <span class="n">tomcat_directories</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat*&quot;</span><span class="p">)</span>
     <span class="n">tomcat_directories</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/apache-tomcat*&quot;</span><span class="p">))</span>
@@ -227,14 +222,9 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">islink</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
             <span class="k">pass</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not delete symlink /usr/local/tomcat&quot;</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/tmp/catalina.pid&quot;</span><span class="p">)</span>
@@ -243,29 +233,45 @@
             <span class="k">pass</span>
 
     <span class="c1"># Tomcat may leave stuck java processes.  Kill them with extreme prejudice</span>
-    <span class="c1">#TODO: stop processes with Python</span>
-    <span class="c1"># esg_functions.call_subprocess(&quot;pkill -9 -f &#39;java.*/usr/local/tomcat&#39;&quot;)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;pkill&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-9&quot;</span><span class="p">,</span> <span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;java.*/usr/local/tomcat&#39;&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+        <span class="k">pass</span>
 
 <span class="k">def</span> <span class="nf">purge_java</span><span class="p">():</span>
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;Purging Java&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
+    <span class="n">java_tarfile</span> <span class="o">=</span> <span class="s2">&quot;jdk</span><span class="si">{}</span><span class="s2">-64.tar.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_version&quot;</span><span class="p">])</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/java&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/usr/local/src/esgf/workbench/esg/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_tarfile</span><span class="p">))</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;No Java installation found to delete at /usr/local/java&quot;</span><span class="p">)</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/jdk</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_version&quot;</span><span class="p">]))</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="s2">&quot;/usr/local/java&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/bin/java&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;No Java installation found to delete at /usr/bin/java&quot;</span><span class="p">)</span>
+        <span class="k">pass</span>
 
 <span class="k">def</span> <span class="nf">purge_ant</span><span class="p">():</span>
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;Purging Ant&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum remove -y ant&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;ant&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+        <span class="k">pass</span>
 
 <span class="k">def</span> <span class="nf">purge_thredds</span><span class="p">():</span>
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
@@ -275,7 +281,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete thredds&quot;</span><span class="p">)</span>
+        <span class="k">pass</span>
 
 <span class="k">def</span> <span class="nf">purge_base</span><span class="p">():</span>
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
@@ -283,22 +289,27 @@
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
     <span class="n">directories_to_delete</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/esg&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/esgfcerts&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;/etc/tempcerts&quot;</span><span class="p">,</span> <span class="s2">&quot;/opt/esgf&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/inputpipe&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/outputpipe&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/cog&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/www/.python-eggs&quot;</span><span class="p">]</span>
+    <span class="s2">&quot;/etc/tempcerts&quot;</span><span class="p">,</span> <span class="s2">&quot;/opt/esgf&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/inputpipe&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/outputpipe&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/cog&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/www/.python-eggs&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/src/esgf/workbench/esg&quot;</span><span class="p">]</span>
 
     <span class="n">files_to_delete</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/etc/httpd/conf/esgf-httpd.conf&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/bin/add_checksums_to_map.sh&quot;</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;umount&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;/esg/gridftp_root/esg_dataroot&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
     <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">directories_to_delete</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="nb">print</span> <span class="s2">&quot;Deleting </span><span class="si">{directory}</span><span class="s2">: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="n">directory</span><span class="p">)</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
 
     <span class="k">for</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="n">files_to_delete</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="nb">print</span> <span class="s2">&quot;Deleting </span><span class="si">{file_name}</span><span class="s2">: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">)</span>
             <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+            <span class="k">pass</span>
 
     <span class="c1"># We want to potentially preserve certificates, as they may be</span>
     <span class="c1"># annoying to recreate and sign.</span>
@@ -315,7 +326,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/etc/hostcert_request.pem&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not delete /etc/hostcert_request.pem&quot;</span><span class="p">)</span>
+        <span class="k">pass</span>
 
     <span class="c1"># WARNING: if $HOME has been reset from /root during an install</span>
     <span class="c1"># run, these directories could show up in a different place!</span>
@@ -324,14 +335,14 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+            <span class="k">pass</span>
 
     <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span>  <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/esgf*&quot;</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">root_dirs</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+                <span class="k">pass</span>
 
 
 <span class="k">def</span> <span class="nf">purge_cdat</span><span class="p">():</span>
@@ -341,77 +352,285 @@
 <span class="k">def</span> <span class="nf">purge_cog</span><span class="p">():</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/cog&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete /usr/local/cog&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/usr/local/bin/wait_for_postgres.sh&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete /usr/local/bin/wait_for_postgres.sh&quot;</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/usr/local/bin/wait_for_postgres.sh&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete /usr/local/bin/process_esgf_config_archive.sh&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
 
 <span class="k">def</span> <span class="nf">purge_apache</span><span class="p">():</span>
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum remove -y httpd httpd-devel mod_ssl&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;httpd-devel&quot;</span><span class="p">,</span> <span class="s2">&quot;mod_ssl&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
     <span class="k">try</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/etc/httpd&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
             <span class="k">pass</span>
 
-<span class="c1">#TODO: define purge_conda()</span>
 <span class="k">def</span> <span class="nf">purge_conda</span><span class="p">():</span>
-    <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/conda&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="k">pass</span>
 
 <span class="k">def</span> <span class="nf">purge_solr</span><span class="p">():</span>
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Purging Solr&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
-    <span class="n">solr_process</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr/bin/solr stop&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">solr_process</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="nb">print</span> <span class="s2">&quot;Could not stop solr&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">solr</span><span class="o">.</span><span class="n">stop_solr</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">ProcessExecutionError</span><span class="p">):</span>
+        <span class="k">pass</span>
 
-    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span>  <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/esgf-solr-*&quot;</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/esgf-solr-*&quot;</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
 
-    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span>  <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr*&quot;</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr-*&quot;</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="s2">&quot;/usr/local/solr&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not delete symlink /usr/local/tomcat&quot;</span><span class="p">)</span>
     <span class="c1"># Solr may leave stuck java processes.  Kill them with extreme prejudice</span>
-    <span class="c1"># esg_functions.call_subprocess(&quot;pkill -9 -f &#39;java.*/usr/local/tomcat&#39;&quot;)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;pkill&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;-9&quot;</span><span class="p">,</span> <span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;java.*/usr/local/tomcat&#39;&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+        <span class="k">pass</span>
 
-<span class="c1">#TODO: define purge_dashboard()</span>
+
+<span class="k">def</span> <span class="nf">purge_globus</span><span class="p">():</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Purging Globus&quot;</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;yum&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;globus*&quot;</span> <span class="p">,</span><span class="s2">&quot;myproxy*&quot;</span><span class="p">])</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/etc/esgfcerts&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/etc/globus-host-ssl.conf&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/etc/globus-user-ssl.conf&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/etc/grid-security.conf&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+        <span class="n">globus_directories</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/etc/globus*&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">globus_directories</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+                <span class="c1">#if not a directory; use file delete method</span>
+                <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/etc/grid-security&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+        <span class="n">gridftp_directories</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/etc/gridftp*&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">gridftp_directories</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/etc/logrotate.d/globus-connect-server&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+        <span class="n">myproxy_directories</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/etc/myproxy*&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">myproxy_directories</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/etc/pam.d/myproxy&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/etc/pam_pgsql.conf&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;/etc/pam_pgsql.conf.tmpl.bak&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+        <span class="n">globus_gridftp_directories</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/etc/rc.d/init.d/globus-gridftp-*&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">globus_gridftp_directories</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HOME&quot;</span><span class="p">],</span> <span class="s2">&quot;.globus&quot;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/root/.globus&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/globus&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/gsoap&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/share/myproxy&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/var/lib/globus&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/var/lib/globus-connect-server&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/var/lib/myproxy&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="n">globus_modules</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globus*&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">globus_modules</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">globus_binaries</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/bin/globus*&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">binary</span> <span class="ow">in</span> <span class="n">globus_binaries</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EISDIR</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">purge_publisher</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/tmp/esg-publisher&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="n">publisher_binaries</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/conda/envs/esgf-pub/bin/esg*&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">binary</span> <span class="ow">in</span> <span class="n">publisher_binaries</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">publisher_modules</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/esg*&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">publisher_modules</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
 <span class="k">def</span> <span class="nf">purge_dashboard</span><span class="p">():</span>
-    <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/esg/config/dashboard&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esgf-stats-api&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/dashboard&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/esgf-dashboard&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/esgf-dashboard-ip&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">confirm_purge</span><span class="p">():</span>
+    <span class="n">purged_directories</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/var/lib/pgsql&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/java&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/bin/java&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat&quot;</span><span class="p">,</span> <span class="s2">&quot;/esg&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/esgfcerts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/etc/tempcerts&quot;</span><span class="p">,</span> <span class="s2">&quot;/opt/esgf&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/inputpipe&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/outputpipe&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/cog&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/www/.python-eggs&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/solr&quot;</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">purged_directories</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+            <span class="nb">print</span> <span class="s2">&quot;Purge failed.  </span><span class="si">{}</span><span class="s2"> still exists and must be delete manually.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+            <span class="k">return</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;All ESGF components have been successfully deleted.&quot;</span>
+
+<span class="k">def</span> <span class="nf">purge_slcs</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/src/esgf-slcs-server-playbook&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;/usr/local/esgf-slcs-server&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="k">pass</span>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="kn">import</span> <span class="nn">esg_logging_manager</span>
-
-    <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
-
     <span class="n">purge_postgres</span><span class="p">()</span>
     <span class="n">purge_tomcat</span><span class="p">()</span>
     <span class="n">purge_thredds</span><span class="p">()</span>
     <span class="n">purge_ant</span><span class="p">()</span>
+    <span class="n">purge_publisher</span><span class="p">()</span>
+    <span class="n">purge_dashboard</span><span class="p">()</span>
+    <span class="n">purge_solr</span><span class="p">()</span>
     <span class="n">purge_java</span><span class="p">()</span>
     <span class="n">purge_base</span><span class="p">()</span>
     <span class="n">purge_cdat</span><span class="p">()</span>
     <span class="n">purge_apache</span><span class="p">()</span>
     <span class="n">purge_cog</span><span class="p">()</span>
+    <span class="n">purge_globus</span><span class="p">()</span>
+    <span class="n">purge_slcs</span><span class="p">()</span>
+    <span class="n">confirm_purge</span><span class="p">()</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -420,11 +639,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, William Hill.
+        &copy; Copyright 2017, William Hill
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -439,35 +658,23 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'alpha',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

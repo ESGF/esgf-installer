@@ -174,19 +174,34 @@
 <ol class="arabic simple">
 <li>Clone this repo using</li>
 </ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/ESGF/esgf-installer.git <span class="o">&amp;&amp;</span> <span class="nb">cd</span> esgf-installer
+</pre></div>
+</div>
 <ol class="arabic simple" start="2">
 <li>Checkout the appropriate branch/tag. For example, the 3.0 beta version can be accessed with the following command:</li>
 </ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout tags/v3.0b1 -b <span class="m">3</span>.0_beta
+</pre></div>
+</div>
 <ol class="arabic simple" start="3">
 <li>To avoid being prompted for various parameters, the <code class="docutils literal notranslate"><span class="pre">esgf.properties.template</span></code> should be populated with the proper values for your node. See <a class="reference external" href="https://esgf.github.io/esgf-installer/autoinstall_usage.html">the properties file documentation</a> for information when populating.</li>
 <li>Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script:</li>
 </ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./esg_bootstrap.sh
+</pre></div>
+</div>
 <ol class="arabic simple" start="5">
 <li>Activate the esgf-pub conda environment</li>
 </ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> /usr/local/conda/bin/activate esgf-pub
+</pre></div>
+</div>
 <ol class="arabic simple" start="6">
 <li>Run an installation by invoking the <cite>esg_node.py</cite> script. For example, a data-only node installation:</li>
 </ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python esg_node.py --install --type data
+</pre></div>
+</div>
 </div>
 
 

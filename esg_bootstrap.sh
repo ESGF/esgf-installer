@@ -139,5 +139,5 @@ run_migration_script(){
 
 
 if [[ ! -d "/usr/local/conda" ]] || [[ "$1" == "migrate" ]]; then
-    install_dependencies_yum && install_miniconda && install_dependencies_pip && run_migration_script $1 && copy_autoinstall_file && echo "Bootstrap complete!" || echo "Bootstrap failed."
+    install_dependencies_yum && install_miniconda && install_dependencies_pip && run_migration_script $1 && copy_autoinstall_file && echo "Bootstrap complete!" || echo "Bootstrap failed." && return 1
 fi

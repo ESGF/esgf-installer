@@ -2,11 +2,12 @@
 
 Installation
 ******************************************
+The installation is performed on the Node itself.
 1. Clone this repo using
 
 .. code-block::
 
-    git clone https://github.com/ESGF/esgf-installer.git
+    git clone https://github.com/ESGF/esgf-installer.git && cd esgf-installer
 
 2. Checkout the appropriate branch/tag. For example, the 3.0 beta version can be accessed with the following command: 
 

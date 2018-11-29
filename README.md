@@ -14,10 +14,11 @@ The custom ESGF software includes:
 - [ESGF-SLCS-server](https://github.com/ESGF/esgf-slcs-server)
 
 ## Installation
+The installation is performed on the Node itself.
 ### Clone
 Clone this repo using 
 ```
-git clone https://github.com/ESGF/esgf-installer.git
+git clone https://github.com/ESGF/esgf-installer.git && cd esgf-installer
 ```
 ### Checkout
 Checkout the appropriate branch/tag. For example, the 3.0 beta version can be accessed with the following command: 

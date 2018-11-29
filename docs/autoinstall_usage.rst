@@ -1,5 +1,5 @@
-The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.
-
+The autoinstaller file, esgf.properties, can be used to configure options so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.
+Note that after running the bootstapper the file will be located at ``/esg/config/esgf.properties`` and the parameters should be edited there.
 Autoinstaller Configuration Options
 ******************************************
 ==================================================  =====
@@ -13,6 +13,7 @@ node.long.name                                      - More descriptive name of E
 node.namespace                                      - Set to your reverse fqdn - Ex: gov.llnl (DEPRECATED)
 node.peer.group <esgf-test | esgf-dev | esgf-prod>  - Determines the node's peer group, i.e which federation the node will belong to
 esgf.index.peer                                     - Hostname of the index peer you wish to publish to
+esgf.idp.peer                                       - Hostname of the IDP peer which you will authenicate against for publishing and data access
 mail.admin.address                                  - Email address that will receive notifications from the ESGF server
 publisher.db.user                                   - Name that will be created as a low privilege user account in Postgres for the ESGF Publisher
 esg.org.name                                        - Organization name that is used as the root ID when running the esgsetup binary. Usually the name of the institution where the node is location (llnl, ipsl, etc.)

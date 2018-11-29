@@ -1,8 +1,8 @@
 Autoinstaller Configuration Options
 ******************************************
 
-The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.
-
+The autoinstaller file, esgf.properties, can be used to configure options so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.
+Note that the file that the installer references for these properties is located at `/esg/config/esgf.properties` so make edits there after the initial population of the `esgf.properties.template`.
 ===============
 Core Parameters
 ===============

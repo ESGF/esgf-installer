@@ -88,7 +88,6 @@
 <li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Autoinstaller Configuration Options</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#core-parameters">Core Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#certificates">Certificates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#update">Update</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#advanced-user-settings">Advanced User Settings</a></li>
@@ -175,9 +174,11 @@
             
   <div class="section" id="autoinstaller-configuration-options">
 <h1>Autoinstaller Configuration Options<a class="headerlink" href="#autoinstaller-configuration-options" title="Permalink to this headline">¶</a></h1>
-<p>The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.</p>
-<div class="section" id="core-parameters">
-<h2>Core Parameters<a class="headerlink" href="#core-parameters" title="Permalink to this headline">¶</a></h2>
+<p>The autoinstaller file, esgf.properties, can be used to configure options so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.
+Note that the file that the installer references for these properties is located at <cite>/esg/config/esgf.properties</cite> so make edits there after the initial population of the <cite>esgf.properties.template</cite>.
+===============
+Core Parameters
+===============</p>
 <div class="topic">
 <p class="topic-title first">esg.root.url</p>
 <p>The URL of the distribution mirror that will be used to fetch ESGF resources</p>
@@ -248,7 +249,6 @@
 <div class="topic">
 <p class="topic-title first">publisher.db.user</p>
 <p>Name that will be created as a low privilege user account in Postgres for the ESGF Publisher</p>
-</div>
 </div>
 <div class="section" id="certificates">
 <h2>Certificates<a class="headerlink" href="#certificates" title="Permalink to this headline">¶</a></h2>

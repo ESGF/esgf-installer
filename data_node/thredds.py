@@ -101,15 +101,13 @@ def add_tomcat_user():
 
 
 def get_idp_peer_from_config():
-    node_type_list = esg_functions.get_node_type()
-    if "INDEX" in node_type_list and not set(["idp", "data", "compute"]).issubset(node_type_list):
-        try:
-            esgf_idp_peer = esg_property_manager.get_property("esgf.idp.peer")
-        except ConfigParser.NoOptionError:
-            default_idp_peer = esg_functions.get_esgf_host()
-            esgf_idp_peer = raw_input("Please specify your IDP peer node's FQDN [{}]: ".format(default_idp_peer)) or default_idp_peer
+    try:
+        esgf_idp_peer = esg_property_manager.get_property("esgf.idp.peer")
+    except ConfigParser.NoOptionError:
+        default_idp_peer = esg_functions.get_esgf_host()
+        esgf_idp_peer = raw_input("Please specify your IDP peer node's FQDN [{}]: ".format(default_idp_peer)) or default_idp_peer
 
-        return esgf_idp_peer
+    return esgf_idp_peer
 
 
 def select_idp_peer(esgf_idp_peer=None):
@@ -122,20 +120,10 @@ def select_idp_peer(esgf_idp_peer=None):
     myproxy_endpoint = esgf_idp_peer
     esgf_host = esg_functions.get_esgf_host()
 
-    # print "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
-    if esgf_host != esgf_idp_peer:
-        print '''
-          ----------------------------------------------------------------------
-          The IDP selected must share at least one of the peer group(s)
-          [${node_peer_group}] that this node is a member of!
-
-          run: esg-node --federation-sanity-check ${esgf_idp_peer}
-
-          for confirmation.
-          ----------------------------------------------------------------------'''
-
-    if esgf_host != myproxy_endpoint:
-        esg_truststore_manager.install_peer_node_cert(myproxy_endpoint)
+    # If issues arise where sites are not using commercial certs from
+    # trusted root certificate authorities, uncomment this and fix it
+    #if esgf_host != myproxy_endpoint:
+    #    esg_truststore_manager.install_peer_node_cert(myproxy_endpoint)
 
     esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
     esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)

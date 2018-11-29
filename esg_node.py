@@ -95,7 +95,7 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8")
     except ConfigParser.NoOptionError:
         selected_mirror = esg_mirror_manager.select_dist_mirror()
         esg_property_manager.set_property("esg.root.url", selected_mirror)
-        esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
+        esg_property_manager.set_property("esg.dist.url", selected_mirror+"/{}/{}".format(script_maj_version, script_release))
 
 def get_installation_type(script_version):
     '''Determining if devel or master directory of the ESGF distribution mirror

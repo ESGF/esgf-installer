@@ -3,6 +3,7 @@ import pwd
 import grp
 import stat
 import logging
+import ConfigParser
 import zipfile
 import requests
 import yaml
@@ -16,10 +17,11 @@ from plumbum import BG
 from plumbum import local
 from plumbum.commands import ProcessExecutionError
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
+
 
 def download_extract(url, dest_dir, owner_user, owner_group):
     r = requests.get(url)
@@ -27,7 +29,7 @@ def download_extract(url, dest_dir, owner_user, owner_group):
     filename = os.path.join(os.sep, "tmp", remote_file)
     with open(filename, "wb") as localfile:
         total_length = int(r.headers.get('content-length'))
-        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length / 1024) + 1):
             if chunk:
                 localfile.write(chunk)
                 localfile.flush()
@@ -48,22 +50,26 @@ def migration_egg(url, cmd, args):
         esg_functions.call_binary("easy_install", [egg_file])
     esg_functions.call_binary(cmd, args)
 
-def setup_dashboard():
 
+def setup_dashboard():
+    """Setup the Dashboard and Stats API webapp."""
     print "\n*******************************"
     print "Setting up ESGF Stats API (dashboard)"
     print "******************************* \n"
 
     if os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"):
-        stats_api_install = raw_input("Existing Stats API installation found.  Do you want to continue with the Stats API installation [y/N]: " ) or "no"
-        if stats_api_install.lower() in ["no", "n"]:
+        try:
+            dashboard_install = esg_property_manager.get_property("update.dashboard")
+        except ConfigParser.NoOptionError:
+            dashboard_install = raw_input("Existing Dashboard and Stats API installation found.  Do you want to continue with the Dashboard and Stats API installation [y/N]: ") or "no"
+        if dashboard_install.strip().lower() in ["no", "n"]:
+            logger.info("Using existing Dashboard installation.  Skipping setup.")
             return
 
     tomcat_webapps = os.path.join(os.sep, "usr", "local", "tomcat", "webapps")
 
     dist_url = esg_property_manager.get_property("esg.dist.url")
     dist_root_url = esg_property_manager.get_property("esg.root.url")
-
 
     stats_api_url = "{}/{}".format(dist_url, "esgf-stats-api/esgf-stats-api.war")
     dest_dir = os.path.join(tomcat_webapps, "esgf-stats-api")

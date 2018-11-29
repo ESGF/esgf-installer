@@ -73,11 +73,7 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
     # -a Start Solr with additional JVM parameters,
     # -m Start Solr with the defined value as the min (-Xms) and max (-Xmx) heap size for the JVM
 
-    try:
-        solr_status()
-    except ProcessExecutionError:
-        pass
-    else:
+    if solr_status():
         logger.info("Solr already running")
         return
 

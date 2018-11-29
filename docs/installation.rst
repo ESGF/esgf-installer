@@ -3,15 +3,16 @@
 Installation
 ******************************************
 The installation is performed on the Node itself.
+
 1. Clone this repo using
 
-.. code-block::
+.. code-block:: bash
 
     git clone https://github.com/ESGF/esgf-installer.git && cd esgf-installer
 
 2. Checkout the appropriate branch/tag. For example, the 3.0 beta version can be accessed with the following command: 
 
-.. code-block::
+.. code-block:: bash
 
     git checkout tags/v3.0b1 -b 3.0_beta
 
@@ -19,18 +20,18 @@ The installation is performed on the Node itself.
 
 4. Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script:
 
-.. code-block::
+.. code-block:: bash
 
     ./esg_bootstrap.sh
 
 5. Activate the esgf-pub conda environment
 
-.. code-block::
+.. code-block:: bash
 
     source /usr/local/conda/bin/activate esgf-pub
 
 6. Run an installation by invoking the `esg_node.py` script. For example, a data-only node installation:
 
-.. code-block::
+.. code-block:: bash
 
     python esg_node.py --install --type data

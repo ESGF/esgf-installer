@@ -1,49 +1,223 @@
+Autoinstaller Configuration Options
+******************************************
+
 The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.
 
-.. table:: Autoinstaller Configuration Options
-    :widths: auto
-    
-    ==================================================  =====
-    Property                                            Description
-    ==================================================  =====
-    esg.root.url                                        - The URL of the distribution mirror that will be used to fetch ESGF resources
-    esgf.host.ip                                        - The IP address of the node
-    esgf.host                                           - The fully qualified domain name (fqdn) of your server
-    node.short.name                                     - Used to set the the Endpoint name in the Globus configuration (see: https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf)
-    node.long.name                                      - More descriptive name of ESGF node (DEPRECATED)
-    node.namespace                                      - Set to your reverse fqdn - Ex: gov.llnl (DEPRECATED)
-    node.peer.group <esgf-test | esgf-dev | esgf-prod>  - Determines the node's peer group, i.e which federation the node will belong to
-    esgf.index.peer                                     - Hostname of the index peer you wish to publish to
-    mail.admin.address                                  - Email address that will receive notifications from the ESGF server
-    publisher.db.user                                   - Name that will be created as a low privilege user account in Postgres for the ESGF Publisher
-    esg.org.name                                        - Organization name that is used as the root ID when running the esgsetup binary. Usually the name of the institution where the node is location (llnl, ipsl, etc.)
-    update.java <y | yes | n | no>                      - Determines whether to update Java if previous Java installation is found
-    update.ant <y | yes | n | no>                       - Determines whether to update Ant if previous Ant installation is found
-    backup.database <y | yes | n | no>                  - Determines whether to create a backup dump of the database if an existing Postgres installation is found
-    update.postgres <y | yes | n | no>                  - Determines whether to update Postgres if previous Postgres installation is found
-    update.apache <y | yes | n | no>                    - Determines whether to update Apache if previous Apache installation is found
-    update.tomcat <y | yes | n | no>                    - Determines whether to update Tomcat if previous Tomcat installation is found
-    update.orp <y | yes | n | no>                       - Determines whether to update ORP if previous ORP webapp installation is found
-    update.node.manager <y | yes | n | no>              - Determines whether to update Node Manager if previous Node Manager webapp installation is found
-    update.thredds <y | yes | n | no>                   - Determines whether to update Thredds if previous Thredds webapp installation is found
-    update.dashboard <y | yes | n | no>                 - Determines whether to update Dashboard if previous Dashboard installation is found
-    update.publisher <y | yes | n | no>                 - Determines whether to update Publisher if previous Publisher installation is found
-    gridftp-config [defaults to:bdm end-user]           - Seems to be nonfunctional (DEPRECATED)
-    tomcat.user                                         - Name of tomcat user to be used with Thredds. Defaults to dnode_user if not populated
-    add.another.user <y | yes | n | no>                 - Determines whether to update ORP if previous ORP webapp installation is found
-    update.esg.search <y | yes | n | no>                - Determines whether to update ESG Search if previous ESG Search webapp installation is found
-    update.cog <y | yes | n | no>                       - Determines whether to update CoG if previous CoG installation is found
-    update.solr <y | yes | n | no>                      - Determines whether to update Solr if previous Solr installation is found
-    backup.idp <y | yes | n | no>                       - Determines whether to update IDP if previous IDP webapp installation is found
-    register.myproxy <y | yes | n | no>                 - Determines if the MyProxy server will be registered with Globus
-    update.globus <y | yes | n | no>                    - Determines whether to update Globus if previous Globus installation is found
-    globus.user                                         - Your Globus Username
-    globus.password                                     - Your Globus Password
-    myproxy.endpoint                                    - Specifies the hostname of the myproxy-server
-    register.gridftp <y | yes | n | no>                 - Determines if the GridFTP server will be registered with Globus
-    update.slcs <y | yes | n | no>                      - Determines whether to update SLCS if previous SLCS server installation is found
-    install.signed.certs <y | yes | n | no>             - Determines whether to install a commercially signed SSL certificate
-    commercial.key.path                                 - Absolute path to commercial key
-    commercial.cert.path                                - Absolute path to commercially signed cert
-    cachain.path                                        - A comma separated list of the absolute paths that make up the cachain
-    ==================================================  =====
+===============
+Core Parameters
+===============
+
+.. topic:: esg.root.url
+
+    The URL of the distribution mirror that will be used to fetch ESGF resources
+
+.. topic:: esgf.host.ip 
+
+    The IP address of the node
+
+.. topic:: esgf.host
+
+    The fully qualified domain name (fqdn) of your server
+
+.. topic:: node.short.name
+
+    Used to set the the Endpoint name in the Globus configuration (see: https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf)
+
+.. topic:: node.long.name
+
+    More descriptive name of ESGF node (DEPRECATED)
+
+.. topic:: node.namespace
+
+    Set to your reverse fqdn Ex: gov.llnl (DEPRECATED)
+
+.. topic:: node.peer.group
+
+    <esgf-test | esgf-dev | esgf-prod>
+
+    Determines the node's peer group, i.e which federation the node will belong to
+
+.. topic:: esgf.index.peer
+
+    Hostname of the index peer you wish to publish to
+
+.. topic:: esgf.idp.peer
+
+    Hostname of the IDP peer you wish to authenicate with
+
+.. topic:: mail.admin.address
+
+    Email address that will receive notifications from the ESGF server
+
+.. topic:: publisher.db.user
+
+    Name that will be created as a low privilege user account in Postgres for the ESGF Publisher
+
+.. topic:: esg.org.name
+
+    Organization name that is used as the root ID when running the esgsetup binary. Usually the name of the institution where the node is location (llnl, ipsl, etc.)
+
+.. topic:: register.gridftp
+
+    <y | yes | n | no>
+
+    Determines if the GridFTP server will be registered with Globus
+
+.. topic:: register.myproxy
+
+    <y | yes | n | no>
+
+    Determines if the MyProxy server will be registered with Globus
+
+.. topic:: globus.user
+
+    Your Globus Username
+
+.. topic:: globus.password
+
+    Your Globus Password
+
+.. topic:: publisher.db.user
+
+    Name that will be created as a low privilege user account in Postgres for the ESGF Publisher
+
+============
+Certificates
+============
+
+.. topic:: install.signed.certs
+
+    <y | yes | n | no>
+
+    Determines whether to install a commercially signed SSL certificate
+
+.. topic:: commercial.key.path
+
+    Absolute path to commercial key
+
+.. topic:: commercial.cert.path
+
+    Absolute path to commercially signed cert
+
+.. topic:: cachain.path
+
+    A comma separated list of the absolute paths that make up the cachain
+
+
+==========
+Update
+==========
+
+.. topic:: update.java
+
+    <y | yes | n | no> 
+
+    Determines whether to update Java if previous Java installation is found
+
+.. topic:: update.ant
+
+    <y | yes | n | no> 
+
+    Determines whether to update Ant if previous Ant installation is found
+
+.. topic:: backup.database
+
+    <y | yes | n | no> 
+
+    Determines whether to create a backup dump of the database if an existing Postgres installation is found
+
+.. topic:: update.postgres
+
+    <y | yes | n | no> 
+
+    Determines whether to update Postgres if previous Postgres installation is found
+
+.. topic:: update.apache
+
+    <y | yes | n | no> 
+
+    Determines whether to update Apache if previous Apache installation is found
+
+.. topic:: update.tomcat
+
+    <y | yes | n | no> 
+
+    Determines whether to update Tomcat if previous Tomcat installation is found
+
+.. topic:: update.orp
+
+    <y | yes | n | no> 
+
+    Determines whether to update ORP if previous ORP webapp installation is found
+
+.. topic:: update.node.manager
+
+    <y | yes | n | no> 
+
+    Determines whether to update Node Manager if previous Node Manager webapp installation is found
+
+.. topic:: update.thredds
+
+    <y | yes | n | no> 
+
+    Determines whether to update Thredds if previous Thredds webapp installation is found
+
+.. topic:: update.dashboard
+
+    <y | yes | n | no> 
+
+    Determines whether to update Dashboard if previous Dashboard installation is found
+
+.. topic:: update.publisher
+
+    <y | yes | n | no> 
+
+    Determines whether to update Publisher if previous Publisher installation is found
+
+.. topic:: update.esg.search
+
+    <y | yes | n | no> 
+
+    Determines whether to update ESG Search if previous ESG Search webapp installation is found
+
+.. topic:: update.cog
+
+    <y | yes | n | no> 
+
+    Determines whether to update CoG if previous CoG installation is found
+
+.. topic:: update.solr
+
+    <y | yes | n | no> 
+
+    Determines whether to update Solr if previous Solr installation is found
+
+.. topic:: backup.idp
+
+    <y | yes | n | no> 
+
+    Determines whether to update IDP if previous IDP webapp installation is found
+
+.. topic:: update.globus
+
+    <y | yes | n | no> 
+
+    Determines whether to update Globus if previous Globus installation is found
+
+.. topic:: update.slcs
+
+    <y | yes | n | no> 
+
+    Determines whether to update SLCS if previous SLCS server installation is found
+
+=======================
+Advanced User Settings
+=======================
+
+.. topic:: tomcat.user
+
+    Name of tomcat user to be used with Thredds. Defaults to dnode_user if not populated
+
+.. topic:: myproxy.endpoint
+
+    Specifies the hostname of the myproxy-server

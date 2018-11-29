@@ -2,8 +2,10 @@ Autoinstaller Configuration Options
 ******************************************
 
 The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.
+
 .. topic:: esg.root.url
     The URL of the distribution mirror that will be used to fetch ESGF resources
+
 .. table:: Autoinstaller Configuration Options
     :widths: 2, 2
     

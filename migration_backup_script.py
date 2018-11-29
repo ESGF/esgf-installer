@@ -16,7 +16,7 @@ from base import esg_postgres
 def copy_tomcat_env_file():
     '''Copies the setenv.sh Tomcat file'''
     CATALINA_HOME = "/usr/local/tomcat"
-    shutil.copy("base/tomcat_conf/setenv.sh"), os.path.join(CATALINA_HOME, "bin")
+    shutil.copy("base/tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
 
 def copy_previous_component_versions():
     print "\n*******************************"

@@ -80,6 +80,7 @@ Core Parameters
 .. topic:: publisher.db.user
 
     Name that will be created as a low privilege user account in Postgres for the ESGF Publisher
+
 ===
 Certificates
 ===

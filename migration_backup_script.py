@@ -13,6 +13,11 @@ from esgf_utilities import esg_functions, pybash
 from base import esg_postgres
 
 
+def copy_tomcat_env_file():
+    '''Copies the setenv.sh Tomcat file'''
+    CATALINA_HOME = "/usr/local/tomcat"
+    shutil.copy("base/tomcat_conf/setenv.sh"), os.path.join(CATALINA_HOME, "bin")
+
 def copy_previous_component_versions():
     print "\n*******************************"
     print "Copying settings from 2.x esg-init to 3.0 esg_config.yaml file"
@@ -174,6 +179,7 @@ def backup_esg_installation():
 def main(argv):
     if check_previous_install():
         backup_esg_installation()
+        copy_tomcat_env_file()
 
 
 if __name__ == "__main__":

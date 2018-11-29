@@ -3,9 +3,9 @@ Autoinstaller Configuration Options
 
 The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.
 
-===
+===============
 Core Parameters
-===
+===============
 
 .. topic:: esg.root.url
 
@@ -81,9 +81,9 @@ Core Parameters
 
     Name that will be created as a low privilege user account in Postgres for the ESGF Publisher
 
-===
+============
 Certificates
-===
+============
 
 .. topic:: install.signed.certs
 
@@ -104,9 +104,9 @@ Certificates
     A comma separated list of the absolute paths that make up the cachain
 
 
-===
+==========
 Update
-===
+==========
 
 .. topic:: update.java
 
@@ -210,9 +210,9 @@ Update
 
     Determines whether to update SLCS if previous SLCS server installation is found
 
-===
+=======================
 Advanced User Settings
-===
+=======================
 
 .. topic:: tomcat.user
 

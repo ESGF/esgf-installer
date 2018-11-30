@@ -18,11 +18,11 @@ The installation is performed on the Node itself.
 
 3. To avoid being prompted for various parameters, the ``esgf.properties.template`` should be populated with the proper values for your node. See `the properties file documentation <https://esgf.github.io/esgf-installer/autoinstall_usage.html>`_ for information when populating.
 
-4. Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script:
+4. Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script. If you are migrating to ESGF 3.0 from a previous version of ESGF, add the 'migrate' parameter:
 
 .. code-block:: bash
 
-    ./esg_bootstrap.sh
+    ./esg_bootstrap.sh [migrate]
 
 5. Activate the esgf-pub conda environment
 

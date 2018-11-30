@@ -1,7 +1,7 @@
 ESGF Command Line Interface
 ******************************************
 
-This program must be run as root or a root equiv shell: (sudo -s)
+This program must be run as root or a root equivalent shell: (sudo -s)
 
 .. argparse::
    :ref: esgf_utilities.esg_cli.argparser

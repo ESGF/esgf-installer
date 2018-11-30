@@ -132,7 +132,14 @@ run_migration_script(){
     echo "Running ESGF 2->3 migration script"
     echo "-----------------------------------"
     echo
-      python migration_backup_script.py
+    python migration_backup_script.py
+    ret=$?
+    if [ $ret -ne 0 ]; then
+         echo "Migration script failed. Please review the error message and run the script again after addressing issues."
+         source ${CDAT_HOME}/bin/deactivate
+         exit 1
+    fi
+
     source ${CDAT_HOME}/bin/deactivate
   fi
 }

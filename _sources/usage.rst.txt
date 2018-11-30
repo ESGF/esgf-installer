@@ -1,6 +1,9 @@
 ESGF Command Line Interface
 ******************************************
 
+.. argparse::
+   :ref: esgf_utilities.esg_cli.argparser
+   :prog: esg_node.py
 
 * This program must be run as root or a root equiv shell: (sudo -s)
 

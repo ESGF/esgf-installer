@@ -87,6 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">ESGF Command Line Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Named Arguments">Named Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-type-selection">Configuration Type Selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#federation-node-relationship-flags">Federation / Node Relationship Flags:</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#security-policy">Security Policy…</a></li>
@@ -185,6 +186,326 @@
             
   <div class="section" id="esgf-command-line-interface">
 <h1>ESGF Command Line Interface<a class="headerlink" href="#esgf-command-line-interface" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">esg_node</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">install</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">base</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">update</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">upgrade</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">install</span><span class="o">-</span><span class="n">local</span><span class="o">-</span><span class="n">certs</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">generate</span><span class="o">-</span><span class="n">esgf</span><span class="o">-</span><span class="n">csrs</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">generate</span><span class="o">-</span><span class="n">esgf</span><span class="o">-</span><span class="n">csrs</span><span class="o">-</span><span class="n">ext</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cert</span><span class="o">-</span><span class="n">howto</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">fix</span><span class="o">-</span><span class="n">perms</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="nb">type</span> <span class="p">{</span><span class="n">data</span><span class="p">,</span><span class="n">index</span><span class="p">,</span><span class="n">idp</span><span class="p">,</span><span class="n">compute</span><span class="p">,</span><span class="nb">all</span><span class="p">}</span> <span class="p">[{</span><span class="n">data</span><span class="p">,</span><span class="n">index</span><span class="p">,</span><span class="n">idp</span><span class="p">,</span><span class="n">compute</span><span class="p">,</span><span class="nb">all</span><span class="p">}</span> <span class="o">...</span><span class="p">]]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="nb">set</span><span class="o">-</span><span class="nb">type</span> <span class="n">SETTYPE</span> <span class="p">[</span><span class="n">SETTYPE</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">--</span><span class="n">get</span><span class="o">-</span><span class="nb">type</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">start</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">stop</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">restart</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">status</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">apache</span><span class="o">-</span><span class="n">conf</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">recommended_setup</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">custom_setup</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">use</span><span class="o">-</span><span class="n">local</span><span class="o">-</span><span class="n">files</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">use</span><span class="o">-</span><span class="n">local</span><span class="o">-</span><span class="n">mirror</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">devel</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">prod</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">debug</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">clear</span><span class="o">-</span><span class="n">envfile</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">clear</span><span class="o">-</span><span class="n">my</span><span class="o">-</span><span class="n">certs</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">info</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">config</span><span class="o">-</span><span class="n">db</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">backup</span><span class="o">-</span><span class="n">db</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">restore</span><span class="o">-</span><span class="n">db</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">verify</span><span class="o">-</span><span class="n">thredds</span><span class="o">-</span><span class="n">credentials</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">uninstall</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">get</span><span class="o">-</span><span class="n">idp</span><span class="o">-</span><span class="n">peer</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">set</span><span class="o">-</span><span class="n">idp</span><span class="o">-</span><span class="n">peer</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">get</span><span class="o">-</span><span class="n">default</span><span class="o">-</span><span class="n">peer</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">set</span><span class="o">-</span><span class="n">default</span><span class="o">-</span><span class="n">peer</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">get</span><span class="o">-</span><span class="n">peer</span><span class="o">-</span><span class="n">group</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">set</span><span class="o">-</span><span class="n">peer</span><span class="o">-</span><span class="n">group</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">auto</span><span class="o">-</span><span class="n">fetch</span><span class="o">-</span><span class="n">certs</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">set</span><span class="o">-</span><span class="n">auto</span><span class="o">-</span><span class="n">fetch</span><span class="o">-</span><span class="n">certs</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">fetch</span><span class="o">-</span><span class="n">esgf</span><span class="o">-</span><span class="n">certs</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">rebuild</span><span class="o">-</span><span class="n">truststore</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">add</span><span class="o">-</span><span class="n">my</span><span class="o">-</span><span class="n">cert</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">truststore</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">generate</span><span class="o">-</span><span class="n">ssl</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="ow">and</span><span class="o">-</span><span class="n">csr</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">migrate</span><span class="o">-</span><span class="n">tomcat</span><span class="o">-</span><span class="n">credentials</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">esgf</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">temp</span><span class="o">-</span><span class="n">ca</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">check</span><span class="o">-</span><span class="n">certs</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">install</span><span class="o">-</span><span class="n">ssl</span><span class="o">-</span><span class="n">keypair</span> <span class="n">INSTALLSSLKEYPAIR</span> <span class="p">[</span><span class="n">INSTALLSSLKEYPAIR</span> <span class="o">...</span><span class="p">]]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">optimize</span><span class="o">-</span><span class="n">index</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">myproxy</span><span class="o">-</span><span class="n">sanity</span><span class="o">-</span><span class="n">check</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">noglobus</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">force</span><span class="o">-</span><span class="n">install</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">index</span><span class="o">-</span><span class="n">config</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">check</span><span class="o">-</span><span class="n">shards</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">add</span><span class="o">-</span><span class="n">replica</span><span class="o">-</span><span class="n">shard</span> <span class="n">ADDREPLICASHARD</span> <span class="n">ADDREPLICASHARD</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">remove</span><span class="o">-</span><span class="n">replica</span><span class="o">-</span><span class="n">shard</span> <span class="n">REMOVEREPLICASHARD</span> <span class="n">REMOVEREPLICASHARD</span><span class="p">]</span>
+                   <span class="p">[</span><span class="o">--</span><span class="n">update</span><span class="o">-</span><span class="n">publisher</span><span class="o">-</span><span class="n">resources</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments">
+<h2>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline">¶</a></h2>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>--install</kbd></td>
+<td><p class="first">Goes through the installation process and automatically starts up node services</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--base</kbd></td>
+<td><p class="first">Install on base third party components</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--update</kbd></td>
+<td><p class="first">Updates the node manager</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--upgrade</kbd></td>
+<td><p class="first">Upgrade the node manager</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--install-local-certs</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Install local certificates</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--generate-esgf-csrs</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Generate CSRs for a simpleCA CA certificate and/or web container certificate</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--generate-esgf-csrs-ext</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Generate CSRs for a node other than the one you are running</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--cert-howto</kbd></td>
+<td><p class="first">Provides information about certificate management</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--fix-perms, --fixperms</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Fix permissions</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--type, -t, --flavor</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Possible choices: data, index, idp, compute, all</p>
+<p class="last">Set type</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--set-type</kbd></td>
+<td>Sets the type value to be used at next start up</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--get-type, --show-type</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--start</kbd></td>
+<td><p class="first">Start the node’s services</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--stop, --shutdown</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Stops the node’s services</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--restart</kbd></td>
+<td><p class="first">Restarts the node’s services (calls stop then start :-/)</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--status</kbd></td>
+<td><p class="first">Status on node’s services</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--update-apache-conf</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Update Apache configuration</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>-v, --version</kbd></td>
+<td><p class="first">Displays the version of this script</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--recommended_setup</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Sets esgsetup to use the recommended, minimal setup</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--custom_setup</kbd></td>
+<td><p class="first">Sets esgsetup to use a custom, user-defined setup</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--use-local-files</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Sets a flag for using local files instead of attempting to fetch a remote file</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--use-local-mirror</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Sets the installer to fetch files from a mirror directory that is on the same server in which the installation is being run</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--devel</kbd></td>
+<td><p class="first">Sets the installation type to the devel build</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--prod</kbd></td>
+<td><p class="first">Sets the installation type to the production build</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--debug</kbd></td>
+<td><p class="first">Sets the logging level to debug</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--clear-envfile</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Delete (and backup) existing envfile (/etc/esg.env)</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--clear-my-certs</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Delete certficates from $HOME/.globus/certificates</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--info</kbd></td>
+<td><p class="first">Print basic info about ESGF installation</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--config-db</kbd></td>
+<td><p class="first">configures the database i.e. sets up table schema based on the the node type.</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--backup-db</kbd></td>
+<td><p class="first">Backs up the Postgres database</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--restore-db</kbd></td>
+<td><p class="first">Restores the Postgres database from a previous backup</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--verify-thredds-credentials</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Verifies Thredds credentials</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--uninstall, --purge</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Uninstalls the ESGF installation</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd>--get-idp-peer</kbd></td>
+<td><p class="first">Displays the IDP peer node name</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--set-idp-peer, --set-admin-peer</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Selects the IDP peer node</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--get-default-peer</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Displays the default peer</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--set-default-peer</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Sets the default peer</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--get-peer-group, --get-peer-groups</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Displays the peer groups</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--set-peer-group, --set-peer-groups</kbd></td>
+</tr>
+<tr><td>&#160;</td><td><p class="first">Sets the peer groups</p>
+<p class="last">Default: False</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--no-auto-fetch-certs</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--set-auto-fetch-certs</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--fetch-esgf-certs</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--rebuild-truststore</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--add-my-cert-to-truststore</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--generate-ssl-key-and-csr</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--migrate-tomcat-credentials-to-esgf</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--update-temp-ca</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group">
+<kbd>--check-certs</kbd></td>
+<td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--install-ssl-keypair, --install-keypair</kbd></td>
+</tr>
+<tr><td>&#160;</td><td></td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--optimize-index</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--myproxy-sanity-check</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group">
+<kbd>--noglobus</kbd></td>
+<td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--force-install</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+<tr><td class="option-group">
+<kbd>--index-config</kbd></td>
+<td>Default: False</td></tr>
+<tr><td class="option-group">
+<kbd>--check-shards</kbd></td>
+<td>Default: False</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--add-replica-shard</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Specify a hostname and port of the replica shard to add</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--remove-replica-shard</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Specify a hostname and port of the replica shard to remove</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd>--update-publisher-resources</kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Default: False</td></tr>
+</tbody>
+</table>
+</div>
 <ul class="simple">
 <li>This program must be run as root or a root equiv shell: (sudo -s)</li>
 </ul>

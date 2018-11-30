@@ -1,6 +1,6 @@
 # ESGF Installer
 The ESGF Installer is a command line tool for installing the ESGF Software Stack.  
-The software stack is comprised of: Tomcat, Thredds, CDAT & CDMS, PostgreSQL, MyProxy, and several ESGF.org custom software applications running on a LINUX (RedHat/CentOS) operating system.
+The software stack is comprised of: Tomcat, Thredds, CDAT & CDMS, PostgreSQL, MyProxy, and several ESGF custom software applications running on a LINUX (RedHat/CentOS) operating system.
 
 The custom ESGF software includes:
 - [ESGF-dashboard](https://github.com/ESGF/esgf-dashboard)
@@ -36,7 +36,11 @@ See [the properties file documentation](https://esgf.github.io/esgf-installer/au
 Install Miniconda and other ESGF dependencies from yum and pip by running the bootstrap script:
 ```
 ./esg_bootstrap.sh
-``` 
+```
+If you are migrating to ESGF 3.0 from a previous version of ESGF, add the migrate parameter to the the bootstrap
+```
+./esg_bootstrap.sh migrate
+```
 Activate the esgf-pub conda environment
 ```
 source /usr/local/conda/bin/activate esgf-pub

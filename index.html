@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Welcome to esgf-installer’s documentation! &mdash; esgf-installer beta documentation</title>
+  <title>Welcome to esgf-installer’s documentation! &mdash; esgf-installer alpha documentation</title>
   
 
   
@@ -57,7 +57,7 @@
             
             
               <div class="version">
-                3.0b1
+                3.0.0-alpha
               </div>
             
           
@@ -84,6 +84,7 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="autoinstall_usage.html">Autoinstaller Configuration Options</a></li>
@@ -172,6 +173,7 @@
 <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="usage.html#configuration-type-selection">Configuration Type Selection</a></li>
@@ -190,44 +192,38 @@
 <li class="toctree-l2"><a class="reference internal" href="usage.html#typical-usage">Typical usage:</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="autoinstall_usage.html">Autoinstaller Configuration Options</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="autoinstall_usage.html#core-parameters">Core Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="autoinstall_usage.html#certificates">Certificates</a></li>
-<li class="toctree-l2"><a class="reference internal" href="autoinstall_usage.html#update">Update</a></li>
-<li class="toctree-l2"><a class="reference internal" href="autoinstall_usage.html#advanced-user-settings">Advanced User Settings</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="autoinstall_usage.html">Autoinstaller Configuration Options</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Base Components</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_apache_manager">ESG Apache Manager Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_postgres">ESG Postgres Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-apache-manager-module">ESG Apache Manager Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-postgres-module">ESG Postgres Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_setup">ESG Setup Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_tomcat_manager">ESG Tomcat Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-tomcat-module">ESG Tomcat Module</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#data-node-components">Data Node Components</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api.html#esg-publisher-module">ESG Publisher Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-orp">ESG ORP Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-thredds">ESG Thredds Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_cert_manager">ESG Cert Manager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_functions">ESG Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_purge">ESG Purge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-orp-module">ESG ORP Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-thredds-module">ESG Thredds Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-cert-manager">ESG Cert Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-functions">ESG Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-purge">ESG Purge</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#index-node-components">Index Node Components</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_search">ESG Search</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-solr">Solr</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_cog">CoG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-search">ESG Search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#solr">Solr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#cog">CoG</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#idp-node-components">IDP Node Components</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-esg_security">ESG Security</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-globus">Globus</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-idp">IDP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#esg-security">ESG Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#globus">Globus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#idp">IDP</a></li>
 </ul>
 </li>
 </ul>

@@ -1,6 +1,10 @@
 ESGF Command Line Interface
 ******************************************
 
+.. argparse::
+   :module: esgf_utilities.esg_cli_argument_manager
+   :func: define_acceptable_arguments
+   :prog: esg_node.py
 
 * This program must be run as root or a root equiv shell: (sudo -s)
 

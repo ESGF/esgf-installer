@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>thredds &mdash; esgf-installer alpha documentation</title>
+  <title>thredds &mdash; esgf-installer beta documentation</title>
   
 
   
@@ -56,7 +56,7 @@
             
             
               <div class="version">
-                3.0.0-alpha
+                3.0b1
               </div>
             
           
@@ -83,7 +83,6 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">ESGF Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../autoinstall_usage.html">Autoinstaller Configuration Options</a></li>
@@ -268,13 +267,15 @@
 
 
 <span class="k">def</span> <span class="nf">get_idp_peer_from_config</span><span class="p">():</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.idp.peer&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
-        <span class="n">default_idp_peer</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
-        <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please specify your IDP peer node&#39;s FQDN [</span><span class="si">{}</span><span class="s2">]: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">default_idp_peer</span><span class="p">))</span> <span class="ow">or</span> <span class="n">default_idp_peer</span>
+    <span class="n">node_type_list</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_node_type</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">&quot;INDEX&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;idp&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;compute&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.idp.peer&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
+            <span class="n">default_idp_peer</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+            <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please specify your IDP peer node&#39;s FQDN [</span><span class="si">{}</span><span class="s2">]: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">default_idp_peer</span><span class="p">))</span> <span class="ow">or</span> <span class="n">default_idp_peer</span>
 
-    <span class="k">return</span> <span class="n">esgf_idp_peer</span>
+        <span class="k">return</span> <span class="n">esgf_idp_peer</span>
 
 
 <div class="viewcode-block" id="select_idp_peer"><a class="viewcode-back" href="../api.html#thredds.select_idp_peer">[docs]</a><span class="k">def</span> <span class="nf">select_idp_peer</span><span class="p">(</span><span class="n">esgf_idp_peer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -287,10 +288,20 @@
     <span class="n">myproxy_endpoint</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span>
     <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
 
-    <span class="c1"># If issues arise where sites are not using commercial certs from</span>
-    <span class="c1"># trusted root certificate authorities, uncomment this and fix it</span>
-    <span class="c1">#if esgf_host != myproxy_endpoint:</span>
-    <span class="c1">#    esg_truststore_manager.install_peer_node_cert(myproxy_endpoint)</span>
+    <span class="c1"># print &quot;Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}&quot;</span>
+    <span class="k">if</span> <span class="n">esgf_host</span> <span class="o">!=</span> <span class="n">esgf_idp_peer</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">          ----------------------------------------------------------------------</span>
+<span class="s1">          The IDP selected must share at least one of the peer group(s)</span>
+<span class="s1">          [$</span><span class="si">{node_peer_group}</span><span class="s1">] that this node is a member of!</span>
+
+<span class="s1">          run: esg-node --federation-sanity-check $</span><span class="si">{esgf_idp_peer}</span><span class="s1"></span>
+
+<span class="s1">          for confirmation.</span>
+<span class="s1">          ----------------------------------------------------------------------&#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">esgf_host</span> <span class="o">!=</span> <span class="n">myproxy_endpoint</span><span class="p">:</span>
+        <span class="n">esg_truststore_manager</span><span class="o">.</span><span class="n">install_peer_node_cert</span><span class="p">(</span><span class="n">myproxy_endpoint</span><span class="p">)</span>
 
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_idp_peer_name&quot;</span><span class="p">,</span> <span class="n">esgf_idp_peer_name</span><span class="p">)</span>
     <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_idp_peer&quot;</span><span class="p">,</span> <span class="n">esgf_idp_peer</span><span class="p">)</span>

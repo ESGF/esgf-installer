@@ -92,15 +92,12 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="9")
         if esg_mirror_manager.is_valid_mirror(esg_property_manager.get_property("esg.root.url")):
             esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
             return
-        elif esg_property_manager.get_property("esg.root.url") == "fastest":
-            esg_property_manager.set_property("esg.root.url", esg_mirror_manager.find_fastest_mirror(install_type))
-            esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
         else:
             selected_mirror = esg_mirror_manager.select_dist_mirror()
             esg_property_manager.set_property("esg.root.url", selected_mirror)
             esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
     except ConfigParser.NoOptionError:
-        selected_mirror = esg_mirror_manager.select_dist_mirror()
+        selected_mirror = esg_mirror_manager.find_fastest_mirror(install_type)
         esg_property_manager.set_property("esg.root.url", selected_mirror)
         esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
 

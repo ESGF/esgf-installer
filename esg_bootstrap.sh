@@ -126,6 +126,7 @@ run_migration_script(){
       echo
       return 0
     fi
+    CDAT_HOME=/usr/local/conda
     source /usr/local/conda/bin/activate esgf-pub
     echo
     echo "-----------------------------------"

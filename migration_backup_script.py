@@ -150,7 +150,11 @@ def backup_esg_installation():
 
     files_to_backup = ["/esg/content/thredds/catalog.xml", "/esg/config/esgf.properties", "/esg/esgf-install-manifest", "/etc/esg.env", "/esg/config/config_type", "/esg/config/esgf_shards.config"]
     for file_name in files_to_backup:
-        esg_functions.create_backup_file(file_name, backup_dir=migration_backup_dir)
+        try:
+            esg_functions.create_backup_file(file_name, backup_dir=migration_backup_dir)
+        except IOError, error:
+            if error.errno == errno.ENOENT:
+                pass
 
     # Remove old install manifest
     try:

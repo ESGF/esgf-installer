@@ -118,10 +118,12 @@ def migrate_solr_shards_config_file(config_file_path):
 
     with open(config_file_path) as shard_config:
         for line in shard_config:
-            key, val = line.split(":")
-            print "key:", key
-            print "value:", val
-            parser["esgf_solr_shards"][key] = str(val)
+            line = line.strip()
+            if line:
+                key, val = line.split(":")
+                print "key:", key
+                print "value:", val
+                parser["esgf_solr_shards"][key] = str(val)
 
     with open("/esg/config/esgf_shards.config", "w") as shard_config:
         parser.write(shard_config, space_around_delimiters=False)

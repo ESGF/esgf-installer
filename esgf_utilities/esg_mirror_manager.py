@@ -89,7 +89,7 @@ def find_fastest_mirror(install_type):
     response_times, _ = get_mirror_response_times()
     ranked_response_times = rank_response_times(response_times)
 
-    master_mirror = 'distrib-coffee.ipsl.jussieu.fr/pub/esgf'
+    master_mirror = 'http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist'
     if ranked_response_times.items()[0][0] == master_mirror:
         logger.debug("Master mirror is fastest")
         return master_mirror

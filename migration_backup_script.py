@@ -5,6 +5,7 @@ import os
 import shutil
 import errno
 import datetime
+import glob
 import StringIO
 import ConfigParser
 import yaml
@@ -49,7 +50,6 @@ def copy_previous_component_versions():
 
 def check_previous_install():
     return os.path.exists("/usr/local/bin/esg-node")
-
 
 def copy_previous_settings(old_config_file, new_config_file):
     print "\n*******************************"
@@ -124,6 +124,21 @@ def migrate_solr_shards_config_file(config_file_path):
     with open("/esg/config/esgf_shards.config", "w") as shard_config:
         parser.write(shard_config, space_around_delimiters=False)
 
+def backup_old_esgf(backup_dir):
+    '''Backs up the ESGF 2.x scripts and deletes them from the bin directory'''
+    esgf_backup_dir = os.path.join(backup_dir, "2.x_backup")
+    esgf_scripts_list = glob.glob("/usr/local/bin/esg*")
+    for file_name in esgf_scripts_list:
+        try:
+            esg_functions.create_backup_file(file_name, backup_dir=esgf_backup_dir)
+        except IOError, error:
+            if error.errno == errno.ENOENT:
+                pass
+        try:
+            os.remove(file_name)
+        except OSError, error:
+            if error.errno == errno.ENOENT:
+                pass
 
 def backup_esg_installation():
     '''From https://github.com/ESGF/esgf-installer/wiki/ESGF-Pre-Installation-Backup
@@ -146,6 +161,7 @@ def backup_esg_installation():
     migration_backup_dir = "/etc/esg_installer_backup_{}".format(str(datetime.date.today()))
     pybash.mkdir_p(migration_backup_dir)
 
+    backup_old_esgf(migration_backup_dir)
     files_to_backup = ["/esg/content/thredds/catalog.xml", "/esg/config/esgf.properties", "/esg/esgf-install-manifest", "/etc/esg.env", "/esg/config/config_type", "/esg/config/esgf_shards.config"]
     for file_name in files_to_backup:
         try:

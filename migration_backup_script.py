@@ -107,17 +107,13 @@ def add_config_file_section_header(config_file_name, section_header):
 
 def migrate_solr_shards_config_file(config_file_path):
     '''Copy over settings from the esgf_shards.config file and format it so it can be parsed by ConfigParser'''
-    # try:
-    #     os.remove("/esg/config/esgf_shards.config")
-    # except OSError, error:
-    #     if error.errno == errno.ENOENT:
-    #         pass
-    # pybash.touch("/esg/config/esgf_shards.config")
     parser = configparser.ConfigParser()
     parser.add_section("esgf_solr_shards")
 
     with open(config_file_path) as shard_config:
         for line in shard_config:
+            if "[esgf_solr_shards]" in line:
+                return
             line = line.strip()
             if line:
                 key, val = line.split(":")

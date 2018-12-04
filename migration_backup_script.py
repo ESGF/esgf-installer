@@ -189,18 +189,17 @@ def backup_esg_installation():
     except IOError, error:
         if error.errno == errno.ENOENT:
             pass
+            
     shards_config_backup_path = os.path.join(migration_backup_dir, "esgf_shards.config-{}.bak".format(str(datetime.date.today())))
     migrate_solr_shards_config_file(shards_config_backup_path)
 
-    directories_to_backup = ["/usr/local/tomcat", "/usr/local/solr", "/etc/grid-security", "/esg/config", "/usr/local/cog/cog_config", "/etc/esgfcerts", "/etc/certs"]
+    directories_to_backup = ["/usr/local/tomcat", "/usr/local/solr", "/etc/grid-security", "/esg/config", "/usr/local/cog/cog_config", "/etc/esgfcerts", "/etc/certs", "/var/lib/globus-connect-server/"]
     for directory in directories_to_backup:
         esg_functions.backup(directory, migration_backup_dir)
 
     current_directory = os.path.join(os.path.dirname(__file__))
     copy_previous_settings(properties_backup_path, os.path.join(current_directory, "esgf.properties.template"))
     copy_previous_component_versions()
-
-
 
 def main(argv):
     if check_previous_install():

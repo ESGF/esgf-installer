@@ -166,9 +166,17 @@ def backup_esg_installation():
             pass
 
     properties_backup_path = os.path.join(migration_backup_dir, "esgf.properties-{}.bak".format(str(datetime.date.today())))
-    add_config_file_section_header(properties_backup_path, "installer.properties")
+    try:
+        add_config_file_section_header(properties_backup_path, "installer.properties")
+    except IOError, error:
+        if error.errno == errno.ENOENT:
+            pass
     install_manifest_backup_path = os.path.join(migration_backup_dir, "esgf-install-manifest-{}.bak".format(str(datetime.date.today())))
-    add_config_file_section_header(install_manifest_backup_path, "install_manifest")
+    try:
+        add_config_file_section_header(install_manifest_backup_path, "install_manifest")
+    except IOError, error:
+        if error.errno == errno.ENOENT:
+            pass
     shards_config_backup_path = os.path.join(migration_backup_dir, "esgf_shards.config-{}.bak".format(str(datetime.date.today())))
     migrate_solr_shards_config_file(shards_config_backup_path)
 

@@ -1,4 +1,4 @@
-'''Module for installing Postgres on ESGF node'''
+"""Module for installing Postgres on ESGF node."""
 import os
 import pwd
 import shutil
@@ -24,8 +24,9 @@ LOGGER = logging.getLogger("esgf_logger" + "." + __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     CONFIG = yaml.load(config_file)
 
+
 def initialize_postgres():
-    '''Sets up postgres data directory'''
+    """Set up postgres data directory."""
     try:
         if os.listdir("/var/lib/pgsql/data"):
             LOGGER.info("Data directory already exists. Skipping initialize_postgres().")

@@ -38,7 +38,7 @@ esgf_security_db_version: 0.1.5
 esgf_security_version: 2.7.17
 esgf_stats_api_version: 1.0.5
 esgprep_version: 2.8.1
-java_version: 1.8.0_162
+java_version: 1.8.0_192
 postgress_min_version: 8.4.20
 postgress_version: 8.4.20
 tds_min_version: 5.0.2

@@ -11,7 +11,7 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from base import esg_postgres
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
@@ -60,10 +60,11 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
 
         node_db_name = "esgcet"
         node_db_security_schema_name = "esgf_security"
-        if node_db_name not in esg_postgres.postgres_list_dbs():
+        pg_sys_acct_passwd = esg_functions.get_postgres_password()
+        if node_db_name not in esg_postgres.postgres_list_dbs(user_name="dbsuper", password=pg_sys_acct_passwd):
             esg_postgres.create_database(node_db_name)
 
-        schema_list = esg_postgres.postgres_list_db_schemas()
+        schema_list = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", password=pg_sys_acct_passwd)
         logger.debug("schema list: %s", schema_list)
         if node_db_security_schema_name in schema_list:
             print "Detected an existing security schema installation..."
@@ -90,7 +91,7 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
 
             node_db_name = "esgcet"
             node_db_security_schema_name = "esgf_security"
-            if node_db_security_schema_name in esg_postgres.postgres_list_db_schemas():
+            if node_db_security_schema_name in esg_postgres.postgres_list_db_schemas(user_name="dbsuper", password=pg_sys_acct_passwd):
                 schema_backup = raw_input("Do you want to make a back up of the existing database schema [{}:{}]? [Y/n]".format(node_db_name, node_db_security_schema_name)) or "y"
                 if schema_backup.lower() in ["y", "yes"]:
                     print "Creating a backup archive of the database schema [{}:{}]".format(node_db_name, node_db_security_schema_name)

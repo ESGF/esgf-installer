@@ -151,7 +151,7 @@ def backup_db(db_name, schema=None, backup_dir="/etc/esgf_db_backup"):
 
     pg_dump = local["pg_dump"]
     local.env["PGPASSWORD"] = esg_functions.get_publisher_password()
-    args = [db_name, "-U", config["postgress_user"]]
+    args = [db_name, "-U", config["postgress_user"] , "--verbose"]
     if schema:
         args.append("-n")
         args.append("schema")
@@ -183,24 +183,21 @@ def connect_to_db(user, db_name=None, host="/tmp", password=None):
     root_id = pwd.getpwnam("root").pw_uid
     if user == "postgres":
         postgres_id = pwd.getpwnam("postgres").pw_uid
-
         os.seteuid(postgres_id)
     db_connection_string = build_connection_string(user, db_name, host, password)
     try:
         conn = psycopg2.connect(db_connection_string)
+    except psycopg2.OperationalError:
+        logger.error("Unable to connect to the database.")
+        raise
+    else:
         logger.debug("Connected to %s database as user '%s'", db_name, user)
-        if not conn:
-            print "Failed to connect to {db_name}".format(db_name=db_name)
-            raise Exception
-
+        return conn
+    finally:
         # Set effective user id (euid) back to root
         if os.geteuid() != root_id:
             os.seteuid(root_id)
 
-        return conn
-    except Exception:
-        logger.exception("Unable to connect to the database.")
-        raise
 
 #----------------------------------------------------------
 # Postgresql user/group management functions
@@ -300,7 +297,7 @@ def log_postgres_properties():
 
 def write_postgress_env():
     '''Write postgres environment properties to /etc/esg.env'''
-    EnvWriter.export("PGHOME", "/usr/bin/postgres")
+    EnvWriter.export("PGHOME", "/usr/bin/psql")
     EnvWriter.export("PGUSER", config["postgress_user"])
     EnvWriter.export("PGPORT", config["postgress_port"])
     EnvWriter.export("PGBINDIR", config["postgress_bin_dir"])
@@ -370,10 +367,10 @@ def postgres_list_schemas_tables(conn=None, user_name="postgres", db_name="postg
         logger.exception("Could not list schema tables")
 
 
-def postgres_list_dbs(conn=None, user_name="postgres", db_name="postgres"):
+def postgres_list_dbs(conn=None, user_name="postgres", db_name="postgres", password=None):
     '''This prints a list of all databases known to postgres.'''
     if not conn:
-        conn = connect_to_db(user_name, db_name)
+        conn = connect_to_db(user_name, db_name, password=password)
     cur = conn.cursor()
     try:
         cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")

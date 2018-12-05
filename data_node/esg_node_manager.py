@@ -25,10 +25,15 @@ current_directory = os.path.join(os.path.dirname(__file__))
 
 def check_for_existing_node_manager():
     print "Checking for node manager {}".format(config["esgf_node_manager_version"])
-    update_node_manager = esg_property_manager.get_property("update.node.manager")
-    if esg_version_manager.check_webapp_version("esgf-node-manager", config["esgf_node_manager_version"]) and update_node_manager.lower() not in ["yes", "y"]:
-        print "\n Found existing version of the node-manager [OK]"
-        return True
+    if esg_version_manager.check_webapp_version("esgf-node-manager", config["esgf_node_manager_version"]):
+        print "Found existing version of the node-manager"
+        try:
+            update_node_manager = esg_property_manager.get_property("update.node.manager")
+        except ConfigParser.NoOptionError:
+            update_node_manager = raw_input("Would you like to update the Node Manager installation? [y/N]") or "no"
+
+        if update_node_manager.lower() not in ["yes", "y"]:
+            return True
 
     node_manager_service_app_home = esg_property_manager.get_property(
         "node_manager_service_app_home")
@@ -202,11 +207,11 @@ def configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_nod
     print "*******************************"
 
     esg_postgres.start_postgres()
-
-    if node_db_name not in esg_postgres.postgres_list_dbs():
+    pg_sys_acct_passwd = esg_functions.get_postgres_password()
+    if node_db_name not in esg_postgres.postgres_list_dbs(user_name="dbsuper", password=pg_sys_acct_passwd):
         esg_postgres.create_database(node_db_name)
     else:
-        if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas():
+        if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas(user_name="dbsuper", password=pg_sys_acct_passwd):
             logger.info("Detected an existing node manager schema installation...")
         else:
             esg_postgres.postgres_clean_schema_migration("ESGF Node Manager")
@@ -223,7 +228,7 @@ def configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_nod
         #install the egg....
         esg_functions.call_binary("easy_install", [esgf_node_manager_egg_file])
 
-        if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas():
+        if node_db_node_manager_schema_name in esg_postgres.postgres_list_db_schemas(user_name="dbsuper", password=pg_sys_acct_passwd):
             schema_backup = raw_input("Do you want to make a back up of the existing database schema [{}:{}]? [Y/n]".format(node_db_name, node_db_node_manager_schema_name)) or "y"
             if schema_backup.lower() in ["y", "yes"]:
                 print "Creating a backup archive of the database schema [{}:{}]".format(node_db_name, node_db_node_manager_schema_name)

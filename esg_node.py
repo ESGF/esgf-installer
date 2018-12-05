@@ -35,10 +35,17 @@ with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as co
 
 force_install = False
 
-#--------------
-# User Defined / Settable (public)
-#--------------
-#--------------
+def set_env_variables():
+    '''Set environment variables for process'''
+    os.environ["GIT_SSL_NO_VERIFY"] = "1"
+    os.environ["PGHOME"] = "/usr/bin/psql"
+    os.environ["PGLIBDIR"] = "/usr/lib64/pgsql"
+    os.environ["PGUSER"] = "dbsuper"
+    os.environ["PGHOST"] = "localhost"
+    os.environ["PGPORT"] = "5432"
+    os.environ["JAVA_HOME"] = "/usr/local/java/"
+    os.environ["CATALINA_HOME"] = "/usr/local/tomcat"
+    os.environ["CATALINA_BASE"] = "/usr/local/tomcat"
 
 def setup_esg_config_permissions():
     '''Set permissions on /esg directory and subdirectories'''
@@ -69,7 +76,7 @@ def esgf_node_info():
 
 
 
-def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8"):
+def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="9"):
     '''Sets the distribution mirror url'''
     try:
         local_mirror = esg_property_manager.get_property("local_mirror")
@@ -85,15 +92,12 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8")
         if esg_mirror_manager.is_valid_mirror(esg_property_manager.get_property("esg.root.url")):
             esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
             return
-        elif esg_property_manager.get_property("esg.root.url") == "fastest":
-            esg_property_manager.set_property("esg.root.url", esg_mirror_manager.find_fastest_mirror(install_type))
-            esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
         else:
             selected_mirror = esg_mirror_manager.select_dist_mirror()
             esg_property_manager.set_property("esg.root.url", selected_mirror)
             esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
     except ConfigParser.NoOptionError:
-        selected_mirror = esg_mirror_manager.select_dist_mirror()
+        selected_mirror = esg_mirror_manager.find_fastest_mirror(install_type)
         esg_property_manager.set_property("esg.root.url", selected_mirror)
         esg_property_manager.set_property("esg.dist.url", selected_mirror+"/{}/{}".format(script_maj_version, script_release))
 
@@ -259,6 +263,7 @@ def main():
 
     esg_setup.check_prerequisites()
     esg_setup.create_esg_directories()
+    set_env_variables()
 
     script_version, script_maj_version, script_release = esg_version_manager.set_version_info()
 

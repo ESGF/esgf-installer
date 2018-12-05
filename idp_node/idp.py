@@ -6,6 +6,7 @@ import distutils.spawn
 import stat
 import yaml
 from git import Repo
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
@@ -54,17 +55,17 @@ def setup_idp():
     idp_service_app_home = os.path.join(config["tomcat_install_dir"], "webapps", "esgf-idp")
 
     if os.path.isdir(idp_service_app_home):
-        print "Detected an existing idp services installation..."
-        continue_install = raw_input("Do you want to continue with idp services installation and setup? [Y/n]: ") or "y"
-        if continue_install.lower() in ["n", "no"]:
-            print "Skipping IDP installation."
+        try:
+            idp_install = esg_property_manager.get_property("update.idp")
+        except ConfigParser.NoOptionError:
+            idp_install = raw_input("Detected an existing idp services installation.  Do you want to continue with the IDP installation [y/N]: ") or "no"
+        if idp_install.strip().lower() in ["no", "n"]:
+            logger.info("Using existing IDP installation.  Skipping setup.")
             return
-
         try:
             backup_idp = esg_property_manager.get_property("backup.idp")
         except ConfigParser.NoOptionError:
             backup_idp = raw_input("Do you want to make a back up of the existing distribution?? [Y/n] ") or "y"
-
         if backup_idp.lower() in ["yes", "y"]:
             "Creating a backup archive of this web application {}".format(idp_service_app_home)
             esg_functions.backup(idp_service_app_home)
@@ -128,8 +129,12 @@ def setup_slcs():
     esg_functions.call_binary("conda", ["create", "-y", "-n", slcs_env, "python<3", "pip"])
     esg_functions.call_binary("pip", ["install", "mod_wsgi<4.6", "ansible"], conda_env=slcs_env)
 
-    #create slcs Database
-    esg_postgres.create_database("slcsdb")
+    # create slcs Database
+    pg_sys_acct_passwd = esg_functions.get_postgres_password()
+    conn = esg_postgres.connect_to_db("dbsuper", "postgres", password=pg_sys_acct_passwd)
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+    esg_postgres.create_database("slcsdb", cursor=cur)
 
     with pybash.pushd("/usr/local/src"):
         clone_slcs()

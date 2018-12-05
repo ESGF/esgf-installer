@@ -25,6 +25,22 @@ trap 'handle_error $LINENO ${BASH_LINENO[@]}' ERR
 
 install_miniconda(){
   # install Anaconda
+  if [ -d "/usr/local/conda" ]; then
+    echo
+    echo "-----------------------------------"
+    echo "Miniconda already installed."
+    echo "-----------------------------------"
+    echo
+    echo
+    echo "-----------------------------------"
+    echo "Installing dependencies to conda environment: esgf-pub"
+    echo "-----------------------------------"
+    echo
+    /usr/local/conda/bin/conda install -y -n esgf-pub cdutil cmor -c pcmdi/label/nightly -c conda-forge
+    /usr/local/conda/bin/conda remove -y -n esgf-pub postgresql psycopg2
+    return 0
+  fi
+
   echo
   echo "-----------------------------------"
   echo "Installing Miniconda"
@@ -56,6 +72,7 @@ install_dependencies_pip(){
   echo "-----------------------------------"
   echo
   # activate virtual env and fetch some pre-requisites
+  CDAT_HOME=/usr/local/conda
   source ${CDAT_HOME}/bin/activate esgf-pub && \
 
       pip install --upgrade pip
@@ -64,7 +81,7 @@ install_dependencies_pip(){
                   setuptools semver Pyyaml configparser psutil
       pip install -r requirements.txt
 
-  source deactivate
+  source ${CDAT_HOME}/bin/deactivate
 
 }
 
@@ -99,7 +116,42 @@ copy_autoinstall_file(){
 
 }
 
-if [ ! -d "/usr/local/conda" ]; then
-    install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file
-    echo "Bootstrap complete!"
-fi
+run_migration_script(){
+  if [ "$1" == "migrate" ]; then
+    if [ ! -e "/usr/local/bin/esg-node" ]; then
+      echo
+      echo "-----------------------------------"
+      echo "ESGF 2.x installation not found.  Skipping migration"
+      echo "-----------------------------------"
+      echo
+      return 0
+    fi
+    CDAT_HOME=/usr/local/conda
+    source /usr/local/conda/bin/activate esgf-pub
+    echo
+    echo "-----------------------------------"
+    echo "Running ESGF 2->3 migration script"
+    echo "-----------------------------------"
+    echo
+    python migration_backup_script.py
+    ret=$?
+    if [ $ret -ne 0 ]; then
+         echo "Migration script failed. Please review the error message and run the script again after addressing issues."
+         source ${CDAT_HOME}/bin/deactivate
+         exit 1
+    fi
+
+    source ${CDAT_HOME}/bin/deactivate
+  fi
+}
+
+main(){
+  if [[ ! -d "/usr/local/conda" ]] || [[ "$1" == "migrate" ]]; then
+      install_dependencies_yum && install_miniconda && install_dependencies_pip && run_migration_script $1 && copy_autoinstall_file && echo "Bootstrap complete!" && return 0
+
+      echo "Bootstrap failed." && exit 1
+  fi
+}
+
+main $1
+

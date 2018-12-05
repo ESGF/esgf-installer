@@ -46,6 +46,7 @@ update.cog=
 update.solr=
 
 #IDP node Components
+update.idp=
 backup.idp=
 esgf.idp.peer=
 register.myproxy=

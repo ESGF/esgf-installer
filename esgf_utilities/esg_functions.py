@@ -161,6 +161,27 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=7):
             oldest_backup = min(files, key=os.path.getctime)
             os.remove(oldest_backup)
 
+def create_backup_file(file_path, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
+    '''Create a backup of a file using the given backup extension'''
+    file_name = pybash.trim_string_from_head(file_path)
+    backup_file_name = file_name + "-" + date + backup_extension
+    logger.debug("backup_dir: %s", backup_dir)
+    if not backup_dir:
+        logger.debug("updating backup_dir")
+        backup_dir = os.path.join(os.path.dirname(file_name))
+
+    logger.debug("backup_dir after if statement: %s", backup_dir)
+    try:
+        # backup_path = os.path.join(backup_dir, backup_file_name)
+        backup_path = backup_dir + "/" + backup_file_name
+        logger.debug("backup_path: %s", backup_path)
+        logger.info("Backup - Creating a backup of %s -> %s", file_path, backup_path)
+        shutil.copyfile(file_path, backup_path)
+    except OSError:
+        logger.exception("Could not create backup file: %s\n", backup_file_name)
+    else:
+        os.chmod(backup_path, 600)
+
 
 def get_parent_directory(directory_path):
     '''Returns the parent directory of directory_path'''
@@ -318,16 +339,6 @@ def fetch_remote_file(local_file, remote_file):
     except requests.exceptions.RequestException:
         logger.exception("Could not download %s", remote_file)
         raise
-
-
-def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.date.today())):
-    '''Create a backup of a file using the given backup extension'''
-    backup_file_name = file_name + date + "."+ backup_extension
-    try:
-        shutil.copyfile(file_name, backup_file_name)
-        os.chmod(backup_file_name, 600)
-    except OSError:
-        logger.exception("Could not create backup file: %s\n", backup_file_name)
 
 
 def verify_checksum(local_file, remote_file):
@@ -795,7 +806,11 @@ def write_security_lib_install_log():
 def write_to_install_manifest(component, install_path, version, manifest_file="/esg/esgf-install-manifest"):
     '''Write component info to install manifest'''
     parser = ConfigParser.ConfigParser()
-    parser.read(manifest_file)
+    try:
+        parser.read(manifest_file)
+    except ConfigParser.MissingSectionHeaderError:
+        parser.add_section("install_manifest")
+        parser.read(manifest_file)
 
     try:
         parser.add_section("install_manifest")
@@ -809,7 +824,11 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
 def get_version_from_install_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
     '''Get component version info from install manifest'''
     parser = ConfigParser.SafeConfigParser()
-    parser.read(manifest_file)
+    try:
+        parser.read(manifest_file)
+    except ConfigParser.MissingSectionHeaderError, error:
+        parser.add_section("install_manifest")
+        parser.read(manifest_file)
 
     try:
         return parser.get(section_name, component)

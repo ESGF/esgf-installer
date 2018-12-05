@@ -38,8 +38,6 @@ def setup_security(node_type_list, esg_dist_url):
             return
 
     configure_postgress(node_type_list, esg_dist_url, config["esgf_security_version"])
-    fetch_user_migration_launcher(node_type_list, esg_dist_url)
-    fetch_policy_check_launcher(node_type_list, esg_dist_url)
     clean_security_webapp_subsystem()
 
 
@@ -253,23 +251,3 @@ def clean_security_webapp_subsystem():
         logger.info("Removing deprecated esgf-security webapp")
         esg_functions.backup(security_webapp_path)
         shutil.rmtree(security_webapp_path)
-
-
-
-def fetch_user_migration_launcher(node_type_list, esg_dist_url):
-    #TODO: Appears to be deprecated
-    if "IDP" in node_type_list:
-        with pybash.pushd(config["scripts_dir"]):
-            shutil.copyfile(os.path.join(current_directory, "esgf_security_scripts/esgf-user-migrate"), "esgf-user-migrate")
-            os.chmod("esgf-user-migrate", 0755)
-    else:
-        logger.debug("This function, fetch_user_migration_launcher(), is not applicable to current node type (%s)", set(node_type_list))
-
-def fetch_policy_check_launcher(node_type_list, esg_dist_url):
-    #TODO: Appears to be deprecated
-    if "IDP" in node_type_list and "DATA" in node_type_list:
-        with pybash.pushd(config["scripts_dir"]):
-            shutil.copyfile(os.path.join(current_directory, "esgf_security_scripts/esgf-policy-check"), "esgf-policy-check")
-            os.chmod("esgf-policy-check", 0755)
-    else:
-        logger.debug("This function, fetch_policy_check_launcher(), is not applicable to current node type (%s)", set(node_type_list))

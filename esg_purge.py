@@ -4,21 +4,20 @@ import glob
 import datetime
 import errno
 import logging
-import psutil
 import yaml
 from esgf_utilities import esg_functions, pybash
-from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from index_node import solr
 from plumbum.commands import ProcessExecutionError
 
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+
 def purge_postgres():
-    '''Removes postgres installation via yum'''
+    '''Remove postgres installation via yum.'''
     print "\n*******************************"
     print "Purging Postgres"
     print "******************************* \n"
@@ -39,7 +38,9 @@ def purge_postgres():
     except OSError:
         pass
 
+
 def purge_tomcat():
+    """Delete the Tomcat installtion."""
     print "\n*******************************"
     print "Purging Tomcat"
     print "******************************* \n"
@@ -73,7 +74,9 @@ def purge_tomcat():
     except ProcessExecutionError:
         pass
 
+
 def purge_java():
+    """Delete the JDK installation."""
     print "\n*******************************"
     print "Purging Java"
     print "******************************* \n"
@@ -99,16 +102,9 @@ def purge_java():
     except OSError:
         pass
 
-def purge_ant():
-    print "\n*******************************"
-    print "Purging Ant"
-    print "******************************* \n"
-    try:
-        esg_functions.call_binary("yum", ["remove", "-y", "ant"])
-    except ProcessExecutionError:
-        pass
 
 def purge_thredds():
+    """Delete the Thredds webapp."""
     print "\n*******************************"
     print "Purging Thredds"
     print "******************************* \n"
@@ -118,7 +114,9 @@ def purge_thredds():
     except OSError:
         pass
 
+
 def purge_base():
+    """Delete the base ESGF components and directories."""
     print "\n*******************************"
     print "Purging Base ESGF Directories"
     print "******************************* \n"
@@ -149,13 +147,12 @@ def purge_base():
     # We want to potentially preserve certificates, as they may be
     # annoying to recreate and sign.
     if os.path.isfile("/etc/hostcert.pem"):
-        logger.warning("preserving /etc/hostcert.pem to /tmp/hostcert-%s.pem",str(datetime.date.today()))
+        logger.warning("preserving /etc/hostcert.pem to /tmp/hostcert-%s.pem", str(datetime.date.today()))
         shutil.move("/etc/hostcert.pem", "/tmp/hostcert-{DATETIME}.pem".format(DATETIME=str(datetime.date.today())))
 
     if os.path.isfile("/etc/hostkey.pem"):
-        logger.warning("preserving /etc/hostkey.pem to /tmp/hostkey-%s.pem",str(datetime.date.today()))
+        logger.warning("preserving /etc/hostkey.pem to /tmp/hostkey-%s.pem", str(datetime.date.today()))
         shutil.move("/etc/hostkey.pem", "/tmp/hostkey-{DATETIME}.pem".format(DATETIME=str(datetime.date.today())))
-
 
     # We don't need to preserve the certificate signing request
     try:
@@ -172,7 +169,7 @@ def purge_base():
         except OSError, error:
             pass
 
-    for directory in  glob.glob("/usr/local/esgf*"):
+    for directory in glob.glob("/usr/local/esgf*"):
         for directory in root_dirs:
             try:
                 shutil.rmtree(directory)
@@ -180,11 +177,8 @@ def purge_base():
                 pass
 
 
-def purge_cdat():
-    pass
-
-
 def purge_cog():
+    """Delete CoG Django app."""
     try:
         shutil.rmtree("/usr/local/cog")
     except OSError:
@@ -194,7 +188,9 @@ def purge_cog():
     except OSError:
         pass
 
+
 def purge_apache():
+    """Delete Apache."""
     try:
         esg_functions.call_binary("yum", ["remove", "-y", "httpd", "httpd-devel", "mod_ssl"])
     except ProcessExecutionError:
@@ -443,22 +439,22 @@ def purge_slcs():
         if error.errno == errno.ENOENT:
             pass
 
+
 def main():
     purge_postgres()
     purge_tomcat()
     purge_thredds()
-    purge_ant()
     purge_publisher()
     purge_dashboard()
     purge_solr()
     purge_java()
     purge_base()
-    purge_cdat()
     purge_apache()
     purge_cog()
     purge_globus()
     purge_slcs()
     confirm_purge()
+
 
 if __name__ == '__main__':
     main()

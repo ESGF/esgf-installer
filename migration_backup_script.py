@@ -47,6 +47,12 @@ def copy_previous_component_versions():
     with open(yaml_config, "w") as yaml_file:
         yaml.dump(config_settings, yaml_file)
 
+    try:
+        os.remove("/usr/local/bin/esg-init")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+
 
 def check_previous_install():
     return os.path.exists("/usr/local/bin/esg-node")
@@ -129,6 +135,9 @@ def backup_old_esgf(backup_dir):
     esgf_backup_dir = os.path.join(backup_dir, "2.x_backup")
     esgf_scripts_list = glob.glob("/usr/local/bin/esg*")
     for file_name in esgf_scripts_list:
+        # Skip over deleting esg-init; it will be parsed for previous settings and deleted in copy_previous_settings
+        if file_name == "/usr/local/bin/esg-init":
+            continue
         try:
             esg_functions.create_backup_file(file_name, backup_dir=esgf_backup_dir)
         except IOError, error:
@@ -189,7 +198,7 @@ def backup_esg_installation():
     except IOError, error:
         if error.errno == errno.ENOENT:
             pass
-            
+
     shards_config_backup_path = os.path.join(migration_backup_dir, "esgf_shards.config-{}.bak".format(str(datetime.date.today())))
     migrate_solr_shards_config_file(shards_config_backup_path)
 

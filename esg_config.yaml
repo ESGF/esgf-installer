@@ -48,6 +48,7 @@ tomcat_major_version: '8'
 tomcat_min_version: 8.5.9
 publisher_tag: v3.5.0
 python_version: '2.7'
+solr_version: 5.5.5
 
 #Postgres constants
 pg_secret_file: /esg/config/.esg_pg_pass

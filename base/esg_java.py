@@ -1,4 +1,4 @@
-'''Module for installing Java on an ESGF node'''
+"""Module for installing Java on an ESGF node."""
 import os
 import logging
 import ConfigParser
@@ -14,20 +14,22 @@ LOGGER = logging.getLogger("esgf_logger" + "." + __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     CONFIG = yaml.load(config_file)
 
+
 def set_default_java():
-    '''Sets the default Java binary to the version installed with ESGF'''
+    """Set the default Java binary to the version installed with ESGF."""
     esg_functions.call_binary("alternatives", ["--install", "/usr/bin/java", "/usr/local/java/bin/java", "3"])
     esg_functions.call_binary("alternatives", ["--set", "java", "/usr/local/java/bin/java"])
 
+
 def check_for_existing_java(java_path=os.path.join(CONFIG["java_install_dir"], "bin", "java")):
-    '''Check if a valid java installation is currently on the system'''
+    """Check if a valid java installation is currently on the system."""
     if pybash.is_exe(java_path):
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         return check_java_version(java_path)
 
 
 def check_java_version(java_path=os.path.join(CONFIG["java_install_dir"], "bin", "java")):
-    '''Checks the Java version on the system'''
+    """Check the Java version on the system."""
     print "Checking Java version"
     LOGGER.debug("java_path: %s", java_path)
     java_version_output = esg_functions.call_binary(java_path, ["-version"])
@@ -41,7 +43,7 @@ def check_java_version(java_path=os.path.join(CONFIG["java_install_dir"], "bin",
 
 
 def download_java(java_tarfile):
-    '''Download Java from distribution mirror'''
+    """Download Java from distribution mirror."""
     print "Downloading Java from ", CONFIG["java_dist_url"]
     if not esg_functions.download_update(java_tarfile, CONFIG["java_dist_url"]):
         LOGGER.error("ERROR: Could not download Java")
@@ -49,11 +51,12 @@ def download_java(java_tarfile):
 
 
 def write_java_env():
-    '''Writes Java config to /etc/esg.env'''
+    """Write Java config to /etc/esg.env."""
     EnvWriter.export("JAVA_HOME", CONFIG["java_install_dir"])
 
+
 def write_java_install_log():
-    '''Writes Java config to install manifest'''
+    """Write Java config to install manifest."""
     esg_functions.write_to_install_manifest(
         "java",
         CONFIG["java_install_dir"],
@@ -62,11 +65,10 @@ def write_java_install_log():
 
 
 def setup_java():
-    '''
-        Installs Oracle Java from rpm using yum localinstall.
-        Does nothing if an acceptible Java install is found.
-    '''
+    """Installs Oracle Java from rpm using yum localinstall.
 
+    Does nothing if an acceptible Java install is found.
+    """
     print "*******************************"
     print "Setting up Java {java_version}".format(java_version=CONFIG["java_version"])
     print "******************************* \n"
@@ -107,7 +109,5 @@ def setup_java():
         esg_functions.change_ownership_recursive(
             CONFIG["java_install_dir"], CONFIG["installer_uid"], CONFIG["installer_gid"])
 
-    # set_default_java()
-    # print check_java_version()
     write_java_install_log()
     write_java_env()

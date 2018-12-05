@@ -28,7 +28,7 @@ def new_ca():
     ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
     careq = esg_cert_manager.create_cert_request(cakey, O="ESGF", OU="ESGF.ORG", CN=ca_answer)
     # CA certificate is valid for five years.
-    cacert = esg_cert_manager.create_certificate(careq, (careq, cakey), 0, (0, 60*60*24*365*5))
+    cacert = esg_cert_manager.create_certificate(careq, (careq, cakey), random.randint(1, pow(2, 30)), (0, 60*60*24*365*5))
 
     print('Creating Certificate Authority private key in "CA/private/cakey.pem"')
     with open('CA/private/cakey.pem', 'w') as capkey:
@@ -118,9 +118,11 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
 
     pybash.mkdir_p(temp_ca_dir)
 
-    shutil.copyfile(os.path.join(current_directory, "myproxy-server.config"), "{}/myproxy-server.config".format(temp_ca_dir))
-
     with pybash.pushd(temp_ca_dir):
+        shutil.copyfile(
+            os.path.join(current_directory, os.pardir, "config", "myproxy-server.config"),
+            "myproxy-server.config"
+        )
         delete_existing_temp_CA()
         new_ca()
 

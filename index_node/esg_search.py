@@ -41,7 +41,7 @@ def write_search_service_install_log(search_web_service_dir, esg_search_version)
 
 def setup_publisher_resources():
     esgf_publisher_resources_repo = "https://github.com/ESGF/esgf-publisher-resources.git"
-    esgf_publisher_resources_dir = os.path.join(config["esg_config_dir"],"esgf-publisher-resources")
+    esgf_publisher_resources_dir = os.path.join(config["esg_config_dir"], "esgf-publisher-resources")
     if not os.path.exists(esgf_publisher_resources_dir):
         Repo.clone_from(esgf_publisher_resources_repo, esgf_publisher_resources_dir)
 
@@ -89,7 +89,7 @@ def check_for_existing_solr_install():
         try:
             esg_search_install = esg_property_manager.get_property("update.esg.search")
         except ConfigParser.NoOptionError:
-            esg_search_install = raw_input("Existing esg-search installation found.  Do you want to continue with the esg-search installation [y/N]: " ) or "no"
+            esg_search_install = raw_input("Existing esg-search installation found.  Do you want to continue with the esg-search installation [y/N]: ") or "no"
         if esg_search_install.lower() in ["no", "n"]:
             print "Using existing esg-search installation. Skipping setup."
             return True
@@ -135,7 +135,7 @@ def update_solr_cores_schema(search_web_service_dir):
     new_solr_xml = "{}/WEB-INF/solr-home/mycore/conf/schema.xml".format(search_web_service_dir)
 
     #The values are the solr cores
-    solr_shards = {"master-8984": ["datasets", "files", "aggregations"] , "localhost-8982": ["datasets", "files", "aggregations"]}
+    solr_shards = {"master-8984": ["datasets", "files", "aggregations"], "localhost-8982": ["datasets", "files", "aggregations"]}
 
     for shard, cores in solr_shards.items():
         for core in cores:
@@ -181,14 +181,11 @@ def setup_search_service():
     write_search_rss_properties()
     setup_publisher_resources()
 
-
     #Get utility script for crawling thredds sites
-    fetch_crawl_launcher(esg_dist_url)
-    fetch_index_optimization_launcher(esg_dist_url)
+    fetch_crawl_launcher()
+    fetch_index_optimization_launcher()
     fetch_static_shards_file()
 
-    #restart tomcat to put modifications in effect.
-    # esg_tomcat_manager.start_tomcat()
 
 def write_search_rss_properties():
     node_short_name = esg_property_manager.get_property("node.short.name")
@@ -201,19 +198,17 @@ def write_search_rss_properties():
     esg_property_manager.set_property("esgf_feed_datasets_link", esgf_feed_datasets_link)
 
 
-def fetch_crawl_launcher(esg_dist_url):
-    esgf_crawl_launcher = "esgf-crawl"
-    with pybash.pushd(config["scripts_dir"]):
-        esgf_crawl_launcher_url = "{}/esg-search/esgf-crawl".format(esg_dist_url)
-        esg_functions.download_update(esgf_crawl_launcher, esgf_crawl_launcher_url)
-        os.chmod(esgf_crawl_launcher, 0755)
+def fetch_crawl_launcher():
+    esgf_crawl_launcher = os.path.join(config["scripts_dir"], "esgf-crawl")
+    current_directory = os.path.join(os.path.dirname(__file__))
+    shutil.copyfile(os.path.join(current_directory, "search_scripts/esgf-crawl"), esgf_crawl_launcher)
+    os.chmod(esgf_crawl_launcher, 0755)
 
-def fetch_index_optimization_launcher(esg_dist_url):
-    with pybash.pushd(config["scripts_dir"]):
-        esgf_index_optimization_launcher = "esgf-optimize-index"
-        esgf_index_optimization_launcher_url = "{}/esg-search/esgf-optimize-index".format(esg_dist_url)
-        esg_functions.download_update(esgf_index_optimization_launcher, esgf_index_optimization_launcher_url)
-        os.chmod(esgf_index_optimization_launcher, 0755)
+def fetch_index_optimization_launcher():
+    esgf_index_optimization_launcher = os.path.join(config["scripts_dir"], "esgf-optimize-index")
+    current_directory = os.path.join(os.path.dirname(__file__))
+    shutil.copyfile(os.path.join(current_directory, "search_scripts/esgf-optimize-index"), esgf_index_optimization_launcher)
+    os.chmod(esgf_index_optimization_launcher, 0755)
 
 def fetch_static_shards_file():
     with pybash.pushd(config["esg_config_dir"]):
@@ -235,6 +230,7 @@ def download_esg_search_war(esg_search_war_url):
             if chunk:
                 f.write(chunk)
                 f.flush()
+
 
 def main():
     print "*******************************"

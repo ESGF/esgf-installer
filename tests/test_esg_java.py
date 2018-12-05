@@ -19,10 +19,6 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 class test_esg_java(unittest.TestCase):
-    def test_setup_ant(self):
-        esg_java.setup_ant()
-        self.assertTrue(os.path.exists("/usr/bin/ant"))
-
 
     def test_check_java_version(self):
         output = esg_java.check_java_version()

@@ -99,22 +99,7 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="9")
     except ConfigParser.NoOptionError:
         selected_mirror = esg_mirror_manager.find_fastest_mirror(install_type)
         esg_property_manager.set_property("esg.root.url", selected_mirror)
-        esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
-
-def download_esg_installarg(esg_dist_url):
-    ''' Downloading esg-installarg file '''
-    if not os.path.isfile(config["esg_installarg_file"]) or force_install or os.path.getmtime(config["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
-        esg_installarg_file_name = pybash.trim_string_from_head(
-            config["esg_installarg_file"])
-        esg_functions.download_update(config["esg_installarg_file"], os.path.join(
-            esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
-        try:
-            if not os.path.getsize(config["esg_installarg_file"]) > 0:
-                os.remove(config["esg_installarg_file"])
-            pybash.touch(config["esg_installarg_file"])
-        except IOError:
-            logger.exception("Unable to access esg-installarg file")
-
+        esg_property_manager.set_property("esg.dist.url", selected_mirror+"/{}/{}".format(script_maj_version, script_release))
 
 def get_installation_type(script_version):
     '''Determining if devel or master directory of the ESGF distribution mirror
@@ -172,7 +157,6 @@ def system_component_installation(esg_dist_url, node_type_list):
     '''
     if "INSTALL" in node_type_list:
         esg_java.setup_java()
-        # esg_java.setup_ant()
         esg_postgres.setup_postgres()
         esg_tomcat_manager.main()
         esg_apache_manager.main()
@@ -210,8 +194,7 @@ def system_component_installation(esg_dist_url, node_type_list):
             orp.main()
         from index_node import esg_cog, esg_search, solr
         esg_cog.main()
-        index_config = config["index_config"].split()
-        solr.main(index_config)
+        solr.main()
         esg_search.main()
 
 
@@ -300,7 +283,6 @@ def main():
 
     set_esg_dist_url(install_type)
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    download_esg_installarg(esg_dist_url)
 
     logger.debug("node_type_list: %s", node_type_list)
 
@@ -390,21 +372,9 @@ def clear_tomcat_cache():
         logger.exception(error)
 
 def remove_unused_esgf_webapps():
-    '''Hard coded to remove node manager, desktop and dashboard'''
+    '''Hard coded to remove node manager'''
     try:
         shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager")
-    except OSError, error:
-        if error.errno == errno.ENOENT:
-            pass
-
-    try:
-        shutil.rmtree("/usr/local/tomcat/webapps/esgf-desktop")
-    except OSError, error:
-        if error.errno == errno.ENOENT:
-            pass
-
-    try:
-        shutil.rmtree("/usr/local/tomcat/webapps/esgf-dashboard")
     except OSError, error:
         if error.errno == errno.ENOENT:
             pass
@@ -412,7 +382,8 @@ def remove_unused_esgf_webapps():
 def install_bash_completion_file(esg_dist_url):
     '''Install bash_completion file from distribution mirror'''
     if os.path.exists("/etc/bash_completion") and not os.path.exists("/etc/bash_completion.d/esg-node"):
-        esg_functions.download_update("/etc/bash_completion.d/esg-node", "{}/esgf-installer/esg-node.completion".format(esg_dist_url))
+        current_directory = os.path.join(os.path.dirname(__file__))
+        shutil.copyfile(os.path.join(current_directory, "../config/esg-node.completion"), "/etc/bash_completion.d/esg-node")
 
 def write_script_version_file(script_version):
     '''Write version file'''
@@ -443,20 +414,6 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     esg_property_manager.set_property("version", script_version)
     esg_property_manager.set_property("release", script_release)
     EnvWriter.add_source("/usr/local/conda/bin/activate esgf-pub")
-    #     write_as_property gridftp_config
-    esg_node_finally(node_type_list)
-
-def esg_node_finally(node_type_list):
-    '''Runs after installation, final setup'''
-    global_x509_cert_dir = "/etc/grid-security/certificates"
-    esg_functions.change_ownership_recursive(global_x509_cert_dir, config["installer_uid"], config["installer_gid"])
-
-    if "IDP" in node_type_list:
-        os.environ["PGPASSWORD"] = esg_functions.get_postgres_password()
-        print "Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard."
-        # psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
-        #     echo "Node installation is complete."
-
 
 if __name__ == '__main__':
     main()

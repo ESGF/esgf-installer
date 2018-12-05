@@ -2,12 +2,12 @@ import os
 import sys
 import shutil
 import logging
-import argparse
 import psutil
 import ConfigParser
 from time import sleep
 import yaml
 from esgf_utilities import esg_functions
+from esgf_utilities import esg_cli
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_truststore_manager
@@ -16,7 +16,7 @@ from base import esg_tomcat_manager
 from base import esg_postgres
 from data_node import esg_dashboard, esg_publisher, orp
 from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError
-from idp_node import globus, gridftp, myproxy, esg_security
+from idp_node import globus, gridftp, myproxy, esg_security, idp
 from index_node import solr, esg_search
 from plumbum.commands import ProcessExecutionError
 
@@ -101,6 +101,7 @@ def start(node_types):
             globus.start_globus("IDP")
         except ProcessExecutionError, error:
             logger.error("Could not start globus: %s", error)
+        idp.slcs_apachectl("start")
 
     if "INDEX" in node_types:
         esg_search.start_search_services()
@@ -120,6 +121,7 @@ def stop(node_types):
 
     if "IDP" in node_types:
         globus.stop_globus("IDP")
+        idp.slcs_apachectl("stop")
 
     if "INDEX" in node_types:
         solr_shards = solr.read_shard_config()
@@ -256,78 +258,9 @@ def check_for_valid_node_type(node_type_args):
 
     return True
 
-def define_acceptable_arguments():
-    #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--install", dest="install", help="Goes through the installation process and automatically starts up node services", action="store_true")
-    parser.add_argument("--base", dest="base", help="Install on base third party components", action="store_true")
-    parser.add_argument("--update", help="Updates the node manager", action="store_true")
-    parser.add_argument("--upgrade", help="Upgrade the node manager", action="store_true")
-    parser.add_argument("--install-local-certs", dest="installlocalcerts", help="Install local certificates", action="store_true")
-    parser.add_argument("--generate-esgf-csrs", dest="generateesgfcsrs", help="Generate CSRs for a simpleCA CA certificate and/or web container certificate", action="store_true")
-    parser.add_argument("--generate-esgf-csrs-ext", dest="generateesgfcsrsext", help="Generate CSRs for a node other than the one you are running", action="store_true")
-    parser.add_argument("--cert-howto", dest="certhowto", help="Provides information about certificate management", action="store_true")
-    parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
-    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="+", choices=["data", "index", "idp", "compute", "all"])
-    parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up", nargs="+")
-    parser.add_argument("--get-type", "--show-type", dest="gettype", help="Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)", action="store_true")
-    parser.add_argument("--start", help="Start the node's services", action="store_true")
-    parser.add_argument("--stop", "--shutdown", dest="stop", help="Stops the node's services", action="store_true")
-    parser.add_argument("--restart", help="Restarts the node's services (calls stop then start :-/)", action="store_true")
-    parser.add_argument("--status", help="Status on node's services", action="store_true")
-    parser.add_argument("--update-apache-conf", dest="updateapacheconf", help="Update Apache configuration", action="store_true")
-    parser.add_argument("-v","--version", dest="version", help="Displays the version of this script", action="store_true")
-    parser.add_argument("--recommended_setup", dest="recommendedsetup", help="Sets esgsetup to use the recommended, minimal setup", action="store_true")
-    parser.add_argument("--custom_setup", dest="customsetup", help="Sets esgsetup to use a custom, user-defined setup", action="store_true")
-    parser.add_argument("--use-local-files", dest="uselocalfiles", help="Sets a flag for using local files instead of attempting to fetch a remote file", action="store_true")
-    parser.add_argument("--use-local-mirror", dest="uselocalmirror", help="Sets the installer to fetch files from a mirror directory that is on the same server in which the installation is being run", action="store_true")
-    parser.add_argument("--devel", help="Sets the installation type to the devel build", action="store_true")
-    parser.add_argument("--prod", help="Sets the installation type to the production build", action="store_true")
-    parser.add_argument("--usage", dest="usage", help="Displays the options of the ESGF command line interface", action="store_true")
-    parser.add_argument("--debug", dest="debug", help="Sets the logging level to debug", action="store_true")
-    parser.add_argument("--clear-envfile", dest="clearenvfile", help="Delete (and backup) existing envfile (/etc/esg.env)", action="store_true")
-    parser.add_argument("--clear-my-certs", dest="clearmycerts", help="Delete certficates from $HOME/.globus/certificates", action="store_true")
-    parser.add_argument("--info", dest="info", help="Print basic info about ESGF installation", action="store_true")
-    parser.add_argument("--config-db", dest="configdb", help="configures the database i.e. sets up table schema based on the the node type.", action="store_true")
-    parser.add_argument("--backup-db", dest="backupdb", help="Backs up the Postgres database", action="store_true")
-    parser.add_argument("--restore-db", dest="restoredb", help="Restores the Postgres database from a previous backup", action="store_true")
-    parser.add_argument("--verify-thredds-credentials", dest="verifythreddscredentials", help="Verifies Thredds credentials", action="store_true")
-    parser.add_argument("--uninstall", "--purge", dest="uninstall", help="Uninstalls the ESGF installation", action="store_true")
-    parser.add_argument("--get-idp-peer", dest="getidppeer", help="Displays the IDP peer node name", action="store_true")
-    parser.add_argument("--set-idp-peer", "--set-admin-peer", dest="setidppeer", help="Selects the IDP peer node", action="store_true")
-    parser.add_argument("--get-index-peer", dest="getindexpeer", help="Displays the index peer node name", action="store_true")
-    parser.add_argument("--set-index-peer", dest="setindexpeer", help="Sets the (index peer) node to which we will publish", action="store_true")
-    parser.add_argument("--set-publication-target", dest="setpublicationtarget", help="Sets the publication target", action="store_true")
-    parser.add_argument("--get-default-peer", dest="getdefaultpeer", help="Displays the default peer", action="store_true")
-    parser.add_argument("--set-default-peer", dest="setdefaultpeer", help="Sets the default peer", action="store_true")
-    parser.add_argument("--get-peer-group", "--get-peer-groups",  dest="getpeergroup", help="Displays the peer groups", action="store_true")
-    parser.add_argument("--set-peer-group", "--set-peer-groups",  dest="setpeergroup", help="Sets the peer groups", action="store_true")
-    parser.add_argument("--no-auto-fetch-certs", dest="noautofetchcerts", help="", action="store_true")
-    parser.add_argument("--set-auto-fetch-certs", dest="setautofetchcerts", help="", action="store_true")
-    parser.add_argument("--fetch-esgf-certs", dest="fetchesgfcerts", help="", action="store_true")
-    parser.add_argument("--rebuild-truststore", dest="rebuildtrustore", help="", action="store_true")
-    parser.add_argument("--add-my-cert-to-truststore", dest="addmycerttotruststore", help="", action="store_true")
-    parser.add_argument("--generate-ssl-key-and-csr", dest="generatesslkeyandcsr", help="", action="store_true")
-    parser.add_argument("--migrate-tomcat-credentials-to-esgf", dest="migratetomcatcredentialstoesgf", help="", action="store_true")
-    parser.add_argument("--update-temp-ca", dest="updatetempca", help="", action="store_true")
-    parser.add_argument("--check-certs", dest="checkcerts", help="", action="store_true")
-    parser.add_argument("--install-ssl-keypair", "--install-keypair", dest="installsslkeypair", help="", nargs="+")
-    parser.add_argument("--optimize-index", dest="optimizeindex", help="", action="store_true")
-    parser.add_argument("--myproxy-sanity-check", dest="myproxysanitycheck", help="", action="store_true")
-    parser.add_argument("--noglobus", dest="noglobus", help="", action="store_true")
-    parser.add_argument("--force-install", dest="forceinstall", help="", action="store_true")
-    parser.add_argument("--index-config", dest="indexconfig", help="", action="store_true")
-    parser.add_argument("--check-shards", dest="checkshards", help="", action="store_true")
-    parser.add_argument("--add-replica-shard", dest="addreplicashard", help="", action="store_true")
-    parser.add_argument("--remove-replica-shard", dest="removereplicashard", help="", action="store_true")
-    parser.add_argument("--time-shards", dest="timeshards", help="", action="store_true")
-    parser.add_argument("--update-publisher-resources", dest="updatepublisherresources", help="", action="store_true")
-
-    return parser
-
 def process_arguments():
 
-    parser = define_acceptable_arguments()
+    parser = esg_cli.argparser()
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -483,16 +416,6 @@ def process_arguments():
         node_type_list = esg_functions.get_node_type()
         from data_node import thredds
         thredds.select_idp_peer()
-    elif args.getindexpeer:
-        try:
-            print "Current Index Peer: {}".format(esg_property_manager.get_property("esgf_index_peer"))
-        except ConfigParser.NoOptionError:
-            logger.error("Could not find Index peer")
-    elif args.setindexpeer:
-        from data_node import esg_publisher
-        esg_publisher.set_index_peer()
-    elif args.setpublicationtarget:
-        pass
     elif args.getdefaultpeer:
         try:
             print "Current Default Peer: {}".format(esg_property_manager.get_property("esgf_default_peer"))
@@ -535,7 +458,6 @@ def process_arguments():
     elif args.migratetomcatcredentialstoesgf:
         from base import esg_tomcat_manager
         esg_tomcat_manager.migrate_tomcat_credentials_to_esgf()
-        esg_tomcat_manager.sanity_check_web_xmls()
     elif args.updatetempca:
         from esgf_utilities import CA
         logger.debug("updating temporary CA")
@@ -572,15 +494,13 @@ def process_arguments():
         from index_node import esg_search
         esg_search.check_shards()
     elif args.addreplicashard:
-        from index_node import esg_search
-        #expecting <hostname>:<solr port> | master | slave
-        esg_search.add_shard()
+        hostname = args.addreplicashard[0]
+        port = args.addreplicashard[1]
+        solr.add_shards(hostname, port)
     elif args.removereplicashard:
-        from index_node import esg_search
-        esg_search.remove_shard()
-    elif args.timeshard:
-        from index_node import esg_search
-        esg_search.time_shards()
+        hostname = args.removereplicashard[0]
+        port = args.removereplicashard[1]
+        solr.remove_shard(hostname, port)
     elif args.updatepublisherresources:
         from index_node import esg_search
         esg_search.setup_publisher_resources()

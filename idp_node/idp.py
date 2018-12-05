@@ -2,6 +2,7 @@ import os
 import zipfile
 import logging
 import ConfigParser
+import distutils.spawn
 import stat
 import yaml
 from git import Repo
@@ -33,10 +34,9 @@ def write_idp_install_log(idp_service_app_home):
     '''Write IDP properties to install manifest and property file'''
     esgf_idp_version = "1.1.4"
     idp_service_host = esg_functions.get_esgf_host()
-    idp_service_port = "443"
-    idp_service_endpoint = "https://{}:443/esgf-idp/idp/openidServer.htm".format(idp_service_host)
-    idp_security_attribute_service_endpoint = "https://{}:443/esgf-idp/saml/soap/secure/attributeService.htm".format(idp_service_host)
-    idp_security_registration_service_endpoint = "https://{}:443/esgf-idp/secure/registrationService.htm".format(idp_service_host)
+    idp_service_endpoint = "https://{}/esgf-idp/idp/openidServer.htm".format(idp_service_host)
+    idp_security_attribute_service_endpoint = "https://{}/esgf-idp/saml/soap/secure/attributeService.htm".format(idp_service_host)
+    idp_security_registration_service_endpoint = "https://{}/esgf-idp/secure/registrationService.htm".format(idp_service_host)
 
     esg_functions.write_to_install_manifest("webapp:esgf-idp", idp_service_app_home, esgf_idp_version)
     esg_property_manager.set_property("idp_service_app_home", idp_service_app_home)
@@ -66,7 +66,6 @@ def setup_idp():
             backup_idp = esg_property_manager.get_property("backup.idp")
         except ConfigParser.NoOptionError:
             backup_idp = raw_input("Do you want to make a back up of the existing distribution?? [Y/n] ") or "y"
-
         if backup_idp.lower() in ["yes", "y"]:
             "Creating a backup archive of this web application {}".format(idp_service_app_home)
             esg_functions.backup(idp_service_app_home)
@@ -103,38 +102,32 @@ def setup_idp():
     write_idp_install_log(idp_service_app_home)
     esg_functions.write_security_lib_install_log()
 
-    # esg_tomcat_manager.start_tomcat()
-
 def clone_slcs():
     if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
         print "SLCS repo already exists.  Skipping cloning from Github."
         return
-    Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
-    checkout_playbook_branch()
-
-
-def checkout_playbook_branch(branch="devel"):
-    '''Checkout playbook branch'''
-    publisher_repo_local = Repo("/usr/local/src/esgf-slcs-server-playbook")
-    publisher_repo_local.git.checkout(branch)
+    Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", "/usr/local/src/esgf-slcs-server-playbook")
 
 #TODO: convert slcs to use Ansible python API
 def setup_slcs():
+    if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
+        try:
+            install_slcs = esg_property_manager.get_property("update.slcs")
+        except ConfigParser.NoOptionError:
+            install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "n"
+
+        if install_slcs.lower() in ["n", "no"]:
+            print "Skipping installation of SLCS server"
+            return
+
     '''Setup the slcs_server'''
     print "*******************************"
     print "Setting up SLCS Oauth Server"
     print "*******************************"
 
-    try:
-        install_slcs = esg_property_manager.get_property("update.slcs")
-    except ConfigParser.NoOptionError:
-        install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "n"
-
-    if install_slcs.lower() in ["n", "no"]:
-        print "Skipping installation of SLCS server"
-        return
-
-    esg_functions.call_binary("yum", ["-y", "install", "ansible"])
+    slcs_env = "slcs-env"
+    esg_functions.call_binary("conda", ["create", "-y", "-n", slcs_env, "python<3", "pip"])
+    esg_functions.call_binary("pip", ["install", "mod_wsgi<4.6", "ansible"], conda_env=slcs_env)
 
     # create slcs Database
     pg_sys_acct_passwd = esg_functions.get_postgres_password()
@@ -151,6 +144,9 @@ def setup_slcs():
         esg_functions.change_ownership_recursive("esgf-slcs-server-playbook", apache_user, apache_group)
 
         with pybash.pushd("esgf-slcs-server-playbook"):
+            #TODO: extract to function
+            publisher_repo_local = Repo(os.getcwd())
+            publisher_repo_local.git.checkout("3.0")
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
 
@@ -173,11 +169,45 @@ def setup_slcs():
 
             esg_property_manager.set_property("short.lived.certificate.server", esg_functions.get_esgf_host())
 
-            pybash.mkdir_p("/usr/local/esgf-slcs-server")
+            pybash.mkdir_p("/usr/local/esgf-slcs-server/src")
             esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
 
-            #TODO: check if there's an ansible Python module
-            esg_functions.call_binary("ansible-playbook", ["-i", "playbook/inventories/localhost", "-e", "@playbook/overrides/production_venv_only.yml", "playbook/playbook.yml"])
+            esg_functions.call_binary(
+                "ansible-playbook",
+                [
+                    "-i", "playbook/inventories/localhost",
+                    "-e", "@playbook/overrides/production_venv_only.yml",
+                    "playbook/playbook.yml"
+                ],
+                conda_env=slcs_env
+            )
+            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
+
+    # Setup the mod_wsgi-express server. Note this does NOT start/stop/restart it.
+    with pybash.pushd("/usr/local/esgf-slcs-server/src/esgf_slcs_server"):
+        esg_functions.call_binary(
+            "mod_wsgi-express",
+            [
+                "setup-server",
+                "esgf_slcs_server/wsgi.py",
+                "--server-root", "/etc/slcs-wsgi-8888",
+                "--user", "apache",
+                "--group", "apache",
+                "--host", "localhost",
+                "--port", "8888",
+                "--mount-point", "/esgf-slcs",
+                "--url-alias", "/static", "/var/www/static"
+            ],
+            conda_env=slcs_env
+        )
+
+def slcs_apachectl(directive):
+    esg_functions.call_binary(
+        "/etc/slcs-wsgi-8888/apachectl",
+        [
+            directive
+        ]
+    )
 
 def main():
     '''Main function'''

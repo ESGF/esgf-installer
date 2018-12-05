@@ -76,12 +76,12 @@ def setup_postgres(default_continue_install="N"):
         if setup_postgres_answer.lower().strip() in ["no", 'n']:
             logger.info("Skipping Postgres installation. Using existing Postgres version")
             return True
-        else:
+        #else:
             # TODO At this point we know there is a valid postgres installation
             # There are no purges, uninstalls, or deletes happening so a db backup is unneeded
             #   as nothing will happen. If we want to purge the old install that will require
             #   a bit more functionality to be added here.
-            backup_db("postgres")
+            #backup_db("postgres")
 
     pg_name = "postgresql-server-{}".format(config["postgress_version"])
     pg_devel = "postgresql-devel-{}".format(config["postgress_version"])

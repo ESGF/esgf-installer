@@ -60,7 +60,7 @@ install_miniconda(){
         echo "-----------------------------------"
         echo
         PATH=${CDAT_HOME}/bin:$PATH
-        conda create -y -n esgf-pub "python<3" cdutil cmor -c pcmdi/label/nightly -c conda-forge
+        conda create -y -n esgf-pub "python<3" cdutil cmor "hdf5==1.10.3" -c pcmdi/label/nightly -c conda-forge
   popd
 
 }
@@ -77,7 +77,7 @@ install_dependencies_pip(){
 
       pip install --upgrade pip
       pip install coloredlogs GitPython progressbar2 pyOpenSSL \
-                  lxml requests psycopg2 decorator Tempita \
+                  lxml "requests==2.20.0" psycopg2 decorator Tempita \
                   setuptools semver Pyyaml configparser psutil
       pip install -r requirements.txt
 
@@ -154,3 +154,4 @@ main(){
 }
 
 main $1
+

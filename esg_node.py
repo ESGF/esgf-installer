@@ -1,8 +1,6 @@
-'''Main control script for the ESGF Installer'''
+"""Main control script for the ESGF Installer."""
 import os
-import sys
 import logging
-import socket
 import platform
 import glob
 import shutil
@@ -28,49 +26,44 @@ from filters import access_logging_filters, esg_security_tokenless_filters
 from esgf_utilities.esg_env_manager import EnvWriter
 
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 force_install = False
 
-#--------------
-# User Defined / Settable (public)
-#--------------
-#--------------
 
 def setup_esg_config_permissions():
-    '''Set permissions on /esg directory and subdirectories'''
+    """Set permissions on /esg directory and subdirectories."""
     esg_functions.change_permissions_recursive("/esg/config", 0644)
 
     root_id = esg_functions.get_user_id("root")
     tomcat_group_id = esg_functions.get_user_id("tomcat")
-    for file_name in  glob.glob("/esg/config/.esg*"):
+    for file_name in glob.glob("/esg/config/.esg*"):
         os.chown(file_name, root_id, tomcat_group_id)
         os.chmod(file_name, 0640)
 
     tomcat_user_id = esg_functions.get_user_id("tomcat")
     esg_functions.change_ownership_recursive("/esg/config/tomcat", tomcat_user_id, tomcat_group_id)
     os.chmod("/esg/config/tomcat", 0755)
-    for file_name in  glob.glob("/esg/config/tomcat/*"):
+    for file_name in glob.glob("/esg/config/tomcat/*"):
         os.chmod(file_name, 0600)
 
     os.chmod("/esg/config/esgcet", 0755)
-    for file_name in  glob.glob("/esg/config/esgcet/*"):
+    for file_name in glob.glob("/esg/config/esgcet/*"):
         os.chmod(file_name, 0644)
     os.chmod("/esg/config/esgcet/esg.ini", 640)
 
 
 def esgf_node_info():
-    '''Print basic info about ESGF installation'''
+    """Print basic info about ESGF installation."""
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
         print info_file.read()
 
 
-
 def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8"):
-    '''Sets the distribution mirror url'''
+    """Set the distribution mirror url."""
     try:
         local_mirror = esg_property_manager.get_property("local_mirror")
     except ConfigParser.NoOptionError:
@@ -97,24 +90,10 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8")
         esg_property_manager.set_property("esg.root.url", selected_mirror)
         esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
 
-def download_esg_installarg(esg_dist_url):
-    ''' Downloading esg-installarg file '''
-    if not os.path.isfile(config["esg_installarg_file"]) or force_install or os.path.getmtime(config["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
-        esg_installarg_file_name = pybash.trim_string_from_head(
-            config["esg_installarg_file"])
-        esg_functions.download_update(config["esg_installarg_file"], os.path.join(
-            esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
-        try:
-            if not os.path.getsize(config["esg_installarg_file"]) > 0:
-                os.remove(config["esg_installarg_file"])
-            pybash.touch(config["esg_installarg_file"])
-        except IOError:
-            logger.exception("Unable to access esg-installarg file")
-
 
 def get_installation_type(script_version):
-    '''Determining if devel or master directory of the ESGF distribution mirror
-    will be use for download of binaries'''
+    """Determine if devel or master directory of the ESGF distribution mirror
+    will be use for download of binaries."""
     if "devel" in script_version:
         logger.debug("Using devel version")
         return "devel"
@@ -123,7 +102,7 @@ def get_installation_type(script_version):
 
 
 def install_log_info(node_type_list):
-    '''Logs out the selected installation types'''
+    """Log out the selected installation types."""
     if force_install:
         logger.info("(force install is ON)")
     if "DATA" in node_type_list:
@@ -135,8 +114,9 @@ def install_log_info(node_type_list):
     if "COMPUTE" in node_type_list:
         logger.info("(compute node type selected)")
 
+
 def show_summary():
-    '''Show user summary and environment variables that have been set'''
+    """Show user summary and environment variables that have been set."""
     print "-------------------"
     print " esgf_node Run Summary: "
     print "-------------------"
@@ -160,12 +140,11 @@ def show_summary():
     print "-------------------"
 
 
-
 def system_component_installation(esg_dist_url, node_type_list):
-    '''
+    """
     Installation of basic system components.
     (Only when one setup in the sequence is okay can we move to the next)
-    '''
+    """
     if "INSTALL" in node_type_list:
         esg_java.setup_java()
         esg_postgres.setup_postgres()
@@ -210,9 +189,8 @@ def system_component_installation(esg_dist_url, node_type_list):
         esg_search.main()
 
 
-
 def done_remark(node_type_list):
-    '''Prints info to denote that the installation has completed'''
+    """Print info to denote that the installation has completed."""
     print "\nFinished!..."
     print "In order to see if this node has been installed properly you may direct your browser to:"
 
@@ -248,8 +226,9 @@ def done_remark(node_type_list):
         logger.exception("esg.org.name could not be found in config file")
     print "(\"Test Project\" -> pcmdi.{esg_org_name}.{node_short_name}.test.mytest)".format(esg_org_name=esg_org_name, node_short_name=esg_property_manager.get_property("node.short.name"))
 
+
 def setup_esgf_rpm_repo():
-    '''Creates the esgf repository definition file'''
+    """Create the esgf repository definition file."""
 
     print "*******************************"
     print "Setting up ESGF RPM repository"
@@ -271,8 +250,7 @@ def setup_esgf_rpm_repo():
 
 
 def main():
-    '''Main function'''
-
+    """Main function."""
     esg_setup.check_prerequisites()
     esg_setup.create_esg_directories()
 
@@ -291,10 +269,8 @@ def main():
     except ConfigParser.NoOptionError:
         devel = False
 
-
     set_esg_dist_url(install_type)
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    download_esg_installarg(esg_dist_url)
 
     logger.debug("node_type_list: %s", node_type_list)
 

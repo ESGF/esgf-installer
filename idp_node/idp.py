@@ -12,6 +12,7 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
+from plumbum.commands import ProcessExecutionError
 
 #####
 # Install The ESGF Idp Services
@@ -126,7 +127,10 @@ def setup_slcs():
     print "*******************************"
 
     slcs_env = "slcs-env"
-    esg_functions.call_binary("conda", ["create", "-y", "-n", slcs_env, "python<3", "pip"])
+    conda_envs = esg_functions.call_binary("/usr/local/conda/bin/conda", ["env", "list"])
+    if slcs_env not in conda_envs:
+        esg_functions.call_binary("/usr/local/conda/bin/conda", ["create", "-y", "-n", slcs_env, "python<3", "pip"])
+
     esg_functions.call_binary("pip", ["install", "mod_wsgi<4.6", "ansible"], conda_env=slcs_env)
 
     # create slcs Database
@@ -146,6 +150,8 @@ def setup_slcs():
         with pybash.pushd("esgf-slcs-server-playbook"):
             #TODO: extract to function
             publisher_repo_local = Repo(os.getcwd())
+            # Blow away any uncommitted changes so we can checkout branch
+            esg_functions.call_binary("git", ["reset", "--hard", "HEAD"])
             publisher_repo_local.git.checkout("3.0")
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)

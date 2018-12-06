@@ -7,6 +7,7 @@ import socket
 import ConfigParser
 import yaml
 import OpenSSL
+import jks
 import pybash
 import esg_functions
 from esgf_utilities import esg_property_manager
@@ -45,13 +46,9 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
     if not os.path.isfile(truststore_file):
         create_new_truststore(truststore_file)
 
-    tmp_dir = "/tmp/esg_scratch"
-    pybash.mkdir_p(tmp_dir)
-
     cert_files = glob.glob('{certs_dir}/*.0'.format(certs_dir=certs_dir))
     for cert in cert_files:
-        _insert_cert_into_truststore(cert, truststore_file, tmp_dir)
-    shutil.rmtree(tmp_dir)
+        _insert_cert_into_truststore(cert, truststore_file)
 
     sync_with_java_truststore(truststore_file)
     os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
@@ -134,10 +131,16 @@ def sync_with_java_truststore(truststore_file):
     os.chown(jssecacerts_path, esg_functions.get_user_id("root"), esg_functions.get_group_id("root"))
 
 
-def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
-    '''Takes full path to a pem certificate file and incorporates it into the given truststore'''
+def _insert_cert_into_truststore(cert_file, truststore_file):
+    '''
+    Takes full path to a pem certificate file and incorporates it into the
+    given truststore
+    '''
 
-    print "Adding {cert_file} -> truststore ({truststore_file})".format(cert_file=cert_file, truststore_file=truststore_file)
+    print "Adding {cert_file} -> {truststore_file}".format(
+        cert_file=cert_file,
+        truststore_file=truststore_file
+    )
     if not os.path.isfile(cert_file):
         raise IOError("{} not found".format(cert_file))
 
@@ -146,38 +149,32 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
     logger.debug("cert_name: %s", cert_name)
     cert_hash = cert_name.split(".")[0]
     logger.debug("cert_hash: %s", cert_hash)
-    der_file = os.path.join(tmp_dir, cert_hash+".der")
-    #--------------
-    # Convert from PEM format to DER format - for ingest into keystore
-    cert_pem = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert_file).read())
-    with open(der_file, "w") as der_file_handle:
-        der_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1, cert_pem))
 
-    #--------------
-    if os.path.isfile(truststore_file):
-        logger.debug("cert_hash: %s", cert_hash)
-        logger.debug("truststore_file: %s", truststore_file)
-        logger.debug("truststore_password: %s", config["truststore_password"])
+    # Convert from PEM format to DER aka ASN1 format - for ingest into keystore
+    cert_pem = OpenSSL.crypto.load_certificate(
+        OpenSSL.crypto.FILETYPE_PEM,
+        open(cert_file).read()
+    )
+    dumped_cert_der = OpenSSL.crypto.dump_certificate(
+        OpenSSL.crypto.FILETYPE_ASN1,
+        cert_pem
+    )
 
-        #If cert is already in truststore, delete existing cert and replace it with updated cert
-        check_for_cert_options = ["-delete", "-alias", cert_hash, "-keystore", truststore_file, "-storepass", config["truststore_password"]]
-        try:
-            esg_functions.call_binary("/usr/local/java/bin/keytool", check_for_cert_options)
-        except ProcessExecutionError, error:
-            if "does not exist" in error.stdout:
-                logger.debug("No existing cert with alias %s found", cert_hash)
-        else:
-            logger.info("Deleted %s from truststore %s", cert_hash, truststore_file)
+    truststore = jks.KeyStore.load(
+        truststore_file,
+        config["truststore_password"]
+    )
 
-        import_cert_options = ["-import", "-alias", cert_hash, "-file", der_file, "-keystore", truststore_file, "-storepass", config["truststore_password"], "-noprompt"]
-        try:
-            esg_functions.call_binary("/usr/local/java/bin/keytool", import_cert_options)
-        except ProcessExecutionError:
-            logger.error("Could not import %s into truststore %s", cert_hash, truststore_file)
-        else:
-            logger.info("Imported %s into truststore %s", cert_hash, truststore_file)
+    alias = cert_hash
+    truststore.entries[alias] = jks.TrustedCertEntry.new(
+        alias,
+        dumped_cert_der
+    )
 
-        os.remove(der_file)
+    truststore.save(
+        truststore_file,
+        config["truststore_password"]
+    )
 
 def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificates"):
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
@@ -213,15 +210,6 @@ def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificate
             with pybash.pushd("globus_simple_ca_{}_setup-0".format(simpleCA_cert_hash)):
                 shutil.copyfile("{}.signing_policy".format(simpleCA_cert_hash), "{}/{}.signing_policy".format(globus_certs_dir, simpleCA_cert_hash))
 
-            #Copy cert to ROOT webapp
-            if os.path.isdir("/usr/local/tomcat/webapps/ROOT"):
-                with open('/usr/local/tomcat/webapps/ROOT/cacert.pem', 'w') as ca:
-                    ca.write(
-                        OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_obj).decode('utf-8')
-                        )
-                print " My CA Cert now posted @ http://{}/cacert.pem ".format(socket.getfqdn())
-                os.chmod("/usr/local/tomcat/webapps/ROOT/cacert.pem", 0644)
-
         os.chmod(globus_certs_dir, 0755)
         esg_functions.change_permissions_recursive(globus_certs_dir, 0644)
 
@@ -242,6 +230,7 @@ def fetch_esgf_certificates(globus_certs_dir="/etc/grid-security/certificates"):
     #Download trusted certs tarball
     esg_trusted_certs_file = "esg_trusted_certificates.tar"
     esg_root_url = esg_property_manager.get_property("esg.root.url")
+    #TODO: Add in check of node-peer-group
     esg_trusted_certs_file_url = "{esg_root_url}/certs/{esg_trusted_certs_file}".format(esg_root_url=esg_root_url, esg_trusted_certs_file=esg_trusted_certs_file)
     esg_functions.download_update(os.path.join(globus_certs_dir, esg_trusted_certs_file), esg_trusted_certs_file_url)
 
@@ -274,9 +263,9 @@ def download_truststore(truststore_file, esg_root_url, node_peer_group):
     truststore_file_name = pybash.trim_string_from_head(truststore_file)
 
     if node_peer_group == "esgf-test":
-        esg_functions.download_update(truststore_file, "{}/certs/test-federation/{}".format(esg_root_url, truststore_file_name))
+        shutil.copyfile(os.path.join(current_directory, "../config/esg-truststore-test-federation.ts"), truststore_file)
     else:
-        esg_functions.download_update(truststore_file, "{}/certs/{}".format(esg_root_url, truststore_file_name))
+        shutil.copyfile(os.path.join(current_directory, "../config/esg-truststore.ts"), truststore_file)
 
 def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group):
     '''Download apache truststore file from distribution mirror'''
@@ -290,9 +279,9 @@ def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
         print "Downloading Apache Truststore... "
         print "******************************* \n"
         if node_peer_group == "esgf-test":
-            esg_functions.download_update(apache_truststore, "{}/certs/test-federation/{}".format(esg_root_url, apache_truststore_file_name))
+            shutil.copyfile(os.path.join(current_directory, "../config/esgf-ca-bundle-test-federation.crt"), apache_truststore)
         else:
-            esg_functions.download_update(apache_truststore, "{}/certs/{}".format(esg_root_url, apache_truststore_file_name))
+            shutil.copyfile(os.path.join(current_directory, "../config/esgf-ca-bundle.crt"), apache_truststore)
 
 def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_truststore='/etc/certs/esgf-ca-bundle.crt', globus_certs_dir="/etc/grid-security/certificates"):
     '''Download ESGF Truststore from the distribution mirror'''
@@ -325,7 +314,7 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_trus
         simpleCA_cert_hash = get_certificate_subject_hash(simple_CA_cert)
 
         simpleCA_cert_hash_file = os.path.join(globus_certs_dir, simpleCA_cert_hash+".0")
-        _insert_cert_into_truststore(simpleCA_cert_hash_file, truststore_file, "/tmp/esg_scratch")
+        _insert_cert_into_truststore(simpleCA_cert_hash_file, truststore_file)
 
         add_my_cert_to_truststore()
 
@@ -357,3 +346,52 @@ def find_certificate_issuer_cert():
                         return simple_CA_cert
         except IOError:
             raise
+
+
+def install_peer_node_cert(remote_host):
+    '''This function is for pulling in keys from hosts we wish to
+    communicate with over an encrypted ssl connection.  This function
+    must be run after tomcat is set up since it references server.xml.
+
+    (called by setup_idp_peer)
+    arg1 - hostname of the machine with the cert you want to get
+    (arg2 - password to truststore where cert will be inserted)
+    (arg3 - password to keystore - only applicable in "local" registration scenario)
+    Formerly called register()
+    '''
+
+    print "Installing Public Certificate of Target Peer Node...[{}]".format(remote_host)
+
+    with pybash.pushd(config["tomcat_conf_dir"]):
+        esgf_host = esg_functions.get_esgf_host()
+        ssl_endpoint = remote_host
+        ssl_port = "443"
+
+        if ssl_endpoint == esgf_host:
+            #For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition
+            add_my_cert_to_truststore()
+        else:
+            pybash.mkdir_p(config["workdir"])
+            with pybash.pushd(config["workdir"]):
+                esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+                if not esg_functions.download_update('./InstallCert.class', "{}/utils/InstallCert.class".format(esg_dist_url)):
+                    raise RuntimeError("Could not download utility class(1) for installing certificates")
+                if not esg_functions.download_update('./InstallCert$SavingTrustManager.class', "{}/utils/InstallCert$SavingTrustManager.class".format(esg_dist_url)):
+                    raise RuntimeError("Could not download utility class(2) for installing certificates")
+
+            class_path = ".:{}".format(config["workdir"])
+
+            #NOTE: The InstallCert code fetches Java's jssecacerts file (if
+            #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
+            #The output of the program is a new file named jssecacerts!      So here we get the output and rename it.
+            esg_functions.call_binary("/usr/local/java/bin/java", ["-classpath", class_path, "InstallCert", "{}:{}".format(ssl_endpoint, ssl_port), config["truststore_password"], config["truststore_file"]])
+
+            with pybash.pushd(config["tomcat_conf_dir"]):
+                os.chmod(config["truststore_file"], 0644)
+
+                tomcat_user = esg_functions.get_user_id("tomcat")
+                tomcat_group = esg_functions.get_group_id("tomcat")
+
+                os.chown(config["truststore_file"], tomcat_user, tomcat_group)
+
+                sync_with_java_truststore(config["truststore_file"])

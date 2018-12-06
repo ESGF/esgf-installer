@@ -67,11 +67,14 @@ def rank_response_times(response_times):
 def get_lastpush_md5(mirror, install_type):
     '''Gets the lastpush.md5 file from the specified mirror.  Can be used to check if mirror is in sync with the master mirror'''
     if install_type == "devel":
-        mirror_md5_url = 'http://{}/dist/devel/lastpush.md5'.format(mirror)
+        mirror_md5_url = '{}/devel/lastpush.md5'.format(mirror)
     else:
-        mirror_md5_url = 'http://{}/dist/lastpush.md5'.format(mirror)
+        mirror_md5_url = '{}/lastpush.md5'.format(mirror)
 
-    mirror_response = requests.get(mirror_md5_url, timeout=4.0).text
+    try:
+        mirror_response = requests.get(mirror_md5_url, timeout=4.0).text
+    except requests.exceptions.ConnectionError, error:
+        logger.error(error)
     mirror_md5 = mirror_response.split()[0]
 
     return mirror_md5
@@ -86,7 +89,7 @@ def find_fastest_mirror(install_type):
     response_times, _ = get_mirror_response_times()
     ranked_response_times = rank_response_times(response_times)
 
-    master_mirror = 'distrib-coffee.ipsl.jussieu.fr/pub/esgf'
+    master_mirror = 'http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist'
     if ranked_response_times.items()[0][0] == master_mirror:
         logger.debug("Master mirror is fastest")
         return master_mirror

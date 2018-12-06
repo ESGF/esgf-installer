@@ -11,7 +11,7 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from base import esg_postgres
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
@@ -38,8 +38,6 @@ def setup_security(node_type_list, esg_dist_url):
             return
 
     configure_postgress(node_type_list, esg_dist_url, config["esgf_security_version"])
-    fetch_user_migration_launcher(node_type_list, esg_dist_url)
-    fetch_policy_check_launcher(node_type_list, esg_dist_url)
     clean_security_webapp_subsystem()
 
 
@@ -60,10 +58,11 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
 
         node_db_name = "esgcet"
         node_db_security_schema_name = "esgf_security"
-        if node_db_name not in esg_postgres.postgres_list_dbs():
+        pg_sys_acct_passwd = esg_functions.get_postgres_password()
+        if node_db_name not in esg_postgres.postgres_list_dbs(user_name="dbsuper", password=pg_sys_acct_passwd):
             esg_postgres.create_database(node_db_name)
 
-        schema_list = esg_postgres.postgres_list_db_schemas()
+        schema_list = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", password=pg_sys_acct_passwd)
         logger.debug("schema list: %s", schema_list)
         if node_db_security_schema_name in schema_list:
             print "Detected an existing security schema installation..."
@@ -90,7 +89,7 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
 
             node_db_name = "esgcet"
             node_db_security_schema_name = "esgf_security"
-            if node_db_security_schema_name in esg_postgres.postgres_list_db_schemas():
+            if node_db_security_schema_name in esg_postgres.postgres_list_db_schemas(user_name="dbsuper", password=pg_sys_acct_passwd):
                 schema_backup = raw_input("Do you want to make a back up of the existing database schema [{}:{}]? [Y/n]".format(node_db_name, node_db_security_schema_name)) or "y"
                 if schema_backup.lower() in ["y", "yes"]:
                     print "Creating a backup archive of the database schema [{}:{}]".format(node_db_name, node_db_security_schema_name)
@@ -252,30 +251,3 @@ def clean_security_webapp_subsystem():
         logger.info("Removing deprecated esgf-security webapp")
         esg_functions.backup(security_webapp_path)
         shutil.rmtree(security_webapp_path)
-
-
-
-def fetch_user_migration_launcher(node_type_list, esg_dist_url):
-    #TODO: Appears to be deprecated
-    if "IDP" in node_type_list:
-        with pybash.pushd(config["scripts_dir"]):
-            security_web_service_name = "esgf-security"
-            esgf_user_migration_launcher = "esgf-user-migrate"
-            esgf_user_migration_launcher_url = "{}/{}/{}".format(esg_dist_url, security_web_service_name, esgf_user_migration_launcher)
-            esg_functions.download_update(esgf_user_migration_launcher, esgf_user_migration_launcher_url)
-            os.chmod(esgf_user_migration_launcher, 0755)
-    else:
-        logger.debug("This function, fetch_user_migration_launcher(), is not applicable to current node type (%s)", set(node_type_list))
-
-def fetch_policy_check_launcher(node_type_list, esg_dist_url):
-    #TODO: Appears to be deprecated
-    if "IDP" in node_type_list and "DATA" in node_type_list:
-        with pybash.pushd(config["scripts_dir"]):
-            security_web_service_name = "esgf-security"
-            esgf_policy_check_launcher = "esgf-policy-check"
-            esgf_user_migration_launcher = "esgf-user-migrate"
-            esgf_policy_check_launcher_url = "{}/{}/{}".format(esg_dist_url, security_web_service_name, esgf_policy_check_launcher)
-            esg_functions.download_update(esgf_policy_check_launcher, esgf_policy_check_launcher_url)
-            os.chmod(esgf_user_migration_launcher, 0755)
-    else:
-        logger.debug("This function, fetch_policy_check_launcher(), is not applicable to current node type (%s)", set(node_type_list))

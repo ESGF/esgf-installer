@@ -1,0 +1,208 @@
+#!/bin/bash
+
+#***************************************************************************
+#                                                                          *
+#  Organization: Earth System Grid Federation                              *
+#	Project: Earth Systems Grid Fed (ESGF) Node Software Stack        *
+#  First Author: Gavin M. Bell (gavin@llnl.gov)                            *
+#                                                                          *
+#***************************************************************************
+#                                                                          *
+#   Copyright (c) 2009, Lawrence Livermore National Security, LLC.         *
+#   Produced at the Lawrence Livermore National Laboratory                 *
+#   LLNL-CODE-420962                                                       *
+#                                                                          *
+#   All rights reserved. This file is part of the:                         *
+#   Earth System Grid (ESG) Data Node Software Stack, Version 1.0          *
+#                                                                          *
+#   For details, see http://esg-repo.llnl.gov/esg-node/                    *
+#   Please also read this link                                             *
+#    http://esg-repo.llnl.gov/LICENSE                                      *
+#                                                                          *
+#   * Redistribution and use in source and binary forms, with or           *
+#   without modification, are permitted provided that the following        *
+#   conditions are met:                                                    *
+#                                                                          *
+#   * Redistributions of source code must retain the above copyright       *
+#   notice, this list of conditions and the disclaimer below.              *
+#                                                                          *
+#   * Redistributions in binary form must reproduce the above copyright    *
+#   notice, this list of conditions and the disclaimer (as noted below)    *
+#   in the documentation and/or other materials provided with the          *
+#   distribution.                                                          *
+#                                                                          *
+#   Neither the name of the LLNS/LLNL nor the names of its contributors    *
+#   may be used to endorse or promote products derived from this           *
+#   software without specific prior written permission.                    *
+#                                                                          *
+#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS    *
+#   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT      *
+#   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS      *
+#   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE    *
+#   LIVERMORE NATIONAL SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR     *
+#   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,           *
+#   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT       *
+#   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF       *
+#   USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND    *
+#   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,     *
+#   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT     *
+#   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     *
+#   SUCH DAMAGE.                                                           *
+#                                                                          *
+#**************************************************************************/
+
+envfile=/etc/esg.env
+[ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
+
+search_app_home=$(sed -n 's@^[ ]*index.service.app.home[ ]*=[ ]*\(.*\)$@\1@p' $ESGF_HOME/config/esgf.properties)
+
+DEBUG=${DEBUG:-0}
+VERBOSE=${VERBOSE:-0}
+version=0.0.1
+
+out_dir="/tmp"
+
+crawl_site() {
+    local site=$(resolve_site ${1})
+    local regex=${2:-'ALL'}
+    local host=$(echo "${site}" | sed -n 's@http[s]*://\([^/]*\)/.*@\1@p')
+    local java_opts=${JAVA_OPTS:-"-Xmx1024m"}
+    verbose_print "------------"
+    verbose_print "host: ${host}"
+    echo "crawling ${site} ...."
+    ((DEBUG)) && curl -s ${site}
+    verbose_print "$JAVA_HOME/bin/java $([[ ${java_opts} ]] && echo ${java_opts}) -Dlog4j.configuration=./log4j.xml -Djava.ext.dirs=../lib esg.search.publish.impl.PublishingServiceMain ${site} ${regex} THREDDS $( ((REMOVE)) && echo "false" || echo "true") ${out_dir}/${host}_publishing.log"
+    $JAVA_HOME/bin/java $([[ ${java_opts} ]] && echo "${java_opts}") -Dlog4j.configuration=./log4j.xml -Djava.ext.dirs=../lib esg.search.publish.impl.PublishingServiceMain ${site} ${regex} THREDDS $( ((REMOVE)) && echo "false" || echo "true") ${out_dir}/${host}_publishing.log
+    verbose_print "------------"
+}
+
+# this will respect the arg syntax of:
+# site1 {regex1} site2 {regex2} site3 ...
+crawl_sites() {
+    local sites=($@)
+    echo "Setting up to crawl these sites:"
+    echo "${sites[@]}"
+    local regex
+    for ((i=0; i < ${#sites[@]}; i++)) ; do
+        site=$(sed -n 's/[{]\([^}]*\)[}]/\1/p' <<< ${sites[i]})
+        [ -n "${site}" ] && continue
+        regex=$(sed -n 's/[{]\([^}]*\)[}]/\1/p' <<< ${sites[((i+1))]})
+        crawl_site ${sites[i]} ${regex}
+        [ -n "${regex}" ] && ((++i))
+        unset regex
+    done
+}
+
+verbose_print() { ((VERBOSE)) && echo $@; return 0; }
+debug_print() { ((DEBUG)) && echo -e $@ >&2; return 0; }
+
+#This helper function allows us to only put in the hostname of the server and have a best guess
+#of the form http://<candidate>/thredds/catalog.xml, if the candidate is a "plausible" url then we use it directly
+resolve_site() {
+    local candidate=$1
+    [ $(grep -v 'http://' <(echo ${candidate})) ] && [ $(grep -v thredds/catalog.xml <(echo ${candidate})) ] && echo "http://${candidate}/thredds/catalog.xml" || echo "${candidate}"
+}
+
+esgf_crawl_usage() {
+    printf "
+   Usage:
+
+      -----------------------------------------------------
+      > ${0##*/} [--help|-h] [--verbose] [--debug] [--file|-f <crawl targets> and/or -- <list of crawl targets>] [--outdir <output log dir>] [--remove|-rm]
+      -----------------------------------------------------
+
+      (required args - one or both)
+      --file    - followed by file containing newline delim list of fqdn or explicit catalog.xml urls to crawl
+      --        - followed by a space delim list of fqdn or catalo.xml urls to crawl
+
+      (optional args)
+      --outdir  - directory where crawl logs are to be written (default is /tmp)
+      --remote | -rm - will remove the catalog from the local index
+      --debug   - provide debug output
+      --verbose - provide more output
+      --help    - this usage output
+      --version - version information
+
+      Ex:
+      > ${0##*/} --file catalog.txt -- http://norstore-trd-bio1.hpc.ntnu.no/thredds/catlog.xml pcmdi3.llnl.gov
+
+      (this command will crawl all the entries listed in the file
+       catalog.txt as well as crawl the two sites listed.  Note: as a
+       convenience you may use just a fqdn as the crawl target. in
+       this case the default catalog.xml url location is used, namely
+       - http://<fqdn>/thredds/catalog.xml, if it is known that the
+       catalog.xml is not in this location then the canonical url to
+       the toplevel catalog.xml file must be used)
+
+"
+    exit 0
+}
+
+
+############################################
+# Main
+############################################
+main() {
+    sites=""
+    while [ -n "$1" ]; do
+        case $1 in
+	    -v | --version)
+                echo "Version ${version}"
+	        echo "Earth Systems Grid Federation (http://esgf.org)"
+	        echo "ESGF P2P Catalog Crawling Utility"
+	        echo ""
+	        exit 0
+                ;;
+            --verbose)
+                VERBOSE=1;
+                ;;
+            --debug)
+                DEBUG=1;
+                ;;
+            --help | -h)
+                esgf_crawl_usage
+                ;;
+            --remove | -rm)
+                REMOVE=1
+                ;;
+            --outdir)
+                shift
+                out_dir=${1}
+                ;;
+            --file | -f)
+                shift
+                input_file=${1}
+                sites=( ${sites[@]} $(cat ${input_file} | sed 's/^[#].*$//' | sed '/^$/d' | xargs))
+                echo "loaded ${#sites[@]} sites from input file: ${input_file}"
+                cat ${input_file} | sed 's/^[#].*$//' | sed '/^$/d'
+                echo
+                ;;
+            --)
+	        local tmpargs="" #array to store args for this switch.
+	        local let index=0
+	        shift
+	        until [ $(echo $1 | egrep '^\s*--') ] || [ $(echo $1 | egrep '^\s*-') ] || [ -z "${1}" ]; do
+		    tmpargs[((index++))]=$1
+		    debug_print "added [${1}] to args list: ${tmpargs[@]}"
+		    shift
+	        done
+                sites=( ${sites[@]} ${tmpargs[@]} )
+                unset tmpargs
+                ;;
+            *)
+                esgf_crawl_usage
+                ;;
+        esac
+        shift
+    done
+
+    [ -z "${sites}" ] && echo "No sites specified to crawl" && esgf_crawl_usage
+    mkdir -p ${out_dir} >& /dev/null
+    crawl_sites ${sites[@]}
+    echo "done"
+}
+
+[ ! -d "${search_app_home}" ] && echo "Sorry could not locate search app directory [${search_app_home}]" && esgf_crawl_usage
+pushd ${search_app_home}/WEB-INF/classes || exit 1
+main $@
+popd >& /dev/null

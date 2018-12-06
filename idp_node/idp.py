@@ -6,11 +6,13 @@ import distutils.spawn
 import stat
 import yaml
 from git import Repo
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
+from plumbum.commands import ProcessExecutionError
 
 #####
 # Install The ESGF Idp Services
@@ -33,10 +35,9 @@ def write_idp_install_log(idp_service_app_home):
     '''Write IDP properties to install manifest and property file'''
     esgf_idp_version = "1.1.4"
     idp_service_host = esg_functions.get_esgf_host()
-    idp_service_port = "443"
-    idp_service_endpoint = "https://{}:443/esgf-idp/idp/openidServer.htm".format(idp_service_host)
-    idp_security_attribute_service_endpoint = "https://{}:443/esgf-idp/saml/soap/secure/attributeService.htm".format(idp_service_host)
-    idp_security_registration_service_endpoint = "https://{}:443/esgf-idp/secure/registrationService.htm".format(idp_service_host)
+    idp_service_endpoint = "https://{}/esgf-idp/idp/openidServer.htm".format(idp_service_host)
+    idp_security_attribute_service_endpoint = "https://{}/esgf-idp/saml/soap/secure/attributeService.htm".format(idp_service_host)
+    idp_security_registration_service_endpoint = "https://{}/esgf-idp/secure/registrationService.htm".format(idp_service_host)
 
     esg_functions.write_to_install_manifest("webapp:esgf-idp", idp_service_app_home, esgf_idp_version)
     esg_property_manager.set_property("idp_service_app_home", idp_service_app_home)
@@ -55,20 +56,20 @@ def setup_idp():
     idp_service_app_home = os.path.join(config["tomcat_install_dir"], "webapps", "esgf-idp")
 
     if os.path.isdir(idp_service_app_home):
-        print "Detected an existing idp services installation..."
-        continue_install = raw_input("Do you want to continue with idp services installation and setup? [Y/n]: ") or "y"
-        if continue_install.lower() in ["n", "no"]:
-            print "Skipping IDP installation."
+        try:
+            idp_install = esg_property_manager.get_property("update.idp")
+        except ConfigParser.NoOptionError:
+            idp_install = raw_input("Detected an existing idp services installation.  Do you want to continue with the IDP installation [y/N]: ") or "no"
+        if idp_install.strip().lower() in ["no", "n"]:
+            logger.info("Using existing IDP installation.  Skipping setup.")
             return
-
-    try:
-        backup_idp = esg_property_manager.get_property("backup.idp")
-    except ConfigParser.NoOptionError:
-        backup_idp = raw_input("Do you want to make a back up of the existing distribution?? [Y/n] ") or "y"
-
-    if backup_idp.lower() in ["yes", "y"]:
-        "Creating a backup archive of this web application {}".format(idp_service_app_home)
-        esg_functions.backup(idp_service_app_home)
+        try:
+            backup_idp = esg_property_manager.get_property("backup.idp")
+        except ConfigParser.NoOptionError:
+            backup_idp = raw_input("Do you want to make a back up of the existing distribution?? [Y/n] ") or "y"
+        if backup_idp.lower() in ["yes", "y"]:
+            "Creating a backup archive of this web application {}".format(idp_service_app_home)
+            esg_functions.backup(idp_service_app_home)
 
     pybash.mkdir_p(idp_service_app_home)
     with pybash.pushd(idp_service_app_home):
@@ -125,10 +126,19 @@ def setup_slcs():
     print "Setting up SLCS Oauth Server"
     print "*******************************"
 
-    esg_functions.call_binary("yum", ["-y", "-q", "install", "epel-release", "ansible"])
+    slcs_env = "slcs-env"
+    conda_envs = esg_functions.call_binary("/usr/local/conda/bin/conda", ["env", "list"])
+    if slcs_env not in conda_envs:
+        esg_functions.call_binary("/usr/local/conda/bin/conda", ["create", "-y", "-n", slcs_env, "python<3", "pip"])
 
-    #create slcs Database
-    esg_postgres.create_database("slcsdb")
+    esg_functions.call_binary("pip", ["install", "mod_wsgi<4.6", "ansible"], conda_env=slcs_env)
+
+    # create slcs Database
+    pg_sys_acct_passwd = esg_functions.get_postgres_password()
+    conn = esg_postgres.connect_to_db("dbsuper", "postgres", password=pg_sys_acct_passwd)
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+    esg_postgres.create_database("slcsdb", cursor=cur)
 
     with pybash.pushd("/usr/local/src"):
         clone_slcs()
@@ -140,6 +150,8 @@ def setup_slcs():
         with pybash.pushd("esgf-slcs-server-playbook"):
             #TODO: extract to function
             publisher_repo_local = Repo(os.getcwd())
+            # Blow away any uncommitted changes so we can checkout branch
+            esg_functions.call_binary("git", ["reset", "--hard", "HEAD"])
             publisher_repo_local.git.checkout("3.0")
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
@@ -157,7 +169,6 @@ def setup_slcs():
             db_password = esg_functions.get_postgres_password()
             production_venv_only["esgf_slcsdb"]["password"] = db_password
             production_venv_only["esgf_userdb"]["password"] = db_password
-            production_venv_only["virtualenv_command"] = distutils.spawn.find_executable("virtualenv")
 
             with open('playbook/overrides/production_venv_only.yml', 'w') as yaml_file:
                 yaml.dump(production_venv_only, yaml_file)
@@ -167,7 +178,42 @@ def setup_slcs():
             pybash.mkdir_p("/usr/local/esgf-slcs-server/src")
             esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
 
-            esg_functions.call_binary("ansible-playbook", ["-i", "playbook/inventories/localhost", "-e", "@playbook/overrides/production_venv_only.yml", "playbook/playbook.yml"])
+            esg_functions.call_binary(
+                "ansible-playbook",
+                [
+                    "-i", "playbook/inventories/localhost",
+                    "-e", "@playbook/overrides/production_venv_only.yml",
+                    "playbook/playbook.yml"
+                ],
+                conda_env=slcs_env
+            )
+            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", apache_user, apache_group)
+
+    # Setup the mod_wsgi-express server. Note this does NOT start/stop/restart it.
+    with pybash.pushd("/usr/local/esgf-slcs-server/src/esgf_slcs_server"):
+        esg_functions.call_binary(
+            "mod_wsgi-express",
+            [
+                "setup-server",
+                "esgf_slcs_server/wsgi.py",
+                "--server-root", "/etc/slcs-wsgi-8888",
+                "--user", "apache",
+                "--group", "apache",
+                "--host", "localhost",
+                "--port", "8888",
+                "--mount-point", "/esgf-slcs",
+                "--url-alias", "/static", "/var/www/static"
+            ],
+            conda_env=slcs_env
+        )
+
+def slcs_apachectl(directive):
+    esg_functions.call_binary(
+        "/etc/slcs-wsgi-8888/apachectl",
+        [
+            directive
+        ]
+    )
 
 def main():
     '''Main function'''

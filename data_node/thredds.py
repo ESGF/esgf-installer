@@ -5,7 +5,6 @@ import getpass
 import ConfigParser
 import zipfile
 import re
-from urlparse import urlparse
 from distutils.dir_util import copy_tree
 import requests
 import yaml
@@ -15,7 +14,6 @@ from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_truststore_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager, esg_postgres
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
@@ -102,103 +100,30 @@ def add_tomcat_user():
     update_tomcat_users_file(tomcat_username, password_hash)
 
 
+def get_idp_peer_from_config():
+    try:
+        esgf_idp_peer = esg_property_manager.get_property("esgf.idp.peer")
+    except ConfigParser.NoOptionError:
+        default_idp_peer = esg_functions.get_esgf_host()
+        esgf_idp_peer = raw_input("Please specify your IDP peer node's FQDN [{}]: ".format(default_idp_peer)) or default_idp_peer
 
-#TODO: terrible, undescriptive name; come up with something better
-def register(remote_host):
-    '''This function is for pulling in keys from hosts we wish to
-    communicate with over an encrypted ssl connection.  This function
-    must be run after tomcat is set up since it references server.xml.
-
-    (called by setup_idp_peer)
-    arg1 - hostname of the machine with the cert you want to get
-    (arg2 - password to truststore where cert will be inserted)
-    (arg3 - password to keystore - only applicable in "local" registration scenario)'''
-
-    print "Installing Public Certificate of Target Peer Node...[{}]".format(remote_host)
-
-    with pybash.pushd(config["tomcat_conf_dir"]):
-        esgf_host = esg_functions.get_esgf_host()
-        ssl_endpoint = urlparse(remote_host).hostname
-        ssl_port = "443"
-
-        if ssl_endpoint == esgf_host:
-            #For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition
-            esg_truststore_manager.add_my_cert_to_truststore()
-        else:
-            pybash.mkdir_p(config["workdir"])
-            with pybash.pushd(config["workdir"]):
-                esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-                if not esg_functions.download_update('./InstallCert.class', "{}/utils/InstallCert.class".format(esg_dist_url)):
-                    raise RuntimeError("Could not download utility class(1) for installing certificates")
-                if not esg_functions.download_update('./InstallCert$SavingTrustManager.class', "{}/utils/InstallCert$SavingTrustManager.class".format(esg_dist_url)):
-                    raise RuntimeError("Could not download utility class(2) for installing certificates")
-
-            class_path = ".:{}".format(config["workdir"])
-
-            #NOTE: The InstallCert code fetches Java's jssecacerts file (if
-            #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
-            #The output of the program is a new file named jssecacerts!      So here we get the output and rename it.
-            esg_functions.call_binary("/usr/local/java/bin/java", ["-classpath", class_path, "InstallCert", "{}:{}".format(ssl_endpoint, ssl_port), config["truststore_password"], config["truststore_file"]])
-
-            with pybash.pushd(config["tomcat_conf_dir"]):
-                os.chmod(config["truststore_file"], 0644)
-
-                tomcat_user = esg_functions.get_user_id("tomcat")
-                tomcat_group = esg_functions.get_group_id("tomcat")
-
-                os.chown(config["truststore_file"], tomcat_user, tomcat_group)
-
-                esg_truststore_manager.sync_with_java_truststore(config["truststore_file"])
+    return esgf_idp_peer
 
 
-def select_idp_peer():
+def select_idp_peer(esgf_idp_peer=None):
     '''called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags'''
+    if not esgf_idp_peer:
+        esgf_idp_peer = get_idp_peer_from_config()
 
-    node_type_list = esg_functions.get_node_type()
-
-    if "INDEX" in node_type_list and not set(["idp", "data", "compute"]).issubset(node_type_list):
-        #TODO: check if esgf_idp_peer = esgf.host
-        #TODO: esg_property_manager.get_property("esgf_idp_peer") == esg_property_manager.get_property("esgf.host"); then no external IDP
-        #TODO: check esgf.properties first
-        try:
-            external_idp = esg_property_manager.get_property("use_external_idp")
-        except ConfigParser.NoOptionError:
-            external_idp = raw_input("Do you wish to use an external IDP peer?(N/y): ") or 'n'
-
-        if external_idp.lower() in ["no", 'n']:
-            esgf_idp_peer = esg_functions.get_esgf_host()
-            esgf_idp_peer_name = esgf_idp_peer.upper()
-
-        else:
-            while True:
-                idp_fqdn = raw_input("Please specify your IDP peer node's FQDN: ")
-                if not idp_fqdn:
-                    print "IDP peer node's FQDN can't be blank."
-                    continue
-
-            esgf_idp_peer = idp_fqdn
-            esgf_idp_peer_name = esgf_idp_peer.upper()
-    else:
-        esgf_idp_peer = esg_functions.get_esgf_host()
-        esgf_idp_peer_name = esgf_idp_peer.upper()
+    esgf_idp_peer_name = esgf_idp_peer.upper()
 
     myproxy_endpoint = esgf_idp_peer
     esgf_host = esg_functions.get_esgf_host()
 
-    # print "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
-    if esgf_host != esgf_idp_peer:
-        print '''
-          ----------------------------------------------------------------------
-          The IDP selected must share at least one of the peer group(s)
-          [${node_peer_group}] that this node is a member of!
-
-          run: esg-node --federation-sanity-check ${esgf_idp_peer}
-
-          for confirmation.
-          ----------------------------------------------------------------------'''
-
-    if esgf_host != myproxy_endpoint:
-        register(myproxy_endpoint)
+    # If issues arise where sites are not using commercial certs from
+    # trusted root certificate authorities, uncomment this and fix it
+    #if esgf_host != myproxy_endpoint:
+    #    esg_truststore_manager.install_peer_node_cert(myproxy_endpoint)
 
     esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
     esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)
@@ -297,44 +222,6 @@ def copy_jar_files(esg_dist_url):
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/jdom-legacy-1.1.3.jar", "{esg_dist_url}/filters/jdom-legacy-1.1.3.jar".format(esg_dist_url=esg_dist_url))
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar", "{esg_dist_url}/filters/commons-httpclient-3.1.jar".format(esg_dist_url=esg_dist_url))
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar", "{esg_dist_url}/filters/commons-lang-2.6.jar".format(esg_dist_url=esg_dist_url))
-
-
-    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/XSGroupRole-1.0.0.jar", "{esg_dist_url}/filters/XSGroupRole-1.0.0.jar".format(esg_dist_url=esg_dist_url))
-    #
-    # #TODO: refactor orp and security jar to pull versions from config yaml; move other jar versions from filters module to config yaml
-    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esg-orp-2.9.3.jar", "{esg_dist_url}/esg-orp/esg-orp-2.9.3.jar".format(esg_dist_url=esg_dist_url))
-    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-common-1.0.0.jar", "{esg_dist_url}/esgf-node-manager/esgf-node-manager-common-1.0.0.jar".format(esg_dist_url=esg_dist_url))
-    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-filters-1.0.0.jar", "{esg_dist_url}/esgf-node-manager/esgf-node-manager-filters-1.0.0.jar".format(esg_dist_url=esg_dist_url))
-    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-security-2.7.10.jar", "{esg_dist_url}/esgf-security/esgf-security-2.7.10.jar".format(esg_dist_url=esg_dist_url))
-    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/opensaml-2.3.2.jar", "{esg_dist_url}/filters/opensaml-2.3.2.jar".format(esg_dist_url=esg_dist_url))
-    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/openws-1.3.1.jar", "{esg_dist_url}/filters/openws-1.3.1.jar".format(esg_dist_url=esg_dist_url))
-    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmltooling-1.2.2.jar", "{esg_dist_url}/filters/xmltooling-1.2.2.jar".format(esg_dist_url=esg_dist_url))
-    #
-    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/serializer-2.9.1.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar")
-    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/velocity-1.5.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/velocity-1.5.jar")
-    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xalan-2.7.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xalan-2.7.2.jar")
-    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xercesImpl-2.10.0.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xercesImpl-2.10.0.jar")
-    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xml-apis-1.4.01.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xml-apis-1.4.01.jar")
-    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xmlsec-1.4.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmlsec-1.4.2.jar")
-    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/log4j-1.2.17.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/log4j-1.2.17.jar")
-    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/commons-io-2.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-io-2.4.jar")
-    #
-    # try:
-    #     shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
-    # except IOError:
-    #     urllib.urlretrieve("{}/filters/commons-dbcp-1.4.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
-    # try:
-    #     shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
-    # except IOError:
-    #     urllib.urlretrieve("{}/filters/commons-dbutils-1.3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
-    # try:
-    #     shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
-    # except IOError:
-    #     urllib.urlretrieve("{}/filters/commons-pool-1.5.4.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
-    # try:
-    #     shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
-    # except IOError:
-    #     urllib.urlretrieve("{}/filters/postgresql-8.4-703.jdbc3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 
 
 def copy_xml_files():

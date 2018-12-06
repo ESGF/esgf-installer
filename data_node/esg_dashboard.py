@@ -3,6 +3,7 @@ import pwd
 import grp
 import stat
 import logging
+import ConfigParser
 import zipfile
 import requests
 import yaml
@@ -16,21 +17,17 @@ from plumbum import BG
 from plumbum import local
 from plumbum.commands import ProcessExecutionError
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+
 def download_extract(url, dest_dir, owner_user, owner_group):
-    r = requests.get(url)
+
     remote_file = pybash.trim_string_from_head(url)
     filename = os.path.join(os.sep, "tmp", remote_file)
-    with open(filename, "wb") as localfile:
-        total_length = int(r.headers.get('content-length'))
-        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
-            if chunk:
-                localfile.write(chunk)
-                localfile.flush()
+    esg_functions.download_update(filename, url)
 
     pybash.mkdir_p(dest_dir)
     with zipfile.ZipFile(filename) as archive:
@@ -48,29 +45,30 @@ def migration_egg(url, cmd, args):
         esg_functions.call_binary("easy_install", [egg_file])
     esg_functions.call_binary(cmd, args)
 
-def setup_dashboard():
 
-    if os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"):
-        stats_api_install = raw_input("Existing Stats API installation found.  Do you want to continue with the Stats API installation [y/N]: " ) or "no"
-        if stats_api_install.lower() in ["no", "n"]:
-            return
+def setup_dashboard():
+    """Setup the Dashboard and Stats API webapp."""
     print "\n*******************************"
     print "Setting up ESGF Stats API (dashboard)"
     print "******************************* \n"
+
+    if os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"):
+        try:
+            dashboard_install = esg_property_manager.get_property("update.dashboard")
+        except ConfigParser.NoOptionError:
+            dashboard_install = raw_input("Existing Dashboard and Stats API installation found.  Do you want to continue with the Dashboard and Stats API installation [y/N]: ") or "no"
+        if dashboard_install.strip().lower() in ["no", "n"]:
+            logger.info("Using existing Dashboard installation.  Skipping setup.")
+            return
 
     tomcat_webapps = os.path.join(os.sep, "usr", "local", "tomcat", "webapps")
 
     dist_url = esg_property_manager.get_property("esg.dist.url")
     dist_root_url = esg_property_manager.get_property("esg.root.url")
 
-
     stats_api_url = "{}/{}".format(dist_url, "esgf-stats-api/esgf-stats-api.war")
     dest_dir = os.path.join(tomcat_webapps, "esgf-stats-api")
     download_extract(stats_api_url, dest_dir, "tomcat", "tomcat")
-
-    dashboard_url = "{}/{}".format(dist_root_url, "esgf-dashboard/esgf-dashboard.war")
-    dest_dir = os.path.join(tomcat_webapps, "esgf-dashboard")
-    download_extract(dashboard_url, dest_dir, "tomcat", "tomcat")
 
     # execute dashboard installation script (without the postgres schema)
     run_dashboard_script()
@@ -83,9 +81,7 @@ def setup_dashboard():
     DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
     DASHBOARD_GROUP_ID = grp.getgrnam("dashboard").gr_gid
     esg_functions.change_ownership_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)
-    os.chmod("/var/run", stat.S_IWRITE)
-    os.chmod("/var/run", stat.S_IWGRP)
-    os.chmod("/var/run", stat.S_IWOTH)
+    os.chmod("/var/run", 0755)
 
     dburl = "{user}:{password}@{host}:{port}/{db}".format(
         user=config["postgress_user"],
@@ -134,14 +130,8 @@ def clone_dashboard_repo():
     print "\n*******************************"
     print "Cloning esgf-dashboard repo from Github"
     print "******************************* \n"
-    from git import RemoteProgress
-    class Progress(RemoteProgress):
-        def update(self, op_code, cur_count, max_count=None, message=''):
-            if message:
-                print('Downloading: (==== {} ====)\r'.format(message))
-                print "current line:", self._cur_line
 
-    Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard", progress=Progress())
+    Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard")
 
 def run_dashboard_script():
     #default values

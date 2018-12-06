@@ -59,19 +59,25 @@ def check_apache_version():
 
 def install_apache_httpd():
     '''Install apache from yum'''
-    esg_functions.call_binary("yum", ["-y", "update"])
-    esg_functions.call_binary("yum", ["-y", "install", "httpd", "httpd-devel", "mod_ssl"])
-    esg_functions.call_binary("yum", ["clean", "all"])
+    pkg_list = ["mod_ssl"]
+    
+    if check_for_apache_installation():
+        print "Found existing Apache installation."
+        check_apache_version()
 
-    # Custom ESGF Apache files that setup proxying
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
-    os.chmod("/etc/init.d/esgf-httpd", 0755)
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd.conf"),
-                    "/etc/httpd/conf/esgf-httpd.conf")
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-local.conf"),
-                    "/etc/httpd/conf/esgf-httpd-local.conf")
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-locals.conf"),
-                    "/etc/httpd/conf/esgf-httpd-locals.conf")
+        try:
+            setup_apache_answer = esg_property_manager.get_property(
+                "update.apache")
+        except ConfigParser.NoOptionError:
+            setup_apache_answer = raw_input(
+                "Would you like to continue the Apache installation anyway? [y/N]: ") or "N"
+
+        if setup_apache_answer.lower() not in ["no", "n"]:
+            pkg_list += ["httpd", "httpd-devel"]
+    else:
+        pkg_list += ["httpd", "httpd-devel"]
+
+    esg_functions.call_binary("yum", ["-y", "install"] + pkg_list)
 
 
 def install_mod_wsgi():
@@ -94,11 +100,15 @@ def make_python_eggs_dir():
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
     pybash.mkdir_p("/etc/certs")
-    remote_bundle = "{}/certs/{}".format(
-        esg_property_manager.get_property("esg.root.url"),
-        "esgf-ca-bundle.crt"
-    )
-    esg_functions.download_update("/etc/certs/esgf-ca-bundle.crt", remote_bundle)
+    current_directory = os.path.join(os.path.dirname(__file__))
+    shutil.copyfile(os.path.join(current_directory, "../config/esg-node.completion"), "/etc/bash_completion.d/esg-node")
+    shutil.copyfile(os.path.join(current_directory, "../config/esgf-ca-bundle.crt"), "/etc/certs/esgf-ca-bundle.crt")
+    # Custom ESGF Apache files that setup proxying
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
+    os.chmod("/etc/init.d/esgf-httpd", 0755)
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd.conf"), "/etc/httpd/conf/esgf-httpd.conf")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-local.conf"), "/etc/httpd/conf/esgf-httpd-local.conf")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-locals.conf"), "/etc/httpd/conf/esgf-httpd-locals.conf")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_html/index.html"), "/var/www/html/index.html")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/ssl.conf"), "/etc/httpd/conf.d/ssl.conf")
     shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))
@@ -120,19 +130,6 @@ def main():
     print "Setting up Apache (httpd) Web Server"
     print "******************************* \n"
 
-    if check_for_apache_installation():
-        print "Found existing Apache installation."
-        check_apache_version()
-
-        try:
-            setup_apache_answer = esg_property_manager.get_property(
-                "update.apache")
-        except ConfigParser.NoOptionError:
-            setup_apache_answer = raw_input(
-                "Would you like to continue the Apache installation anyway? [y/N]: ") or "N"
-
-        if setup_apache_answer.lower() in ["no", "n"]:
-            return
     install_apache_httpd()
     stop_apache()
     esg_functions.call_binary("chkconfig", ["--levels", "2345", "httpd", "off"])

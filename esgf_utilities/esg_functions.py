@@ -133,7 +133,7 @@ def prefix_to_path(path, prepend_value):
     return path_unique(prepend_value) + ":" + path
 
 
-def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num_backups_to_keep"]):
+def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=7):
     '''
         Given a directory the contents of the directory is backed up as a tar.gz file in
         path - a filesystem path
@@ -160,6 +160,27 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
         if len(files) > num_of_backups:
             oldest_backup = min(files, key=os.path.getctime)
             os.remove(oldest_backup)
+
+def create_backup_file(file_path, backup_extension=".bak", backup_dir=None, date=str(datetime.date.today())):
+    '''Create a backup of a file using the given backup extension'''
+    file_name = pybash.trim_string_from_head(file_path)
+    backup_file_name = file_name + "-" + date + backup_extension
+    logger.debug("backup_dir: %s", backup_dir)
+    if not backup_dir:
+        logger.debug("updating backup_dir")
+        backup_dir = os.path.join(os.path.dirname(file_name))
+
+    logger.debug("backup_dir after if statement: %s", backup_dir)
+    try:
+        # backup_path = os.path.join(backup_dir, backup_file_name)
+        backup_path = backup_dir + "/" + backup_file_name
+        logger.debug("backup_path: %s", backup_path)
+        logger.info("Backup - Creating a backup of %s -> %s", file_path, backup_path)
+        shutil.copyfile(file_path, backup_path)
+    except OSError:
+        logger.exception("Could not create backup file: %s\n", backup_file_name)
+    else:
+        os.chmod(backup_path, 600)
 
 
 def get_parent_directory(directory_path):
@@ -317,17 +338,7 @@ def fetch_remote_file(local_file, remote_file):
                     downloaded_file.flush()
     except requests.exceptions.RequestException:
         logger.exception("Could not download %s", remote_file)
-        sys.exit()
-
-
-def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.date.today())):
-    '''Create a backup of a file using the given backup extension'''
-    backup_file_name = file_name + date + "."+ backup_extension
-    try:
-        shutil.copyfile(file_name, backup_file_name)
-        os.chmod(backup_file_name, 600)
-    except OSError:
-        logger.exception("Could not create backup file: %s\n", backup_file_name)
+        raise
 
 
 def verify_checksum(local_file, remote_file):
@@ -469,8 +480,7 @@ def set_security_admin_password(updated_password, password_file=config['esgf_sec
 
     os.chmod(config['esgf_secret_file'], 0640)
     try:
-        os.chown(config['esgf_secret_file'], config[
-            "installer_uid"], tomcat_group_id)
+        os.chown(config['esgf_secret_file'], get_user_id("root"), tomcat_group_id)
     except OSError:
         logger.exception("Unable to change ownership of %s", password_file)
 
@@ -515,12 +525,9 @@ def set_publisher_password(password=None):
 
 def set_postgres_password(password):
     '''Updates the Postgres superuser account password; gets saved to /esg/config/.esg_pg_pass'''
-
-    config["pg_sys_acct_passwd"] = password
-
     try:
         with open(config['pg_secret_file'], "w") as secret_file:
-            secret_file.write(config["pg_sys_acct_passwd"])
+            secret_file.write(password)
     except IOError:
         logger.exception("Could not open %s", config['pg_secret_file'])
 
@@ -531,8 +538,7 @@ def set_postgres_password(password):
     tomcat_group_id = get_tomcat_group_id()
 
     try:
-        os.chown(config['pg_secret_file'], config[
-                 "installer_uid"], tomcat_group_id)
+        os.chown(config['pg_secret_file'], get_user_id("root"), tomcat_group_id)
     except OSError:
         logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
 
@@ -800,7 +806,11 @@ def write_security_lib_install_log():
 def write_to_install_manifest(component, install_path, version, manifest_file="/esg/esgf-install-manifest"):
     '''Write component info to install manifest'''
     parser = ConfigParser.ConfigParser()
-    parser.read(manifest_file)
+    try:
+        parser.read(manifest_file)
+    except ConfigParser.MissingSectionHeaderError:
+        parser.add_section("install_manifest")
+        parser.read(manifest_file)
 
     try:
         parser.add_section("install_manifest")
@@ -814,7 +824,11 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
 def get_version_from_install_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
     '''Get component version info from install manifest'''
     parser = ConfigParser.SafeConfigParser()
-    parser.read(manifest_file)
+    try:
+        parser.read(manifest_file)
+    except ConfigParser.MissingSectionHeaderError, error:
+        parser.add_section("install_manifest")
+        parser.read(manifest_file)
 
     try:
         return parser.get(section_name, component)
@@ -913,13 +927,19 @@ def esgf_node_info():
         print info_file.read()
 
 
-def call_binary(binary_name, arguments=None, silent=False):
+def call_binary(binary_name, arguments=None, silent=False, conda_env=None):
     '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
     RETURN_CODE = 0
     STDOUT = 1
     STDERR = 2
     logger.debug("binary_name: %s", binary_name)
     logger.debug("arguments: %s", arguments)
+    if conda_env is not None:
+        if arguments is not None:
+            arguments = [conda_env, binary_name] + arguments
+        else:
+            arguments = [conda_env, binary_name]
+        binary_name = os.path.join(os.path.dirname(__file__), "run_in_env.sh")
     try:
         command = local[binary_name]
     except ProcessExecutionError:

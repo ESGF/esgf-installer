@@ -1,21 +1,18 @@
+"""ESG Dashboard Module."""
 import os
 import pwd
 import grp
-import stat
 import logging
 import ConfigParser
 import zipfile
-import requests
 import yaml
 from git import Repo
-from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum import BG
 from plumbum import local
-from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -24,7 +21,8 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 
 def download_extract(url, dest_dir, owner_user, owner_group):
-
+    """Download a compressed file and extract it to {dest_dir}."""
+    # TODO: This could be generalized in esgf_utilities
     remote_file = pybash.trim_string_from_head(url)
     filename = os.path.join(os.sep, "tmp", remote_file)
     esg_functions.download_update(filename, url)
@@ -37,7 +35,9 @@ def download_extract(url, dest_dir, owner_user, owner_group):
     gid = esg_functions.get_group_id(owner_group)
     esg_functions.change_ownership_recursive(dest_dir, uid, gid)
 
+
 def migration_egg(url, cmd, args):
+    """Install egg file and install with easy_install."""
     with pybash.pushd(os.path.join(os.sep, "tmp")):
         egg_file = pybash.trim_string_from_head(url)
 
@@ -47,7 +47,7 @@ def migration_egg(url, cmd, args):
 
 
 def setup_dashboard():
-    """Setup the Dashboard and Stats API webapp."""
+    """Install the Dashboard and Stats API webapp."""
     print "\n*******************************"
     print "Setting up ESGF Stats API (dashboard)"
     print "******************************* \n"
@@ -56,7 +56,7 @@ def setup_dashboard():
         try:
             dashboard_install = esg_property_manager.get_property("update.dashboard")
         except ConfigParser.NoOptionError:
-            dashboard_install = raw_input("Existing Dashboard and Stats API installation found.  Do you want to continue with the Dashboard and Stats API installation [y/N]: ") or "no"
+            dashboard_install = raw_input("Existing Dashboard and Stats API installation found. Do you want to continue with the Dashboard and Stats API installation [y/N]: ") or "n"
         if dashboard_install.strip().lower() in ["no", "n"]:
             logger.info("Using existing Dashboard installation.  Skipping setup.")
             return
@@ -64,7 +64,6 @@ def setup_dashboard():
     tomcat_webapps = os.path.join(os.sep, "usr", "local", "tomcat", "webapps")
 
     dist_url = esg_property_manager.get_property("esg.dist.url")
-    dist_root_url = esg_property_manager.get_property("esg.root.url")
 
     stats_api_url = "{}/{}".format(dist_url, "esgf-stats-api/esgf-stats-api.war")
     dest_dir = os.path.join(tomcat_webapps, "esgf-stats-api")
@@ -115,15 +114,17 @@ def setup_dashboard():
         registration_xml_download_url
     )
 
-def start_dashboard_service():
 
+def start_dashboard_service():
+    """Start the dashboard service."""
     EnvWriter.prepend_to_path("LD_LIBRARY_PATH", "/usr/local/conda/envs/esgf-pub/lib")
     os.chmod("/usr/local/esgf-dashboard-ip/bin/ip.service", 0555)
     ip_service = local.get("/usr/local/esgf-dashboard-ip/bin/ip.service")
     result = ip_service.__getitem__(["start"]) & BG
 
+
 def clone_dashboard_repo():
-    ''' Clone esgf-dashboard repo from Github'''
+    """Clone esgf-dashboard repo from Github."""
     if os.path.isdir("/usr/local/esgf-dashboard"):
         print "esgf-dashboard repo already exists."
         return
@@ -133,8 +134,9 @@ def clone_dashboard_repo():
 
     Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard")
 
+
 def run_dashboard_script():
-    #default values
+    """Run the dashboard make file."""
     dashdir = "/usr/local/esgf-dashboard-ip"
     # Required property for ip.service start, copied from 2.x
     # TODO Figure out what this does and if it is valid
@@ -163,7 +165,9 @@ def run_dashboard_script():
         print "make install"
         esg_functions.call_binary("make", ["install"], silent=True)
 
+
 def main():
+    """Run main function."""
     setup_dashboard()
 
 

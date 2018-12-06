@@ -1,3 +1,4 @@
+"""ESG authentication module."""
 import os
 import stat
 import string
@@ -6,11 +7,10 @@ import pwd
 import logging
 import zipfile
 import pip
-from git import Repo, GitCommandError
+from git import Repo
 
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
-from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
 logger = logging.getLogger('esgf_logger.{}'.format(__name__))
@@ -24,6 +24,7 @@ auth_system_user = 'apache'
 
 
 def check_auth_version():
+    """Check the authentication package version."""
     auth_path = '/usr/local/esgf-auth/esgf-auth'
     if os.path.islink(auth_path):
         real_path = os.path.realpath(auth_path)
@@ -35,7 +36,7 @@ def check_auth_version():
 
 
 def clone_crypto_cookie_repo(install_dir, tag):
-
+    """Clone the Crypto Cookie repo from Github."""
     from git import RemoteProgress
 
     class Progress(RemoteProgress):
@@ -49,7 +50,7 @@ def clone_crypto_cookie_repo(install_dir, tag):
 
 
 def setup_auth_webapp(auth_dir='/usr/local/esgf-auth'):
-
+    """Install the authentication webapp."""
     apache_uid = pwd.getpwnam(auth_system_user).pw_uid
 
     key_chars = string.ascii_letters + string.digits

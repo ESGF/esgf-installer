@@ -1,28 +1,28 @@
+"""Run setup operations for ESGF."""
 import os
-import socket
 import logging
 import platform
-import sys
 
 import yaml
 from esgf_utilities import pybash
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+
 def exit_on_false(assertion, err_msg):
-    ''' Exit if the assertion fails '''
+    """Exit if the assertion fails."""
     try:
         assert assertion, err_msg
     except AssertionError:
         logger.error(err_msg)
         raise
 
-def check_if_root():
-    '''Check to see if the user has root privileges'''
 
+def check_if_root():
+    """Check to see if the user has root privileges."""
     print "Checking for root privileges..."
 
     err_msg = "This program must be run with root privileges"
@@ -31,11 +31,11 @@ def check_if_root():
     logger.debug("Root privileges found")
     return True
 
-def check_os():
-    ''' Check if the operating system on server is Redhat or CentOS '''
 
+def check_os():
+    """Check if the operating system on server is Redhat or CentOS."""
     print "Checking operating system..."
-    print "  {}".format(platform.platform())
+    print "{}".format(platform.platform())
     machine = platform.machine()
     req_machines = ['x86_64']
     err_msg = "Accepted machine types: {}, Found: {}".format(req_machines, machine)
@@ -57,10 +57,7 @@ def check_os():
 
 
 def check_prerequisites():
-    '''
-        A check for what is expected to be on the system a-priori that we are
-        not going to install or be responsible for.
-    '''
+    """Check for what is expected to be on the system a-priori that we are not going to install or be responsible for."""
     # checking for OS, architecture, distribution and version
     print "Checking prerequisites..."
     check_os()
@@ -68,8 +65,9 @@ def check_prerequisites():
 
     return True
 
+
 def create_esg_directories():
-    '''Create directories to hold ESGF scripts, config files, and logs'''
+    """Create directories to hold ESGF scripts, config files, and logs."""
     directories_to_check = [
         config["scripts_dir"],
         config["esg_backup_dir"],

@@ -1,4 +1,4 @@
-'''Module for installing Apache and mod_wsgi. Also contains Apache process management functions'''
+"""Module for installing Apache and mod_wsgi. Also contains Apache process management functions."""
 import os
 import shutil
 import logging
@@ -18,26 +18,27 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 
 def check_for_apache_installation():
-    '''Check for existing httpd installation'''
+    """Check for existing httpd installation."""
     return find_executable("httpd")
 
+
 def start_apache():
-    '''Start httpd server'''
+    """Start httpd server."""
     esg_functions.call_binary("service", ["httpd", "start"])
 
 
 def stop_apache():
-    '''Stop httpd server'''
+    """Stop httpd server."""
     esg_functions.call_binary("service", ["httpd", "stop"])
 
 
 def restart_apache():
-    '''Restart httpd server'''
+    """Restart httpd server."""
     esg_functions.call_binary("service", ["httpd", "restart"])
 
 
 def check_apache_status():
-    '''Check httpd status'''
+    """Check httpd status."""
     try:
         esg_functions.call_binary("service", ["httpd", "status"])
     except ProcessExecutionError as error:
@@ -49,18 +50,19 @@ def check_apache_status():
 
 
 def run_apache_config_test():
-    '''Run httpd config test'''
+    """Run httpd config test."""
     esg_functions.call_binary("service", ["httpd", "configtest"])
 
 
 def check_apache_version():
+    """Return the installed apache version."""
     esg_functions.call_binary("httpd", ["-version"])
 
 
 def install_apache_httpd():
-    '''Install apache from yum'''
+    """Install apache from yum."""
     pkg_list = ["mod_ssl"]
-    
+
     if check_for_apache_installation():
         print "Found existing Apache installation."
         check_apache_version()
@@ -81,7 +83,7 @@ def install_apache_httpd():
 
 
 def install_mod_wsgi():
-    '''Have to ensure python is install properly with the shared library for mod_wsgi installation to work'''
+    """Have to ensure python is install properly with the shared library for mod_wsgi installation to work."""
     print "\n*******************************"
     print "Setting mod_wsgi"
     print "******************************* \n"
@@ -89,8 +91,9 @@ def install_mod_wsgi():
     esg_functions.pip_install("mod_wsgi==4.5.3")
     esg_functions.call_binary("mod_wsgi-express", ["install-module"])
 
+
 def make_python_eggs_dir():
-    '''Create Python egg directories'''
+    """Create Python egg directories."""
     pybash.mkdir_p("/var/www/.python-eggs")
     apache_user_id = esg_functions.get_user_id("apache")
     apache_group_id = esg_functions.get_group_id("apache")
@@ -98,7 +101,7 @@ def make_python_eggs_dir():
 
 
 def copy_apache_conf_files():
-    ''' Copy custom apache conf files '''
+    """Copy custom apache conf files."""
     pybash.mkdir_p("/etc/certs")
     current_directory = os.path.join(os.path.dirname(__file__))
     shutil.copyfile(os.path.join(current_directory, "../config/esg-node.completion"), "/etc/bash_completion.d/esg-node")
@@ -123,9 +126,13 @@ def copy_apache_conf_files():
     # add LD_LIBRARY_PATH to /etc/sysconfig/httpd
     with open("/etc/sysconfig/httpd", "a") as httpd_file:
         httpd_file.write("OPTIONS='-f /etc/httpd/conf/esgf-httpd.conf'\n")
-        httpd_file.write("export LD_LIBRARY_PATH=/usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server\n")
+        httpd_file.write("export LD_LIBRARY_PATH=/usr/local/conda/envs/esgf-pub/lib/"
+                         ":/usr/local/conda/envs/esgf-pub/lib/python2.7/"
+                         ":/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server\n")
+
 
 def main():
+    """Run main function."""
     print "\n*******************************"
     print "Setting up Apache (httpd) Web Server"
     print "******************************* \n"

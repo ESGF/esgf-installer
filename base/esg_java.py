@@ -1,3 +1,4 @@
+"""Install the Java JDK."""
 import os
 import logging
 import ConfigParser
@@ -6,7 +7,6 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities.esg_env_manager import EnvWriter
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
@@ -14,20 +14,22 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+
 def set_default_java():
-    '''Sets the default Java binary to the version installed with ESGF'''
+    """Set the default Java binary to the version installed with ESGF."""
     esg_functions.call_binary("alternatives", ["--install", "/usr/bin/java", "/usr/local/java/bin/java", "3"])
     esg_functions.call_binary("alternatives", ["--set", "java", "/usr/local/java/bin/java"])
 
+
 def check_for_existing_java(java_path=os.path.join(config["java_install_dir"], "bin", "java")):
-    '''Check if a valid java installation is currently on the system'''
+    """Check if a valid java installation is currently on the system."""
     if pybash.is_exe(java_path):
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         return check_java_version(java_path)
 
 
 def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin", "java")):
-    '''Checks the Java version on the system'''
+    """Check the Java version on the system."""
     print "Checking Java version"
     logger.debug("java_path: %s", java_path)
     java_version_output = esg_functions.call_binary(java_path, ["-version"])
@@ -44,8 +46,7 @@ def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin",
 
 
 def download_java(java_tarfile):
-    '''Download Java from distribution mirror'''
-
+    """Download Java from distribution mirror."""
     java_url = "{0}/java/{1}/jdk{1}-64.tar.gz".format(
         esg_property_manager.get_property("esg.root.url"),
         config["java_version"]
@@ -57,11 +58,12 @@ def download_java(java_tarfile):
 
 
 def write_java_env():
-    '''Writes Java config to /etc/esg.env'''
+    """Write Java config to /etc/esg.env."""
     EnvWriter.export("JAVA_HOME", config["java_install_dir"])
 
+
 def write_java_install_log():
-    '''Writes Java config to install manifest'''
+    """Write Java config to install manifest."""
     esg_functions.write_to_install_manifest(
         "java",
         config["java_install_dir"],
@@ -70,11 +72,11 @@ def write_java_install_log():
 
 
 def setup_java():
-    '''
-        Installs Oracle Java from rpm using yum localinstall.
-        Does nothing if an acceptible Java install is found.
-    '''
+    """
+    Installs Oracle Java from rpm using yum localinstall.
 
+    Does nothing if an acceptible Java install is found.
+    """
     print "*******************************"
     print "Setting up Java {java_version}".format(java_version=config["java_version"])
     print "******************************* \n"

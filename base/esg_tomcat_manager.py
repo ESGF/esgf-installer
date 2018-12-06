@@ -1,6 +1,4 @@
-'''
-Tomcat Management Functions
-'''
+"""Tomcat Management Functions."""
 import os
 import shutil
 import grp
@@ -20,7 +18,7 @@ from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager, esg_keystore_manager, esg_truststore_manager
-from esgf_utilities import esg_cert_manager, CA
+from esgf_utilities import CA
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 
@@ -35,12 +33,12 @@ CATALINA_HOME = "/usr/local/tomcat"
 
 
 def check_tomcat_version():
-    '''Check installed tomcat version'''
+    """Check installed tomcat version."""
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/version.sh")
 
 
 def download_tomcat():
-    '''Download tomcat from distribution mirror'''
+    """Download tomcat from distribution mirror."""
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found."
         check_tomcat_version()
@@ -67,11 +65,13 @@ def download_tomcat():
 
     return True
 
-def remove_default_error_page():
-    '''Removes the default Tomcat error page.
-    From https://www.owasp.org/index.php/Securing_tomcat:
-    The default error page shows a full stacktrace which is a disclosure of sensitive information. Place the following within the web-app tag (after the welcome-file-list tag is fine). The following solution is not ideal as it produces a blank page because Tomcat cannot find the file specified, but without a better solution this, at least, achieves the desired result. A well configured web application will override this default in CATALINA_HOME/webapps/APP_NAME/WEB-INF/web.xml so it won't cause problems.'''
 
+def remove_default_error_page():
+    """Remove the default Tomcat error page.
+
+    From https://www.owasp.org/index.php/Securing_tomcat:
+    The default error page shows a full stacktrace which is a disclosure of sensitive information. Place the following within the web-app tag (after the welcome-file-list tag is fine). The following solution is not ideal as it produces a blank page because Tomcat cannot find the file specified, but without a better solution this, at least, achieves the desired result. A well configured web application will override this default in CATALINA_HOME/webapps/APP_NAME/WEB-INF/web.xml so it won't cause problems.
+    """
     tree = etree.parse("/usr/local/tomcat/conf/web.xml")
     root = tree.getroot()
     error_subelement = etree.SubElement(root, "error-page")
@@ -81,8 +81,9 @@ def remove_default_error_page():
     location_subelement.text = "/error.jsp"
     tree.write(open("/usr/local/tomcat/conf/web.xml", "w"), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
+
 def extract_tomcat_tarball(dest_dir="/usr/local"):
-    '''Extract tomcat tarball that was downloaded from the distribution mirror'''
+    """Extract tomcat tarball that was downloaded from the distribution mirror."""
     with pybash.pushd(dest_dir):
         esg_functions.extract_tarball(
             "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
@@ -96,7 +97,7 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
         except OSError, error:
             logger.error(error)
 
-        #From https://www.owasp.org/index.php/Securing_tomcat
+        # From https://www.owasp.org/index.php/Securing_tomcat
         tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
         tomcat_group_id = grp.getgrnam("tomcat").gr_gid
         os.chown("/usr/local/tomcat", tomcat_user_id, tomcat_group_id)
@@ -106,9 +107,8 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
         remove_default_error_page()
 
 
-
 def remove_example_webapps():
-    '''remove Tomcat example applications'''
+    """Remove Tomcat example applications."""
     with pybash.pushd("/usr/local/tomcat/webapps"):
         webapps = os.listdir("/usr/local/tomcat/webapps")
         for webapp in webapps:
@@ -120,10 +120,9 @@ def remove_example_webapps():
                 else:
                     raise
 
-def copy_config_files():
-    '''copy custom configuration
-    context.xml: increases the Tomcat cache to avoid flood of warning messages'''
 
+def copy_config_files():
+    """Copy custom configuration context.xml: increases the Tomcat cache to avoid flood of warning messages."""
     print "\n*******************************"
     print "Copying custom Tomcat config files"
     print "******************************* \n"
@@ -143,9 +142,8 @@ def copy_config_files():
         sys.exit()
 
 
-
 def create_tomcat_group():
-    '''Creates Tomcat Unix group'''
+    """Create Tomcat Unix group."""
     try:
         esg_functions.call_binary("groupadd", ["tomcat"])
     except ProcessExecutionError, err:
@@ -156,8 +154,9 @@ def create_tomcat_group():
     else:
         print "Created tomcat group with group id: {}".format(grp.getgrnam("tomcat").gr_gid)
 
+
 def create_tomcat_user():
-    '''Create the Tomcat system user and user group'''
+    """Create the Tomcat system user and user group."""
     print "\n*******************************"
     print "Creating Tomcat User"
     print "******************************* \n"
@@ -166,7 +165,7 @@ def create_tomcat_user():
         logger.info("Tomcat user already exists")
         return
 
-    if not "tomcat" in esg_functions.get_group_list():
+    if "tomcat" not in esg_functions.get_group_list():
         create_tomcat_group()
 
     useradd_options = ["-s", "/sbin/nologin", "-M", "-g", "tomcat", "-d", "/usr/local/tomcat", "tomcat"]
@@ -180,7 +179,7 @@ def create_tomcat_user():
 
 
 def start_tomcat():
-    '''Start tomcat server'''
+    """Start tomcat server."""
     print "\n*******************************"
     print "Attempting to start Tomcat"
     print "******************************* \n"
@@ -202,7 +201,7 @@ def start_tomcat():
 
 
 def stop_tomcat():
-    '''Stop tomcat server'''
+    """Stop tomcat server."""
     try:
         tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
     except IOError:
@@ -224,7 +223,7 @@ def stop_tomcat():
 
 
 def restart_tomcat():
-    '''Restart tomcat server'''
+    """Restart tomcat server."""
     print "\n*******************************"
     print "Restarting Tomcat"
     print "******************************* \n"
@@ -237,7 +236,7 @@ def restart_tomcat():
 
 
 def check_tomcat_status():
-    '''Check status of tomcat server'''
+    """Check status of tomcat server."""
     try:
         tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
         if psutil.pid_exists(int(tomcat_pid)):
@@ -251,12 +250,12 @@ def check_tomcat_status():
 
 
 def run_tomcat_config_test():
-    '''Run tomcat config test'''
+    """Run tomcat config test."""
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh configtest")
 
 
 def copy_credential_files(tomcat_install_config_dir):
-    '''Copy Tomcat config files'''
+    """Copy Tomcat config files."""
     logger.debug("Moving credential files into node's tomcat configuration dir: %s",
                  config["tomcat_conf_dir"])
     tomcat_credential_files = [config["truststore_file"], config["keystore_file"], config["tomcat_users_file"],
@@ -272,7 +271,8 @@ def copy_credential_files(tomcat_install_config_dir):
                 logger.exception("Could not move file %s", credential_file_name)
 
     esgf_host = esg_functions.get_esgf_host()
-    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.csr")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.csr")):
+    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.csr")) and not os.path.exists(
+            os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.csr")):
         shutil.move(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.csr"),
                     os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.csr"))
 
@@ -280,9 +280,10 @@ def copy_credential_files(tomcat_install_config_dir):
         shutil.move(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.pem"),
                     os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.pem"))
 
+
 def migrate_tomcat_credentials_to_esgf():
-    '''
-    Move selected config files into esgf tomcat's config dir (certificate et al)
+    """Move selected config files into esgf tomcat's config dir (certificate et al).
+
     Ex: /esg/config/tomcat
     -rw-r--r-- 1 tomcat tomcat 181779 Apr 22 19:44 esg-truststore.ts
     -r-------- 1 tomcat tomcat    887 Apr 22 19:32 hostkey.pem
@@ -291,7 +292,7 @@ def migrate_tomcat_credentials_to_esgf():
     -rw-r--r-- 1 tomcat tomcat    733 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.pem
     -rw-r--r-- 1 tomcat tomcat    295 Apr 22 19:42 tomcat-users.xml
     Only called when migration conditions are present.
-    '''
+    """
     tomcat_install_config_dir = os.path.join(config["tomcat_install_dir"], "conf")
 
     if tomcat_install_config_dir != config["tomcat_conf_dir"]:
@@ -305,22 +306,27 @@ def migrate_tomcat_credentials_to_esgf():
         os.chown(config["tomcat_conf_dir"], esg_functions.get_user_id(
             "tomcat"), esg_functions.get_group_id("tomcat"))
 
+
 def write_tomcat_env():
-    '''Write tomcat environment info to /etc/esg.env'''
+    """Write tomcat environment info to /etc/esg.env."""
     EnvWriter.export("CATALINA_HOME", config["tomcat_install_dir"])
     esg_property_manager.set_property("PATH_with_tomcat", os.environ["PATH"]+":/usr/local/tomcat/bin")
 
+
 def write_tomcat_install_log():
-    '''Write tomcat version to install manifest'''
+    """Write tomcat version to install manifest."""
     esg_functions.write_to_install_manifest("tomcat", config["tomcat_install_dir"], TOMCAT_VERSION)
     esg_property_manager.set_property("tomcat.install.dir", config["tomcat_install_dir"])
     esg_property_manager.set_property("esgf.http.port", "80")
     esg_property_manager.set_property("esgf.https.port", "443")
 
+
 def setup_tomcat_logrotate():
-    '''If there is no logrotate file ${tomcat_logrotate_file} then create one
-    default is to cut files after 512M up to 20 times (10G of logs)
-    No file older than year should be kept.'''
+    """If there is no logrotate file ${tomcat_logrotate_file} then create one.
+
+    Default is to cut files after 512M up to 20 times (10G of logs)
+    No file older than year should be kept.
+    """
     if not os.path.exists("/usr/sbin/logrotate"):
         print "Not able to find logrotate here [/usr/sbin/logrotate]"
         return False
@@ -356,7 +362,6 @@ def setup_tomcat_logrotate():
         os.chmod("/usr/local/tomcat/logs/catalina.out", 0644)
         os.chown("/usr/local/tomcat/logs/catalina.out", tomcat_user, tomcat_group)
 
-
     if not os.path.exists("/usr/local/tomcat/logs/catalina.err"):
         print "Creating /usr/local/tomcat/logs/catalina.err"
         pybash.touch("/usr/local/tomcat/logs/catalina.err")
@@ -369,7 +374,7 @@ def setup_tomcat_logrotate():
 
 
 def configure_tomcat():
-    '''Configure tomcat for ESGF Node Manager'''
+    """Configure tomcat for ESGF Node Manager."""
     print "*******************************"
     print "Configuring Tomcat... (for Node Manager)"
     print "*******************************"
@@ -395,28 +400,27 @@ def configure_tomcat():
         os.chmod("/usr/local/tomcat/conf/server.xml", 0600)
         os.chown("/usr/local/tomcat/conf/server.xml", tomcat_user, tomcat_group)
 
-        #Find or create keystore file
+        # Find or create keystore file
         if os.path.exists(config["keystore_file"]):
             print "Found existing keystore file {}".format(config["keystore_file"])
         else:
             print "creating keystore... "
-            #create a keystore with a self-signed cert
+            # Create a keystore with a self-signed cert
             distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
 
-            #if previous keystore is found; backup
+            # if previous keystore is found; backup
             esg_keystore_manager.backup_previous_keystore(config["keystore_file"])
 
-            #-------------
-            #Make empty keystore...
-            #-------------
+            # -------------
+            # Make empty keystore...
+            # -------------
             keystore_password = esg_functions.get_java_keystore_password()
             esg_keystore_manager.create_empty_java_keystore(config["keystore_file"], config["keystore_alias"], keystore_password, distinguished_name)
 
-
-            #Setup temp CA
+            # Setup temp CA
             CA.setup_temp_ca()
 
-            #Fetch truststore to $tomcat_conf_dir
+            # Fetch truststore to $tomcat_conf_dir
             if not os.path.exists(config["truststore_file"]):
                 remote = "{}/certs/{}".format(
                     esg_property_manager.get_property("esg.root.url"),
@@ -430,9 +434,8 @@ def configure_tomcat():
             esg_functions.change_ownership_recursive(config["tomcat_conf_dir"], tomcat_user, tomcat_group)
 
 
-
 def main():
-    '''Main function'''
+    """Run main function."""
     print "\n*******************************"
     print "Setting up Tomcat {TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
     print "******************************* \n"

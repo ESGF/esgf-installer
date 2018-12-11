@@ -1,3 +1,4 @@
+"""ESGF MyProxy Module."""
 import os
 import logging
 import shutil
@@ -5,24 +6,22 @@ import ConfigParser
 import OpenSSL
 import psutil
 import yaml
-from requests.exceptions import HTTPError
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-#--------------------
-# Register with Globus Web Service and get a host certificate
-#--------------------
+
 def setup_gcs_id(first_run=None):
-    '''Runs the Globus Connect Server (gcs) ID setup script and gets a host certificate'''
+    """Register with Globus Web Service and get a host certificate."""
+    """Runs the Globus Connect Server (gcs) ID setup script and gets a host certificate"""
     if first_run == "firstrun":
         cert_dir = "/etc/tempcerts"
     else:
@@ -57,7 +56,6 @@ def setup_gcs_id(first_run=None):
         shutil.copyfile(simpleCA_tar_file, os.path.join(myproxyca_dir, simpleCA_tar_file))
         shutil.copyfile(simpleCA_tar_file, os.path.join("/etc/grid-security/certificates", simpleCA_tar_file))
 
-
     print '*******************************'
     print ' Registering the IdP node with Globus Platform'
     print '*******************************'
@@ -69,12 +67,11 @@ def setup_gcs_id(first_run=None):
     print 'This step can be skipped, but users will not be able to download datasets'
     print 'from the GridFTP server on the data node through the ESGF web interface.'
 
-
     try:
         register_myproxy_answer = esg_property_manager.get_property("register.myproxy")
     except ConfigParser.NoOptionError:
         register_myproxy_answer = raw_input(
-        "Do you want to register the MyProxy server with Globus?: ") or "Y"
+            "Do you want to register the MyProxy server with Globus?: ") or "Y"
 
     globus_setup = register_myproxy_answer.lower() in ["y", "yes"]
 
@@ -88,7 +85,9 @@ def setup_gcs_id(first_run=None):
     # Create a substitution of Globus generated configuration files for MyProxy server
     copy_globus_connect_esgf()
 
+
 def get_globus_username():
+    """Get Globus username from properties file.  If not found, prompt user."""
     try:
         globus_user = esg_property_manager.get_property("globus.user")
     except ConfigParser.NoOptionError:
@@ -101,7 +100,9 @@ def get_globus_username():
                 break
     return globus_user
 
+
 def get_globus_password():
+    """Get Globus password from properties file.  If not found, prompt user."""
     try:
         globus_password = esg_property_manager.get_property("globus.password")
     except ConfigParser.NoOptionError:
@@ -116,8 +117,9 @@ def get_globus_password():
 
     return globus_password
 
+
 def copy_gcs_conf(gcs_conf_path="/esg/config/myproxy/globus-connect-server.conf"):
-    '''Setups up the globus-connect-server.conf config file to be used with the globus-connect-server-id-setup binary'''
+    """Setups up the globus-connect-server.conf config file to be used with the globus-connect-server-id-setup binary."""
     shutil.copyfile(os.path.join(current_directory, "../config/globus-connect-server.conf"), gcs_conf_path)
 
     parser = ConfigParser.SafeConfigParser(allow_no_value=True)
@@ -135,13 +137,16 @@ def copy_gcs_conf(gcs_conf_path="/esg/config/myproxy/globus-connect-server.conf"
     with open(gcs_conf_path, "w") as conf_file:
         parser.write(conf_file)
 
+
 def copy_globus_connect_esgf(config_path="/etc/myproxy.d/globus-connect-esgf"):
+    """Copy custom Globus Connect configuration file."""
     pybash.mkdir_p("/etc/myproxy.d")
     logger.debug("Copying globus-connect-esgf file to /etc/myproxy.d")
     shutil.copyfile(os.path.join(current_directory, "../config/globus-connect-esgf"), config_path)
 
 
 def config_myproxy_server(globus_location, install_mode="install"):
+    """Configure MyProxy Server."""
     if install_mode not in ["install", "update"]:
         logger.error("You have entered an invalid argument: [%s]", install_mode)
         logger.error("The install mode must be either 'install' or 'update'")
@@ -151,17 +156,8 @@ def config_myproxy_server(globus_location, install_mode="install"):
 
     copy_myproxy_certificate_apps()
     edit_pam_pgsql_conf()
-    #--------------------
-    # Fetch -> pam resource file used for myproxy
-    #--------------------
     fetch_etc_pam_d_myproxy()
-    #--------------------
-    # Create /esg/config/myproxy/myproxy-server.config
-    #--------------------
     copy_myproxy_server_config()
-    #--------------------
-    # Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config
-    #--------------------
     edit_etc_myproxyd()
     write_db_name_env()
 
@@ -169,6 +165,7 @@ def config_myproxy_server(globus_location, install_mode="install"):
 
 
 def start_myproxy_server():
+    """Start MyProxy service."""
     if check_myproxy_process():
         return
     try:
@@ -176,7 +173,9 @@ def start_myproxy_server():
     except ProcessExecutionError:
         raise
 
+
 def stop_myproxy_server():
+    """Stop MyProxy service."""
     try:
         esg_functions.call_binary("service", ["myproxy-server", "stop"])
     except ProcessExecutionError:
@@ -185,14 +184,17 @@ def stop_myproxy_server():
     if not check_myproxy_process():
         print "MyProxy Process is stopped..."
 
+
 def restart_myproxy_server():
+    """Restart MyProxy service."""
     try:
         esg_functions.call_binary("service", ["myproxy-server", "restart"])
     except ProcessExecutionError:
         raise
 
+
 def myproxy_status():
-    '''Checks the status of the myproxy server'''
+    """Check the status of the myproxy server."""
     try:
         status = esg_functions.call_binary("service", ["myproxy-server", "status"])
     except ProcessExecutionError:
@@ -200,14 +202,18 @@ def myproxy_status():
     else:
         return (True, status)
 
+
 def check_myproxy_process():
+    """Check the MyProxy process."""
     myproxy_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username']) if "myproxy-server" in proc.info["name"]]
     if myproxy_processes:
         print "myproxy-server process is running..."
         print myproxy_processes
         return myproxy_processes
 
+
 def write_myproxy_install_log():
+    """Write MyProxy install properties to logs."""
     if os.path.exists("/usr/sbin/myproxy-server"):
         esg_property_manager.set_property("myproxy_app_home", "/usr/sbin/myproxy-server")
         if not esg_property_manager.get_property("myproxy_endpoint"):
@@ -216,14 +222,15 @@ def write_myproxy_install_log():
             default_myproxy_port = "7512"
             esg_property_manager.set_property("myproxy_port", default_myproxy_port)
 
-        #TODO: get distinguished name for cert
+        # TODO: get distinguished name for cert
         # esg_property_manager.set_property("myproxy_dn", default_myproxy_port)
 
-        myproxy_app_home = "/usr/sbin/myproxy-server"
-        #TODO: Find myproxy_version
+        # TODO: Find myproxy_version
         # esg_functions.write_to_install_manifest("globus:myproxy", thredds_install_dir, thredds_version)
 
+
 def copy_myproxy_server_config(config_path="/esg/config/myproxy/myproxy-server.config"):
+    """Create /esg/config/myproxy/myproxy-server.config."""
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
     if os.path.isfile(config_path):
@@ -236,7 +243,9 @@ def copy_myproxy_server_config(config_path="/esg/config/myproxy/myproxy-server.c
 # Configuration File Editing Functions
 ############################################
 
+
 def copy_myproxy_certificate_apps():
+    """Copy MyProxy certificate app into place."""
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
     mapapp_file = os.path.join(os.path.dirname(__file__), "mapapp", "myproxy-certificate-mapapp")
@@ -250,13 +259,15 @@ def copy_myproxy_certificate_apps():
     shutil.copy2(extapp_file, myproxy_config_dir)
     shutil.copy2(retriever_file, myproxy_config_dir)
 
+
 def edit_pam_pgsql_conf():
+    """Edit pam_pgsql configuration file with Postgres properties."""
     pgsql_conf_file = "/etc/pam_pgsql.conf"
     logger.info("Copy and Modifying pam pgsql configuration file: pam_pgsql.conf")
     shutil.copyfile(os.path.join(current_directory, "myproxy_conf_files/etc_pam_pgsql.conf"), pgsql_conf_file)
     os.chmod(pgsql_conf_file, 0600)
 
-    #Replace placeholder values
+    # Replace placeholder values
     with open(pgsql_conf_file, 'r') as file_handle:
         filedata = file_handle.read()
     filedata = filedata.replace("@@esgf_db_name@@", esg_property_manager.get_property("db.database"))
@@ -270,13 +281,19 @@ def edit_pam_pgsql_conf():
     with open(pgsql_conf_file, 'w') as file_handle:
         file_handle.write(filedata)
 
+
 def fetch_etc_pam_d_myproxy():
+    """Fetch -> pam resource file used for myproxy."""
     myproxy_file = "/etc/pam.d/myproxy"
     logger.info("Copying pam's MyProxy resource file to %s", myproxy_file)
     shutil.copyfile(os.path.join(current_directory, "myproxy_conf_files/etc_pam.d_myproxy"), myproxy_file)
 
+
 def edit_etc_myproxyd(myproxy_esgf_path="/etc/myproxy.d/myproxy-esgf"):
+    """Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config."""
     shutil.copyfile(os.path.join(current_directory, "../config/myproxy-esgf"), myproxy_esgf_path)
 
+
 def write_db_name_env():
+    """Write database name to environment configuration file."""
     EnvWriter.export("ESGF_DB_NAME", esg_property_manager.get_property("db.database"))

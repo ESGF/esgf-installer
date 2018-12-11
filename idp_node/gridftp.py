@@ -86,7 +86,7 @@ def config_gridftp_metrics_logging():
 
 
 def setup_gridftp_jail(globus_sys_acct="globus"):
-
+    """Create code jail for GridFTP."""
     print "*******************************"
     print "Setting up GridFTP... chroot jail"
     print "*******************************"
@@ -144,7 +144,7 @@ def create_test_data_file(gridftp_chroot_jail):
 
 
 def copy_sanitized_passwd_file(gridftp_chroot_jail):
-    """Write our trimmed version of /etc/passwd in the chroot location"""
+    """Write our trimmed version of /etc/passwd in the chroot location."""
     sanitized_passwd = os.path.join(gridftp_chroot_jail, "etc", "passwd")
     if os.path.exists(sanitized_passwd):
         logger.info("Copying sanitized passwd file to [%s/etc/passwd]", gridftp_chroot_jail)
@@ -152,7 +152,7 @@ def copy_sanitized_passwd_file(gridftp_chroot_jail):
 
 
 def copy_sanitized_group_file(gridftp_chroot_jail):
-    """Write our trimmed version of /etc/group in the chroot location"""
+    """Write our trimmed version of /etc/group in the chroot location."""
     sanitized_group = os.path.join(gridftp_chroot_jail, "etc", "group")
     if os.path.exists(sanitized_group):
         logger.info("Copying sanitized group file to [%s/etc/group]", gridftp_chroot_jail)
@@ -160,7 +160,7 @@ def copy_sanitized_group_file(gridftp_chroot_jail):
 
 
 def post_gridftp_jail_setup():
-    """Write our trimmed version of /etc/password in the chroot location"""
+    """Write our trimmed version of /etc/password in the chroot location."""
     gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
     if not os.path.exists(gridftp_chroot_jail):
         logger.error("%s does not exist. Exiting.", gridftp_chroot_jail)
@@ -173,6 +173,7 @@ def post_gridftp_jail_setup():
 
 
 def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{}/gridftp_root".format(config["esg_root_dir"])):
+    """Configure GridFTP."""
     print "GridFTP - Configuration..."
     print "*******************************"
     print "Setting up GridFTP..."
@@ -190,8 +191,7 @@ def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{}/gridftp_root"
 
 
 def write_esgsaml_auth_conf():
-    """By making this a separate function it may be called directly in the
-    event that the gateway_service_root needs to be repointed. (another Estani gem :-))"""
+    """By making this a separate function it may be called directly in the event that the gateway_service_root needs to be repointed."""
     try:
         orp_security_authorization_service_endpoint = esg_property_manager.get_property("orp_security_authorization_service_endpoint")
     except ConfigParser.NoOptionError:
@@ -205,10 +205,11 @@ def write_esgsaml_auth_conf():
 
 
 def configure_esgf_publisher_for_gridftp():
-    print " configuring publisher to use this GridFTP server... "
+    """Configure ESG Publisher to use GridFTP."""
+    print "Configuring publisher to use this GridFTP server... "
     publisher_config_path = os.path.join(config["publisher_home"], config["publisher_config"])
     if os.path.exists(publisher_config_path):
-        shutil.copyfile(publisher_config_path, publisher_config_path+".bak")
+        shutil.copyfile(publisher_config_path, publisher_config_path + ".bak")
         # replace gsiftp://host.sample.gov:2811/ with esgf_host and gridftp_server_port in esg.ini
         parser = ConfigParser.SafeConfigParser(allow_no_value=True)
         parser.read(publisher_config_path)
@@ -217,6 +218,7 @@ def configure_esgf_publisher_for_gridftp():
 
 
 def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["esg_root_dir"])):
+    """Start GridFTP."""
     print " GridFTP - Starting server... $*"
     write_esgsaml_auth_conf()
     setup_gridftp_jail()
@@ -234,11 +236,12 @@ def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["es
 
 
 def stop_gridftp_server():
+    """Stop GridFTP."""
     esg_functions.call_binary("service", ["globus-gridftp-server", "stop"])
 
 
 def gridftp_server_status():
-    """Checks the status of the gridftp server"""
+    """Check the status of the gridftp server."""
     status = esg_functions.call_binary("service", ["globus-gridftp-server", "status"])
     if "running" in status:
         return (True, status)
@@ -247,12 +250,13 @@ def gridftp_server_status():
 
 
 def check_gridftp_process():
+    """Get status of GridFTP."""
     gridftp_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "globus-gridftp-server" in proc.info["name"]]
     logger.info("gridftp_processes: %s", gridftp_processes)
-    # print " gridftp-server process is running on port [${port}]..."
 
 
 def get_globus_username():
+    """Get Globus username from properties file.  If not found, prompt user."""
     try:
         globus_user = esg_property_manager.get_property("globus.user")
     except ConfigParser.NoOptionError:
@@ -267,6 +271,7 @@ def get_globus_username():
 
 
 def get_globus_password():
+    """Get Globus password from properties file.  If not found, prompt user."""
     try:
         globus_password = esg_property_manager.get_property("globus.password")
     except ConfigParser.NoOptionError:
@@ -283,7 +288,7 @@ def get_globus_password():
 
 
 def copy_gcs_esgf_conf(gcs_esgf_path="/etc/globus-connect-server-esgf.conf"):
-    """Setup up the globus-connect-server-esgf.conf config file to be used with the globus-connect-server-io-setup binary."""
+    """Set the globus-connect-server-esgf.conf config file to be used with the globus-connect-server-io-setup binary."""
     shutil.copyfile(os.path.join(current_directory, "../config/globus-connect-server-esgf.conf"), gcs_esgf_path)
 
     parser = ConfigParser.SafeConfigParser(allow_no_value=True)

@@ -1,8 +1,8 @@
+"""ESGF IDP module."""
 import os
 import zipfile
 import logging
 import ConfigParser
-import distutils.spawn
 import stat
 import yaml
 from git import Repo
@@ -12,7 +12,6 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
-from plumbum.commands import ProcessExecutionError
 
 #####
 # Install The ESGF Idp Services
@@ -24,7 +23,7 @@ from plumbum.commands import ProcessExecutionError
 # In update mode it will always pull down latest after archiving old
 #
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
@@ -32,7 +31,7 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
 
 
 def write_idp_install_log(idp_service_app_home):
-    '''Write IDP properties to install manifest and property file'''
+    """Write IDP properties to install manifest and property file."""
     esgf_idp_version = "1.1.4"
     idp_service_host = esg_functions.get_esgf_host()
     idp_service_endpoint = "https://{}/esgf-idp/idp/openidServer.htm".format(idp_service_host)
@@ -49,7 +48,7 @@ def write_idp_install_log(idp_service_app_home):
 
 
 def setup_idp():
-    '''Setup IDP service'''
+    """Install the IDP service."""
     print "*******************************"
     print "Setting up The ESGF Idp Services"
     print "*******************************"
@@ -103,14 +102,17 @@ def setup_idp():
     write_idp_install_log(idp_service_app_home)
     esg_functions.write_security_lib_install_log()
 
+
 def clone_slcs():
+    """Clone SLCS repo from GitHub."""
     if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
         print "SLCS repo already exists.  Skipping cloning from Github."
         return
     Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", "/usr/local/src/esgf-slcs-server-playbook")
 
-#TODO: convert slcs to use Ansible python API
+
 def setup_slcs():
+    """Install SLCS."""
     if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
         try:
             install_slcs = esg_property_manager.get_property("update.slcs")
@@ -121,7 +123,7 @@ def setup_slcs():
             print "Skipping installation of SLCS server"
             return
 
-    '''Setup the slcs_server'''
+    """Setup the slcs_server"""
     print "*******************************"
     print "Setting up SLCS Oauth Server"
     print "*******************************"
@@ -148,7 +150,7 @@ def setup_slcs():
         esg_functions.change_ownership_recursive("esgf-slcs-server-playbook", apache_user, apache_group)
 
         with pybash.pushd("esgf-slcs-server-playbook"):
-            #TODO: extract to function
+            # TODO: extract to function
             publisher_repo_local = Repo(os.getcwd())
             # Blow away any uncommitted changes so we can checkout branch
             esg_functions.call_binary("git", ["reset", "--hard", "HEAD"])
@@ -157,7 +159,7 @@ def setup_slcs():
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
 
             current_mode = os.stat("/var/lib/globus-connect-server/myproxy-ca/")
-            #add group read and execute permissions
+            # add group read and execute permissions
             os.chmod("/var/lib/globus-connect-server/myproxy-ca/", current_mode.st_mode | stat.S_IRGRP | stat.S_IXGRP)
             os.chmod("/var/lib/globus-connect-server/myproxy-ca/private", current_mode.st_mode | stat.S_IRGRP | stat.S_IXGRP)
             os.chmod("/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem", current_mode.st_mode | stat.S_IRGRP)
@@ -207,7 +209,9 @@ def setup_slcs():
             conda_env=slcs_env
         )
 
+
 def slcs_apachectl(directive):
+    """Invoke the SLCS control script."""
     esg_functions.call_binary(
         "/etc/slcs-wsgi-8888/apachectl",
         [
@@ -215,10 +219,12 @@ def slcs_apachectl(directive):
         ]
     )
 
+
 def main():
-    '''Main function'''
+    """Run main function."""
     setup_idp()
     # setup_slcs()
+
 
 if __name__ == '__main__':
     main()

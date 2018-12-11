@@ -1,7 +1,7 @@
-'''
-Build the strings for myproxy-server to use in myproxy-logon,
+"""Build the strings for myproxy-server to use in myproxy-logon.
+
 See http://grid.ncsa.illinois.edu/myproxy/man/myproxy-server.config.5.html
-'''
+"""
 import argparse
 import ConfigParser
 import logging
@@ -11,7 +11,9 @@ import sys
 import OpenSSL
 import psycopg2
 
+
 def db_connection(config_parser, esgf_home):
+    """Create connection to database."""
     pass_file = os.path.join(esgf_home, "config", ".esg_pg_pass")
     logging.info("Retrieving pg pass from %s", pass_file)
     with open(pass_file, "rb") as filep:
@@ -35,8 +37,9 @@ def db_connection(config_parser, esgf_home):
 
     return psycopg2.connect(connection_params)
 
+
 def build_grouprole(args, config_parser, esgf_home):
-    ''' Build the group and role string for a specified username '''
+    """Build the group and role string for a specified username."""
     logging.info("Fetching groups and roles for %s", args.username)
 
     section = "installer.properties"
@@ -73,8 +76,9 @@ def build_grouprole(args, config_parser, esgf_home):
         grouprole_elements.append("group_" + group + "_role_" + role)
     return ";".join(grouprole_elements)
 
+
 def get_openid(args, config_parser, esgf_home):
-    ''' Retrieve the OpenID for a specified username '''
+    """Retrieve the OpenID for a specified username."""
     logging.info("Fetching OpenID for %s", args.username)
 
     section = "installer.properties"
@@ -100,19 +104,18 @@ def get_openid(args, config_parser, esgf_home):
     logging.info("OpenID Success: %s", result[0])
     return result[0]
 
+
 def get_subject_line(args):
-    ''' Retrieve the subject line from the specified certificate file '''
+    """Retrieve the subject line from the specified certificate file."""
     logging.info("Loading cert file: %s", args.cert_file)
     with open(args.cert_file) as cert:
         cert_contents = cert.read()
     cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_contents)
     return cert.get_subject()
 
+
 def main():
-    '''
-    Parse arguments, setup logging, retrieve properties,
-    call needed functions and write new subject line to stdout
-    '''
+    """Parse arguments, setup logging, retrieve properties, call needed functions and write new subject line to stdout."""
     parser = argparse.ArgumentParser(
         description="A script for building strings to be used by myproxy-logon"
     )
@@ -140,7 +143,7 @@ def main():
         datefmt='%m/%d/%Y %I:%M:%S %p',
         level=logging.DEBUG,
         filename=os.path.join(esgf_home, "config", "myproxy", "app.log"),
-        maxBytes=2*1024*1024
+        maxBytes=2 * 1024 * 1024
     )
     properties_file = os.path.join(esgf_home, "config", "esgf.properties")
 
@@ -165,10 +168,11 @@ def main():
         else:
             grouprole = "null"
         openid = get_openid(args, config_parser, esgf_home)
-        #1.2.3.4.4.3.2.1.7.8=ASN1:UTF8String:null:esg.vo.openid=https://esgf-dev1.llnl.gov/esgf-idp/openid/ncarlson
+        # 1.2.3.4.4.3.2.1.7.8=ASN1:UTF8String:null:esg.vo.openid=https://esgf-dev1.llnl.gov/esgf-idp/openid/ncarlson
         output = "1.2.3.4.4.3.2.1.7.8=ASN1:UTF8String:{}:esg.vo.openid={}"
         output = output.format(grouprole, openid)
         print output
         logging.info("Extapp sent to myproxy: %s", output)
+
 
 main()

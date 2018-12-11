@@ -29,7 +29,7 @@ def check_for_globus_installation(globus_version, installation_type):
         print "Detected an existing Globus installation"
         print "Checking for Globus {}".format(globus_version)
         installed_globus_version = esg_functions.call_binary("/usr/bin/globus-version")
-        if esg_version_manager.compare_versions(installed_globus_version, globus_version+".0"):
+        if esg_version_manager.compare_versions(installed_globus_version, globus_version + ".0"):
             if installation_type == "DATA" and os.path.exists("/usr/bin/globus-connect-server-io-setup"):
                 print "GridFTP already installed"
                 print "Globus version appears sufficiently current"
@@ -81,7 +81,6 @@ def setup_globus(installation_type):
         if installation_type == "IDP":
             logger.info("Globus Setup for Index-Node... (MyProxy server)")
             directive = "gateway"
-            setup_mode = "install"
             setup_globus_services(directive)
             write_globus_env(globus_location)
             pybash.touch(os.path.join(globus_location, "esg_esg-node_installed"))

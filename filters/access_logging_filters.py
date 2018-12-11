@@ -1,54 +1,46 @@
-'''Description: Installation of the esg-security infrastructure.'''
+"""Description: Installation of the esg-security infrastructure."""
 import os
 import logging
 import shutil
-import ConfigParser
-import zipfile
-import OpenSSL
-from lxml import etree
-import stat
-import glob
-import psutil
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_version_manager
-from esgf_utilities import esg_cert_manager
 from base import esg_tomcat_manager
-from base import esg_postgres
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+
 def setup_access_logging_filter():
-    '''Main function'''
+    """Install access logging filter."""
     pybash.mkdir_p(config["workdir"])
     with pybash.pushd(config["workdir"]):
         install_access_logging_filter()
 
 
 def download_jar_files(esg_dist_url, dest_dir):
+    """Download jar files from mirror."""
     esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
     esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
     with pybash.pushd(config["workdir"]):
-        #Place (copy) the filter jar in the WEB-INF/lib
         print "Installing ESGF Node Manager Filter jar..."
         shutil.copyfile("esgf-node-manager-common-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-common-1.0.1.jar"))
         shutil.copyfile("esgf-node-manager-filters-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-filters-1.0.1.jar"))
 
+
 def edit_web_xml(service_name, esg_filter_entry_pattern, dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
+    """Edit the Thredds web.xml file."""
     esg_filter_entry_file_path = os.path.join(current_directory, esg_filter_entry_file)
 
     with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
-        #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
-        #Use utility function...
+        # Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
         esg_functions.insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
 
-        #Edit the web.xml file for ${service_name} to include these token replacement values
+        # Edit the web.xml file for ${service_name} to include these token replacement values
         exempt_extensions = ".xml"
         exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
         extensions = ".nc"
@@ -66,7 +58,8 @@ def edit_web_xml(service_name, esg_filter_entry_pattern, dest_dir="/usr/local/to
 
 
 def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
-    '''Takes 2 arguments:
+    """Install the access loggin filter into Thredds web.xml file.
+
     dest_dir  - The top level directory of the webapp where filter is to be installed.
     esg_filter_entry_file - The file containing the filter entry xml snippet (optional: defaulted)
 
@@ -75,7 +68,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     place holder token with the contents of the filter snippet file
     "esg-filter-web.xml".  Copies the filter jar file to the ${service_name}'s
     lib dir
-    '''
+    """
     service_name = pybash.trim_string_from_head(dest_dir)
     esg_filter_entry_pattern = "<!--@@esg_access_logging_filter_entry@@-->"
 
@@ -86,7 +79,6 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     print "Filter entry file = {}".format(esg_filter_entry_file)
     print "Filter entry pattern = {}".format(esg_filter_entry_pattern)
 
-    #pre-checking... make sure the files we need in ${service_name}'s dir are there....
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
         logger.error("Could not find WEB-INF/lib installation dir - Filter Not Applied")
         raise OSError
@@ -99,7 +91,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     get_node_manager_libs(os.path.join(dest_dir, "WEB-INF", "lib"), esg_dist_url)
 
-    if not esg_filter_entry_pattern in open(os.path.join(dest_dir, "WEB-INF", "web.xml")).read():
+    if esg_filter_entry_pattern not in open(os.path.join(dest_dir, "WEB-INF", "web.xml")).read():
         logger.info("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
         return
 
@@ -112,22 +104,19 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
 
 
 def get_node_manager_libs(dest_dir, esg_dist_url):
-    '''Get libraries need for Node Manager; formerly called get_mgr_libs()'''
+    """Get libraries need for Node Manager; formerly called get_mgr_libs()."""
     print "Checking for / Installing required jars..."
-    #Jar versions...
+    # Jar versions...
     commons_dbcp_version = "1.4"
     commons_dbutils_version = "1.3"
     commons_pool_version = "1.5.4"
 
-    #----------------------------
-    #Jar Libraries Needed To Be Present For Node Manager (AccessLogging) Filter Support
-    #----------------------------
+    # Jar Libraries Needed To Be Present For Node Manager (AccessLogging) Filter Support
     dbcp_jar = "commons-dbcp-{}.jar".format(commons_dbcp_version)
     dbutils_jar = "commons-dbutils-{}.jar".format(commons_dbutils_version)
     pool_jar = "commons-pool-{}.jar".format(commons_pool_version)
     postgress_jar = "postgresql-8.4-703.jdbc3.jar"
 
-    #move over libraries...
     logger.info("getting (copying) library jars to %s", dest_dir)
 
     shutil.copyfile(os.path.join(current_directory, "jars", dbcp_jar), os.path.join(dest_dir, dbcp_jar))
@@ -135,9 +124,7 @@ def get_node_manager_libs(dest_dir, esg_dist_url):
     shutil.copyfile(os.path.join(current_directory, "jars", pool_jar), os.path.join(dest_dir, pool_jar))
     shutil.copyfile(os.path.join(current_directory, "jars", postgress_jar), os.path.join(dest_dir, postgress_jar))
 
-    #----------------------------
-    #Fetching Node Manager Jars from Distribution Site...
-    #----------------------------
+    # Fetching Node Manager Jars from Distribution Site...
     node_manager_commons_jar = "esgf-node-manager-common-{}.jar".format(config["esgf_node_manager_version"])
     node_manager_filters_jar = "esgf-node-manager-filters-{}.jar".format(config["esgf_node_manager_version"])
 

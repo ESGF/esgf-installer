@@ -1,11 +1,8 @@
+"""ESG Globus Module."""
 import os
 import logging
-import shutil
 import ConfigParser
-import OpenSSL
 import stat
-import glob
-import psutil
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
@@ -13,21 +10,21 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
 from esgf_utilities.esg_exceptions import InvalidNodeTypeError
-from base import esg_tomcat_manager
-from base import esg_postgres
 from idp_node import gridftp
 from idp_node import myproxy
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+
 def check_for_globus_installation(globus_version, installation_type):
+    """Check for existing globus install."""
     if os.access("/usr/bin/globus-version", os.X_OK):
         print "Detected an existing Globus installation"
         print "Checking for Globus {}".format(globus_version)
@@ -42,13 +39,16 @@ def check_for_globus_installation(globus_version, installation_type):
                 print "Globus version appears sufficiently current"
                 return True
 
+
 def setup_globus(installation_type):
-    '''
+    """Install Globus.
+
     Globus Toolkit ->  MyProxy (client) & GridFTP (server)
     Takes arg <selection bit vector>
     The rest of the args are the following...
     for data-node configuration (GridFTP stuff): ["bdm"|"end-user"] see esg-globus script
-    for idp configuration (MyProxy stuff): [gen-self-cert] <dir> | <regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"]'''
+    for idp configuration (MyProxy stuff): [gen-self-cert] <dir> | <regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"]
+    """
     logger.debug("setup_globus for installation type: %s", installation_type)
 
     globus_version = "6.0"
@@ -76,7 +76,7 @@ def setup_globus(installation_type):
             directive = "datanode"
             setup_globus_services(directive)
             write_globus_env(globus_location)
-            pybash.touch(os.path.join(globus_location,"esg_esg-node_installed"))
+            pybash.touch(os.path.join(globus_location, "esg_esg-node_installed"))
 
         if installation_type == "IDP":
             logger.info("Globus Setup for Index-Node... (MyProxy server)")
@@ -86,14 +86,18 @@ def setup_globus(installation_type):
             write_globus_env(globus_location)
             pybash.touch(os.path.join(globus_location, "esg_esg-node_installed"))
 
+
 def write_globus_env(globus_location):
-    '''Write globus properties to /etc/esg.env'''
+    """Write globus properties to /etc/esg.env."""
     EnvWriter.export("GLOBUS_LOCATION", globus_location)
 
+
 def start_globus(installation_type):
-    '''Starts the globus services by delegating out to esg-globus script
+    """Start the globus services by delegating out to esg-globus script.
+
     arg1 selection bit vector ($sel)
-    args* (in the context of "data" node ->  ["bdm"|"end-user"])'''
+    args* (in the context of "data" node ->  ["bdm"|"end-user"])
+    """
     if installation_type == "DATA":
         directive = "datanode"
         start_globus_services(directive)
@@ -101,9 +105,9 @@ def start_globus(installation_type):
         directive = "gateway"
         start_globus_services(directive)
 
-def stop_globus(installation_type):
-    '''Stops the globus services'''
 
+def stop_globus(installation_type):
+    """Stop the globus services."""
     if installation_type == "DATA":
         stop_globus_services("datanode")
     elif installation_type == "IDP":
@@ -111,12 +115,16 @@ def stop_globus(installation_type):
     else:
         raise InvalidNodeTypeError("Globus is not installed on a {} node type".format(installation_type))
 
-#--------------------------------------------------------------
+# --------------------------------------------------------------
 # PROCEDURE
-#--------------------------------------------------------------
-def setup_globus_services(config_type):
-    '''arg1 - config_type ("datanode" | "gateway"  ["install"|"update"])'''
+# --------------------------------------------------------------
 
+
+def setup_globus_services(config_type):
+    """Install Globus Services.
+
+    arg1 - config_type ("datanode" | "gateway"  ["install"|"update"])
+    """
     print "*******************************"
     print "Setting up Globus... (config type: {})".format(config_type)
     print "*******************************"
@@ -158,6 +166,7 @@ def setup_globus_services(config_type):
 
 
 def start_globus_services(config_type):
+    """Start Globus Services."""
     print "Starting Globus services for {}".format(config_type)
 
     if config_type == "datanode":
@@ -169,8 +178,9 @@ def start_globus_services(config_type):
         print "You must provide a configuration type arg [datanode | gateway]"
         return
 
+
 def stop_globus_services(config_type):
-    '''Stop globus'''
+    """Stop globus."""
     print "stop_globus_services for {}".format(config_type)
 
     if config_type == "datanode":
@@ -181,24 +191,27 @@ def stop_globus_services(config_type):
         print "You must provide a configuration type arg [datanode | gateway]"
         return
 
+
 def check_for_existing_globus_rpm_packages():
-    '''Check if globus rpm is already installed'''
+    """Check if globus rpm is already installed."""
     rpm_packages = esg_functions.call_binary("rpm", ["-qa"]).split("\n")
     globus_packages = [package for package in rpm_packages if "globus" in package]
     return globus_packages
 
-#--------------------------------------------------------------
+# --------------------------------------------------------------
 # GLOBUS INSTALL (subset)
-#--------------------------------------------------------------
+# --------------------------------------------------------------
 # All methods below this point should be considered "private" functions
 
+
 def install_globus_rpm():
-    '''Install globus rpm repo'''
+    """Install globus rpm repo."""
     globus_connect_server_file = "globus-connect-server-repo-latest.noarch.rpm"
     globus_connect_server_url = "http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm"
     esg_functions.download_update(globus_connect_server_file, globus_connect_server_url)
     esg_functions.call_binary("rpm", ["--import", "http://www.globus.org/ftppub/globus-connect-server/RPM-GPG-KEY-Globus"])
     esg_functions.call_binary("rpm", ["-i", "globus-connect-server-repo-latest.noarch.rpm"])
+
 
 def _install_globus(config_type):
     if config_type == "datanode":
@@ -230,7 +243,7 @@ def _install_globus(config_type):
                 logger.error(error)
                 pass
         else:
-            #TODO: remove --nogpgcheck check when packages are properly signed
+            # TODO: remove --nogpgcheck check when packages are properly signed
             esg_functions.call_binary("yum", ["-y", "install", "--nogpgcheck", "mhash", "pam-pgsql"])
             esg_functions.call_binary("yum", ["-y", "update", "--nogpgcheck", "mhash", "pam-pgsql"])
 
@@ -240,7 +253,7 @@ def _install_globus(config_type):
 ############################################
 
 def create_globus_account(globus_sys_acct):
-    '''Create the system account for globus to run as.'''
+    """Create the system account for globus to run as."""
     esg_functions.add_unix_group(globus_sys_acct)
 
     globus_sys_acct_passwd = esg_functions.get_security_admin_password()
@@ -248,8 +261,9 @@ def create_globus_account(globus_sys_acct):
     useradd_options = ["-r", "-c", "Globus System User", "-g", "globus", "-p", globus_sys_acct_passwd, "-s", "/bin/bash", globus_sys_acct]
     esg_functions.add_unix_user(useradd_options)
 
+
 def globus_check_certificates():
-    '''Check if globus certificates are valid'''
+    """Check if globus certificates are valid."""
     print "globus_check_certificates..."
     my_cert = "/etc/grid-security/hostcert.pem"
     esg_cert_manager.check_cert_expiry(my_cert)

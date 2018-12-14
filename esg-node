@@ -1108,7 +1108,7 @@ setup_esgcet() {
 
     unset LD_LIBRARY_PATH
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy pyopenssl
+    conda install -y -c conda-forge lxml requests==${requests_version} psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy pyopenssl
 
     if [ $ESGF_INSECURE > 0 ] ; then
         if [ "$mode" = "I" ]; then
@@ -1125,7 +1125,7 @@ setup_esgcet() {
     fi
 
     $pipcmd sqlalchemy_migrate
-    $pipcmd cdf2cim==0.2.3.0
+    $pipcmd cdf2cim==0.3.0.0
     $pipcmd cf-python==2.2.1
     $pipcmd hurry
     $pipcmd psycopg2-binary

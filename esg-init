@@ -36,7 +36,7 @@ init() {
     publisher_tag=${publisher_tag:-"v3.5.7"}
 
 
-    esgprep_version="2.9.3"
+    esgprep_version="2.9.4"
     cmor_version="3.3.3"
     requests_version="2.20.0" 
 

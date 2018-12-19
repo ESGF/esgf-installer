@@ -32,8 +32,8 @@ init() {
 
 
 
-    esgcet_version=${esgcet_version:-"3.5.5"}
-    publisher_tag=${publisher_tag:-"v3.5.5"}
+    esgcet_version=${esgcet_version:-"3.5.6"}
+    publisher_tag=${publisher_tag:-"v3.5.6"}
 
 
     esgprep_version="2.9.3"
@@ -51,7 +51,7 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.10.10"}
+    esg_orp_version=${esg_orp_version:-"2.10.11"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"2.8.8"}

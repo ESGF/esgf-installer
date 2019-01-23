@@ -32,14 +32,14 @@ init() {
 
 
 
-    esgcet_version=${esgcet_version:-"3.5.7"}
-    publisher_tag=${publisher_tag:-"v3.5.7"}
+    esgcet_version=${esgcet_version:-"3.5.8"}
+    publisher_tag=${publisher_tag:-"v3.5.8"}
 
 
     esgprep_version="2.9.4"
     cmor_version="3.3.3"
     requests_version="2.20.0" 
-
+    cdf2cim_versiom="0.3.2.0"
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"1.0.3"}

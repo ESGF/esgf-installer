@@ -25,7 +25,7 @@ init() {
     #--------------------------------
 
     apache_frontend_version=${apache_frontend_version:-"1.0.13"}
-    apache_frontend_tag=${apache_frontend_tag:-"v1.14"}
+    apache_frontend_tag=${apache_frontend_tag:-"v1.15"}
 
     cdat_version=${cdat_version:-"8.0"}
 #    cdat_tag="1.5.1.esgf-v1.7.0"

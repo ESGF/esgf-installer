@@ -1796,9 +1796,9 @@ setup_apache_frontend() {
 	if [ $? -eq 0 ]; then
 		cd apache-frontend;
 		if [ $devel -eq 1 ]; then
-			git checkout $apache_frontend_tag;
+			git checkout devel;
 			else
-			git checkout master;
+			git checkout $apache_frontend_tag;
 		fi
 		hn=${esgf_host:-`hostname -f`}
 		echo -e "$hn\ny" >answers

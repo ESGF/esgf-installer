@@ -916,8 +916,8 @@ setup_cdat() {
 	   unset LD_LIBRARY_PATH
         source /usr/local/conda/bin/activate esgf-pub
 	
-	   conda remove -y cdms2 cdtime cdutil cdat_info libnetcdf
-        conda install -y -c conda-forge cdms2 cdtime libnetcdf cdat_info future      
+	   conda remove -y cdms2 cdtime cdutil cdat_info libnetcdf cmor
+        conda install -y -c conda-forge cdms2 cdtime libnetcdf cdat_info cmor==${cmor_version} future      
         echo
     source deactivate
 
@@ -967,7 +967,7 @@ setup_cdat() {
 
 
 
-	conda create -y -n esgf-pub -c conda-forge cdms2 cdtime cdat_info future python=2.7
+	conda create -y -n esgf-pub -c conda-forge cdms2 cdtime cdat_info future cmor==${cmor_version} python=2.7
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
     fi
 
@@ -1271,8 +1271,6 @@ setup_esgcet() {
     if [ ! -z  $has_cmor ] ; then
         echo  found cmor installation for PrePARE - upgrading to specified version ${cmor_version}
 
-
-        conda install -y -c conda-forge cmor==${cmor_version}
         pip install esgfpid --upgrade
 
         python -c "import esgcet.config.cmip6_handler"

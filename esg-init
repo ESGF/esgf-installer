@@ -24,8 +24,9 @@ init() {
     # Internal esgf node code versions
     #--------------------------------
 
-    apache_frontend_version=${apache_frontend_version:-"1.0.13"}
-    apache_frontend_tag=${apache_frontend_tag:-"v1.15"}
+    apache_frontend_version=${apache_frontend_version:-"1.0.14"}
+    apache_frontend_tag=${apache_frontend_tag:-"v1.14"}
+
 
     cdat_version=${cdat_version:-"8.0"}
 #    cdat_tag="1.5.1.esgf-v1.7.0"
@@ -36,8 +37,8 @@ init() {
     publisher_tag=${publisher_tag:-"v3.5.9"}
 
 
-    esgprep_version="2.9.4"
-    cmor_version="3.3.3"
+    esgprep_version="2.9.5"
+    cmor_version="3.4"
     requests_version="2.20.0" 
     cdf2cim_versiom="0.3.2.0"
 

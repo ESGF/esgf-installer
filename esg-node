@@ -2039,7 +2039,8 @@ setup_temp_ca() {
 	hostname=$esgf_host;
 	mkdir -p /etc/tempcerts;
 	cd /etc/tempcerts && rm -rf CA; rm -f *.pem; rm -f *.gz; rm -f *.ans; rm -f *.tmpl altnames
-	mkdir CA
+	mkdir -p CA
+    echo "unique_subject = yes" >CA/index.txt.attr
 	write_ca_ans_templ >setupca.ans.tmpl
 	write_reqhost.ans_templ >reqhost.ans.tmpl
 	echo -e "y\ny" >setuphost.ans

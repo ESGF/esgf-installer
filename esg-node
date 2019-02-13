@@ -129,7 +129,7 @@ init_structure() {
 
     chmod 777 ${esg_etc_dir} 2> /dev/null
 
-    [ -w "${envfile}" ] && write_paths
+    write_paths
 
     #--------------
     #Setup variables....
@@ -1386,6 +1386,7 @@ setup_tomcat() {
     check_app_version ${tomcat_install_dir} ${tomcat_min_version}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && [OK] && return 0
+    write_paths
 
     echo
     echo "*******************************"

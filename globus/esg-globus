@@ -98,7 +98,7 @@ esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
 esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
 esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
 
-esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/${script_maj_version}/${script_sub_version}
 
 compress_extensions=${compress_extensions:-".tar.gz|.tar.bz2|.tgz|.bz2"}
 cdat_home=${cdat_home:-${install_prefix}/cdat}
@@ -121,7 +121,7 @@ globus_sys_acct_group=${globus_sys_acct_group:-globus}
 globus_sys_acct_passwd=${globus_sys_acct_passwd:-$(cat ${esgf_secret_file} 2> /dev/null)}
 #-----------
 gridftp_config=${gridftp_config:-""}
-gridftp_dist_url_base=${esg_dist_url}/globus/gridftp
+gridftp_dist_url_base=${esg_dist_url_root}/globus/gridftp
 gridftp_chroot_jail=${esg_root_dir}/gridftp_root
 #ports end-user configured:
 gridftp_server_port=2811
@@ -132,13 +132,12 @@ gridftp_server_usage_config=${esg_config_dir}/gridftp/esg-server-usage-gridftp.c
 esg_crontab=${esg_config_dir}/esg_crontab
 #-----------
 myproxy_config_args=${myproxy_config_args:-""}
-myproxy_dist_url_base=${esg_dist_url}/globus/myproxy
 myproxy_dist_url=http://downloads.sourceforge.net/project/cilogon/myproxy/myproxy-${myproxy_version}.tar.gz
 myproxy_endpoint=${myproxy_endpoint}
 myproxy_location=${globus_location}/bin/
 #-----------
 #esg_usage_parser_dist_url=http://www.mcs.anl.gov/~neillm/esg/esg_usage_parser-0.1.0.tar.gz
-esg_usage_parser_dist_url=${esg_dist_url}/globus/gridftp/esg_usage_parser-${usage_parser_version}.tar.bz2
+esg_usage_parser_dist_url=${esg_dist_url_root}/globus/gridftp/esg_usage_parser-${usage_parser_version}.tar.bz2
 pam_pgsql_workdir=${workdir}/extra/pam_pgsql
 pam_pgsql_install_dir=${install_prefix}/pam
 postgress_jar=${postgress_jar:-postgresql-8.4-703.jdbc3.jar}

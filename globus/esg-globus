@@ -994,8 +994,8 @@ config_myproxy_server() {
     if [ ! -e ESGOpenIDRetriever.class ] || [ ! -e ESGGroupRetriever ]; then
         pushd ${globus_location}/bin >& /dev/null
         echo "Download and building ESGOpenIDRetriever and ESGGroupRetriever..."
-        wget -O ESGOpenIDRetriever.java ${myproxy_dist_url_base}/ESGOpenIDRetriever.java
-        wget -O ESGGroupRetriever.java  ${myproxy_dist_url_base}/ESGGroupRetriever.java
+        wget -O ESGOpenIDRetriever.java ${esg_dist_url}/esgf-installer/ESGOpenIDRetriever.java
+        wget -O ESGGroupRetriever.java  ${esg_dist_url}/esgf-installer/ESGGroupRetriever.java
 
         #NOTE: "gateway_app_home" is available if this file is sourced from esg-gway
         if [ -e ${gateway_app_home}/WEB-INF/lib/${postgress_jar} ]; then
@@ -1004,7 +1004,7 @@ config_myproxy_server() {
         else
             echo " Could not find postgresql jdbc jar in gateway web application's lib"
             echo " getting it..."
-            wget -O ${postgress_jar} ${myproxy_dist_url_base}/${postgress_jar}
+            wget -O ${postgress_jar} ${esg_dist_url}/esgf-installer/${postgress_jar}
         fi
 
         local cp=.:`pwd`:$(find `pwd`| grep .jar | xargs | perl -pe 's/ /:/g')
@@ -1179,7 +1179,7 @@ edit_pam_pgsql_conf() {
     pushd /etc >& /dev/null
     local tfile=pam_pgsql.conf
     echo "Download and Modifying pam pgsql configuration file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/etc_${tfile} $((_force_install))
+    checked_get ${tfile}.tmpl ${esg_dist_url}/esgf-installer/etc_${tfile} $((_force_install))
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ -n "${tfile}" ] && chmod 600 ${tfile}* >& /dev/null
@@ -1215,12 +1215,10 @@ fetch_myproxy_certificate_mapapp() {
 
     local tfile=myproxy-certificate-mapapp
     echo "Downloading configuration file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((_force_install))
+    checked_get ${tfile} ${esg_dist_url}/esgf-installer/${tfile} $((_force_install))
     local ret=$?
 #    (( ret >= 1 )) && return 0
-    [ -e "${tfile}.tmpl" ] && chmod 640 ${tfile}.tmpl && cp -v ${tfile}{.tmpl,} && chmod 751 ${tfile} && \
-        sed -i.bak 's#/root/\.globus/simpleCA/cacert\.pem#/var/lib/globus-connect-server/myproxy-ca/cacert\.pem#' ${tfile}
-    ((DEBUG)) && cat ${tfile}
+    chmod 751 ${tfile}
     popd >& /dev/null
     unset tfile
     return 0
@@ -1231,7 +1229,7 @@ fetch_etc_pam_d_myproxy() {
     pushd /etc/pam.d >& /dev/null
     local tfile=myproxy
     echo "Fetching pam's myproxy resource file: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/etc_pam.d_${tfile} $((_force_install))
+    checked_get ${tfile} ${esg_dist_url}/esgf-installer/etc_pam.d_${tfile} $((_force_install))
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile
@@ -1246,7 +1244,7 @@ fetch_esg_attribute_callout_app() {
 
     local tfile=esg_attribute_callout_app
     echo "Downloading configuration file: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((_force_install))
+    checked_get ${tfile} ${esg_dist_url}/esgf-installer/${tfile} $((_force_install))
     [ -e "${tfile}" ] && chmod 751 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null

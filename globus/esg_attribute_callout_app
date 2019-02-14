@@ -1,0 +1,47 @@
+#!/bin/bash
+
+if test "x$1" = "x"; then
+  echo "Usage: esg_attribute_callout_app <username>"
+  exit 1
+fi
+
+ESGF_HOME=${ESGF_HOME:-"/esg"}
+GLOBUS_LOCATION=${GLOBUS_LOCATION:="/usr/local/globus"}
+
+envfile="/etc/esg.env"
+[ -e "${envfile}" ] && source ${envfile}
+
+# Configure this for each installation
+ESG_GROUP_RETRIEVER_DIR="${GLOBUS_LOCATION}/bin"
+
+CWD=`pwd`
+cd $ESG_GROUP_RETRIEVER_DIR
+
+# REQUIRES postgresql jar file either in same dir as this script and
+# java class file, or in the classpath export
+export CLASSPATH=$CLASSPATH:$ESG_GROUP_RETRIEVER_DIR/postgresql-8.4-703.jdbc3.jar
+
+#--------------------------------
+# Read and set vars
+#--------------------------------
+postgress_host=$(sed -n 's@^[^#]*[ ]*db.host[ ]*=[ ]*\(.*\)$@\1@p' ${ESGF_HOME}/config/esgf.properties | head -n1)
+postgress_port=$(sed -n 's@^[^#]*[ ]*db.port[ ]*=[ ]*\(.*\)$@\1@p' ${ESGF_HOME}/config/esgf.properties | head -n1)
+postgress_user=$(sed -n 's@^[^#]*[ ]*db.user[ ]*=[ ]*\(.*\)$@\1@p' ${ESGF_HOME}/config/esgf.properties | head -n1)
+pg_sys_acct_passwd=$(cat ${ESGF_HOME}/config/.esg_pg_pass 2> /dev/null)
+esgf_db_name=$(sed -n 's@^[^#]*[ ]*db.database[ ]*=[ ]*\(.*\)$@\1@p' ${ESGF_HOME}/config/esgf.properties | head -n1)
+
+esgf_host=$(sed -n 's@^[^#]*[ ]*esgf.host[ ]*=[ ]*\(.*\)$@\1@p' ${ESGF_HOME}/config/esgf.properties | head -n1)
+openid_dirname=${openid_dirname:-"https://${esgf_host}/esgf-idp/openid/"}
+#--------------------------------
+
+#JAVA_CMD="$JAVA_HOME/bin/java ESGGroupRetriever -h pcmdi.llnl.gov:9999 -u esgcet_admin -p PASSWORD -d DATABASE -g https://${esgf_host}/esgf-idp/openid/ -U"
+JAVA_CMD="$JAVA_HOME/bin/java ESGGroupRetriever -h ${postgress_host}:${postgress_port} -u ${postgress_user} -p ${pg_sys_acct_passwd} -d ${esgf_db_name} -g ${openid_dirname} -U"
+
+if ! test "x$1" = "x"; then
+  GROUP_STR=`$JAVA_CMD $1`
+  if ! test -z "$GROUP_STR" ; then
+    echo "1.2.3.4.4.3.2.1.7.8=ASN1:UTF8String:$GROUP_STR"
+  fi
+fi
+
+cd $CWD

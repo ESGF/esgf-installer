@@ -2066,7 +2066,7 @@ setup_temp_ca() {
 	cert=cacert.pem
 	tmpsubj='/O=ESGF/OU=ESGF.ORG/CN=placeholder'
 	quotedtmpsubj=`echo "$tmpsubj" | sed 's/[./*?|]/\\\\&/g'`;
-	certsubj=`openssl x509 -in $cert -noout -subject|sed "s/=O/=\/O/"|cut -d '=' -f2-`;
+    certsubj=`openssl x509 -in $cert -noout -subject|sed "s/=O/=\/O/"|tr -d ' '|sed "s/,/\//g"|cut -d '=' -f2-`;
 	quotedcertsubj=`echo "$certsubj" | sed 's/[./*?|]/\\\\&/g'`;
 	echo "quotedcertsubj=~$quotedcertsubj~";
 	localhash=`$ESGF_OPENSSL x509 -in $cert -noout -hash`;

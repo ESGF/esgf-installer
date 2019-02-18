@@ -163,7 +163,7 @@ esg-purge-base () {
 
 esg-purge-cdat () {
     yum remove -y cdat uvcdat
-    rm -rf /usr/local/cdat /usr/local/uvcdat /usr/local/conda /usr/local/cmip6-cmor-tables
+    rm -rf /usr/local/cdat /usr/local/uvcdat /usr/local/conda /usr/local/cmip6-cmor-tables /root/.conda
 
 
 }
@@ -175,6 +175,7 @@ esg-purge-final () {
     rm -f /etc/yum.repos.d/esgf.repo
 
     rm -f /usr/local/etc/esg-autoinstall.template
+    rm -f /root/.rnd
     if [ -f /usr/local/etc/esg-autoinstall.conf ] ; then
         echo "WARNING: not removing autoinstall configuration file /usr/local/etc/esg-autoinstall.conf"
         echo "If you want a pristine environment, remove it manually."

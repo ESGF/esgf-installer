@@ -116,6 +116,7 @@ esg-purge-base () {
     rm -f  /etc/esg.env
     rm -rf /etc/esgfcerts
     rm -f  /etc/httpd/conf/esgf-httpd.conf
+    rm -f /etc/sysconfig/httpd*
     rm -rf /etc/tempcerts
     rm -rf /opt/esgf
     rm -rf /tmp/inputpipe /tmp/outputpipe
@@ -173,6 +174,7 @@ esg-purge-final () {
     # message for the user should happen here so they don't get
     # scrolled off the screen.
     rm -f /etc/yum.repos.d/esgf.repo
+    rm -f /etc/cron.d/esg_usage_parser
 
     rm -f /usr/local/etc/esg-autoinstall.template
     rm -f /root/.rnd
@@ -223,6 +225,7 @@ esg-purge-postgres () {
     pkill -9 -u postgres
     rm -rf /usr/local/pgsql
     rm -rf /var/lib/pgsql
+    rm -f /etc/pam_psql.conf.tmpl
 
     # The installation of CDAT creates databases and tables, so
     # purging postgres but leaving CDAT will always result in invalid

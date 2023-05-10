@@ -6,16 +6,26 @@ Regardless of whether you have installed and administered an ESGF node previousl
 
 http://esgf.llnl.gov/media/pdf/ESGF-Policies-and-Guidelines-V1.0.pdf
 
-## ESGF Ansible Installation
+## ESGF Docker Installation
 
-We have migrated the ESGF installation procedure to use [Ansible](https://www.ansible.com/).  Please see the following:
+ESGF has adopted the use of containers for new node installations and upgrades, please see:
+
+https://github.com/esgf/esgf-docker
+
+Specific instructions for deployment methods are linked at the bottom of the README.
+
+## ESGF Ansible Installation - deprecated
+
+These Ansible playbooks are no longer being maintained.   Limited community support for the playbooks is possible, reach out to Tier-1 node administrators.
+
+The prior ESGF installation procedure used [Ansible](https://www.ansible.com/).  Please see the following:
 
 * [ESGF Ansible Documentation site](https://esgf.github.io/esgf-ansible)
 * [ESGF Ansible playbooks source repository](https://github.com/ESGF/esgf-ansible)
  
 Information on the use of esgf-installer scripts are kept in this repository, though maintenance of these scripts have been discontinued on April 1, 2019.
 
-## esgf-installer
+## esgf-installer - deprecated
 
 The ESGF Installer is a command line tool for installing the ESGF Software Stack.  
 The software stack is comprised of: Tomcat, Thredds, CDAT & CDMS, PostgreSQL, MyProxy, and several ESGF.org custom software applications running on a LINUX (RedHat/CentOS) operating system.
